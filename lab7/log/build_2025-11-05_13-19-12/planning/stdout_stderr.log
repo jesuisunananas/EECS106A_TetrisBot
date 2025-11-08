@@ -1,0 +1,28 @@
+running egg_info
+writing ../../build/planning/planning.egg-info/PKG-INFO
+writing dependency_links to ../../build/planning/planning.egg-info/dependency_links.txt
+writing entry points to ../../build/planning/planning.egg-info/entry_points.txt
+writing requirements to ../../build/planning/planning.egg-info/requires.txt
+writing top-level names to ../../build/planning/planning.egg-info/top_level.txt
+reading manifest file '../../build/planning/planning.egg-info/SOURCES.txt'
+writing manifest file '../../build/planning/planning.egg-info/SOURCES.txt'
+running build
+running build_py
+copying planning/transform_cube_pose.py -> /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/planning/build/lib/planning
+copying planning/static_tf_transform.py -> /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/planning/build/lib/planning
+running install
+running install_lib
+copying /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/planning/build/lib/planning/transform_cube_pose.py -> /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/python3.10/site-packages/planning
+copying /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/planning/build/lib/planning/static_tf_transform.py -> /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/python3.10/site-packages/planning
+byte-compiling /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/python3.10/site-packages/planning/transform_cube_pose.py to transform_cube_pose.cpython-310.pyc
+byte-compiling /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/python3.10/site-packages/planning/static_tf_transform.py to static_tf_transform.cpython-310.pyc
+running install_data
+running install_egg_info
+removing '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/python3.10/site-packages/planning-0.0.0-py3.10.egg-info' (and everything under it)
+Copying ../../build/planning/planning.egg-info to /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/python3.10/site-packages/planning-0.0.0-py3.10.egg-info
+running install_scripts
+Installing ik script to /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/planning
+Installing main script to /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/planning
+Installing tf script to /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/planning
+Installing transform_cube_pose script to /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/planning
+writing list of installed files to '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/planning/install.log'

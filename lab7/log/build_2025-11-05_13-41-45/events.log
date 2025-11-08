@@ -1,0 +1,118 @@
+[0.000000] (-) TimerEvent: {}
+[0.000111] (perception) JobQueued: {'identifier': 'perception', 'dependencies': OrderedDict()}
+[0.000139] (planning) JobQueued: {'identifier': 'planning', 'dependencies': OrderedDict()}
+[0.000157] (ros2_aruco) JobQueued: {'identifier': 'ros2_aruco', 'dependencies': OrderedDict()}
+[0.000174] (ros2_aruco_interfaces) JobQueued: {'identifier': 'ros2_aruco_interfaces', 'dependencies': OrderedDict()}
+[0.000194] (perception) JobStarted: {'identifier': 'perception'}
+[0.066399] (planning) JobStarted: {'identifier': 'planning'}
+[0.089161] (ros2_aruco) JobStarted: {'identifier': 'ros2_aruco'}
+[0.099513] (-) TimerEvent: {}
+[0.114199] (ros2_aruco_interfaces) JobStarted: {'identifier': 'ros2_aruco_interfaces'}
+[0.199685] (-) TimerEvent: {}
+[0.300347] (-) TimerEvent: {}
+[0.400918] (-) TimerEvent: {}
+[0.501211] (-) TimerEvent: {}
+[0.652103] (-) TimerEvent: {}
+[0.892647] (-) TimerEvent: {}
+[1.062673] (-) TimerEvent: {}
+[1.389669] (-) TimerEvent: {}
+[3.189508] (-) TimerEvent: {}
+[4.037339] (-) TimerEvent: {}
+[4.329517] (-) TimerEvent: {}
+[4.570776] (-) TimerEvent: {}
+[4.739862] (-) TimerEvent: {}
+[5.211660] (-) TimerEvent: {}
+[5.691875] (-) TimerEvent: {}
+[6.211165] (-) TimerEvent: {}
+[6.690370] (-) TimerEvent: {}
+[6.826312] (-) TimerEvent: {}
+[6.939550] (-) TimerEvent: {}
+[7.041473] (-) TimerEvent: {}
+[7.141655] (-) TimerEvent: {}
+[7.241885] (-) TimerEvent: {}
+[7.342107] (-) TimerEvent: {}
+[7.442260] (-) TimerEvent: {}
+[7.542477] (-) TimerEvent: {}
+[7.642685] (-) TimerEvent: {}
+[7.728976] (ros2_aruco_interfaces) JobProgress: {'identifier': 'ros2_aruco_interfaces', 'progress': 'cmake'}
+[7.734590] (ros2_aruco_interfaces) JobProgress: {'identifier': 'ros2_aruco_interfaces', 'progress': 'build'}
+[7.735873] (ros2_aruco_interfaces) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces', '--', '-j32', '-l32'], 'cwd': '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces', 'env': OrderedDict([('ARCH', 'x86_64'), ('QT_SCALE_FACTOR', '1'), ('USER', 'ee106a-acy'), ('HOSTNAME', 'ros2'), ('XDG_SESSION_TYPE', 'x11'), ('MASTERDIR', '/home/ff/ee106a'), ('COMPIZ_CONFIG_PROFILE', 'mate'), ('XDG_CACHE_HOME', '/home/cc/ee106a/fa25/class/ee106a-acy/.cache'), ('SHLVL', '2'), ('LD_LIBRARY_PATH', '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/ros2_aruco_interfaces/lib:/usr/lib/x86_64-linux-gnu/gazebo-11/plugins:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/cc/ee106a/fa25/class/ee106a-acy'), ('OLDPWD', '/home/cc/ee106a/fa25/class/ee106a-acy'), ('DESKTOP_SESSION', 'mate'), ('ROS_PYTHON_VERSION', '3'), ('GTK_MODULES', 'gail:atk-bridge:appmenu-gtk-module:gail:atk-bridge:canberra-gtk-module'), ('EE106_UR_ROBOT_IP', '192.168.1.100'), ('DISTROBOX_ENTER_PATH', '/usr/local/bin/distrobox-enter'), ('SYSTEMD_EXEC_PID', '4993'), ('NNTPSERVER', 'news.csua.berkeley.edu'), ('VISUAL', 'emacs'), ('XDG_STATE_HOME', '/home/cc/ee106a/fa25/class/ee106a-acy/.local/state'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/90076/bus'), ('COLORTERM', 'truecolor'), ('container', 'podman'), ('UBUNTU_MENUPROXY', '1'), ('QT_QPA_PLATFORMTHEME', 'gtk2'), ('COLCON_PREFIX_PATH', '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install:/home/ff/ee106a/robot_workspaces/ur/install'), ('ROS_DISTRO', 'humble'), ('GTK_IM_MODULE', 'ibus'), ('LOGNAME', 'ee106a-acy'), ('MASTER', 'ee106a'), ('WINDOWID', '37781999'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('TERMINFO_DIRS', '/usr/share/terminfo:/run/host/usr/share/terminfo'), ('USERNAME', 'ee106a-acy'), ('TERM', 'xterm-256color'), ('GTK_OVERLAY_SCROLLING', '0'), ('XDG_SESSION_ID', '6'), ('ROS_LOCALHOST_ONLY', '0'), ('WINDOWPATH', '2'), ('PATH', '/share/b/grading/bin:/home/ff/ee106a/bin:/home/ff/ee106a/bin/arch/x86_64:/opt/ros/humble/bin:/share/b/grading/bin:/home/ff/ee106a/bin:/home/ff/ee106a/bin/arch/x86_64:/share/b/grading/bin:/home/ff/ee106a/bin:/home/ff/ee106a/bin/arch/x86_64:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin:/share/b/grading/bin:/share/b/grading/sbin:/share/b/runas/x86_64:/share/b/bin:/home/ff/ee106a/venvs/all:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/share/b/grading/bin:/share/b/grading/sbin:/share/b/runas/x86_64:/share/b/bin:/home/ff/ee106a/venvs/all:/share/b/grading/bin:/share/b/grading/sbin:/share/b/runas/x86_64:/share/b/bin:/home/ff/ee106a/venvs/all'), ('SESSION_MANAGER', 'local/c105-6:@/tmp/.ICE-unix/5056,unix/c105-6:/tmp/.ICE-unix/5056'), ('OS', 'Linux'), ('XDG_RUNTIME_DIR', '/run/user/90076'), ('DISPLAY', ':1'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'MATE'), ('XDG_DATA_HOME', '/home/cc/ee106a/fa25/class/ee106a-acy/.local/share'), ('XDG_CONFIG_HOME', '/home/cc/ee106a/fa25/class/ee106a-acy/.config'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'mate'), ('XAUTHORITY', '/run/user/90076/gdm/Xauthority'), ('SSH_AUTH_SOCK', '/run/user/90076/keyring/ssh'), ('ROS_DOMAIN_ID', '26'), ('AMENT_PREFIX_PATH', '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/ros2_aruco_interfaces:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/ros2_aruco:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/perception:/home/ff/ee106a/robot_workspaces/ur/install/ur7e_utils:/opt/ros/humble'), ('SHELL', '/usr/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('EE106_UR_ROBOT_NAME', 'baymax'), ('GDMSESSION', 'mate'), ('RUNAS', '/share/b/runas/x86_64'), ('GPG_AGENT_INFO', '/run/user/90076/gnupg/S.gpg-agent:0:1'), ('CONFIG_SHELL', '/usr/bin/ksh'), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces'), ('EE106_ENV_SETUP', 'ur_ros2'), ('CONTAINER_ID', 'ros2'), ('LC_ALL', 'C.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-mate:/etc/xdg'), ('CLUTTER_IM_MODULE', 'ibus'), ('XDG_DATA_DIRS', '/usr/share/mate:/usr/share/mate:/usr/share/gnome:/home/cc/ee106a/fa25/class/ee106a-acy/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop:/usr/local/share:/usr/share'), ('PYTHONPATH', '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/ros2_aruco_interfaces/local/lib/python3.10/dist-packages:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/ros2_aruco/lib/python3.10/site-packages:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning/lib/python3.10/site-packages:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/perception/lib/python3.10/site-packages:/home/ff/ee106a/robot_workspaces/ur/install/ur7e_utils/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('MATE_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('COLCON', '1'), ('MANPATH', '/usr/local/man:/usr/man:/usr/X11/man:/usr/local/man:/share/b/grading/man:/usr/local/man:/usr/man:/usr/X11/man:/usr/local/man:/share/b/grading/man:/usr/local/man:/usr/man:/usr/X11/man:/usr/local/man:/share/b/grading/man:'), ('VTE_VERSION', '6800'), ('EDITOR', 'emacs'), ('CMAKE_PREFIX_PATH', '/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/ros2_aruco_interfaces:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/ros2_aruco:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/planning:/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/install/perception:/home/ff/ee106a/robot_workspaces/ur/install/ur7e_utils:/opt/ros/humble'), ('QT_FONT_DPI', '122')]), 'shell': False}
+[7.745224] (-) TimerEvent: {}
+[7.845410] (-) TimerEvent: {}
+[7.950095] (-) TimerEvent: {}
+[8.066738] (-) TimerEvent: {}
+[8.185031] (-) TimerEvent: {}
+[8.341339] (-) TimerEvent: {}
+[8.971131] (-) TimerEvent: {}
+[10.538103] (-) TimerEvent: {}
+[12.233588] (-) TimerEvent: {}
+[14.002305] (-) TimerEvent: {}
+[14.993986] (-) TimerEvent: {}
+[16.206411] (-) TimerEvent: {}
+[17.198521] (-) TimerEvent: {}
+[18.186089] (-) TimerEvent: {}
+[19.441872] (-) TimerEvent: {}
+[20.430335] (-) TimerEvent: {}
+[21.504351] (-) TimerEvent: {}
+[23.214223] (-) TimerEvent: {}
+[25.021072] (-) TimerEvent: {}
+[27.532271] (-) TimerEvent: {}
+[29.741986] (-) TimerEvent: {}
+[31.845586] (-) TimerEvent: {}
+[32.650834] (-) TimerEvent: {}
+[33.759493] (-) TimerEvent: {}
+[34.485340] (-) TimerEvent: {}
+[34.933889] (-) TimerEvent: {}
+[35.154115] (-) TimerEvent: {}
+[35.391565] (-) TimerEvent: {}
+[35.561183] (-) TimerEvent: {}
+[35.708203] (-) TimerEvent: {}
+[35.822908] (-) TimerEvent: {}
+[35.968095] (-) TimerEvent: {}
+[36.224598] (-) TimerEvent: {}
+[36.836243] (-) TimerEvent: {}
+[37.012767] (-) TimerEvent: {}
+[37.488499] (-) TimerEvent: {}
+[37.602707] (-) TimerEvent: {}
+[37.732207] (-) TimerEvent: {}
+[37.863894] (-) TimerEvent: {}
+[38.006293] (-) TimerEvent: {}
+[38.566174] (-) TimerEvent: {}
+[38.972725] (-) TimerEvent: {}
+[39.469940] (-) TimerEvent: {}
+[40.127941] (-) TimerEvent: {}
+[40.947635] (-) TimerEvent: {}
+[41.485374] (-) TimerEvent: {}
+[42.071621] (-) TimerEvent: {}
+[42.467860] (-) TimerEvent: {}
+[43.251930] (-) TimerEvent: {}
+[43.823797] (-) TimerEvent: {}
+[44.393305] (-) TimerEvent: {}
+[44.636326] (-) TimerEvent: {}
+[44.889337] (-) TimerEvent: {}
+[45.367896] (-) TimerEvent: {}
+[46.184598] (-) TimerEvent: {}
+[46.730760] (-) TimerEvent: {}
+[47.455816] (-) TimerEvent: {}
+[48.209051] (-) TimerEvent: {}
+[48.854798] (-) TimerEvent: {}
+[49.962916] (-) TimerEvent: {}
+[50.953896] (-) TimerEvent: {}
+[51.404899] (-) TimerEvent: {}
+[51.983298] (-) TimerEvent: {}
+[52.153065] (-) TimerEvent: {}
+[54.319091] (-) TimerEvent: {}
+[54.382754] (ros2_aruco_interfaces) StdoutLine: {'line': b'[  6%] Built target ros2_aruco_interfaces__cpp\n'}
+[54.388448] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 12%] Built target ros2_aruco_interfaces__rosidl_generator_c\n'}
+[54.419167] (-) TimerEvent: {}
+[54.519375] (-) TimerEvent: {}
+[54.619584] (-) TimerEvent: {}
+[54.719816] (-) TimerEvent: {}
+[54.779332] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 41%] Built target ros2_aruco_interfaces__rosidl_typesupport_cpp\n'}
+[54.779967] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 41%] Built target ros2_aruco_interfaces__rosidl_typesupport_fastrtps_cpp\n'}
+[54.782240] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 41%] Built target ros2_aruco_interfaces__rosidl_typesupport_introspection_cpp\n'}
+[54.795040] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 54%] Built target ros2_aruco_interfaces__rosidl_typesupport_fastrtps_c\n'}
+[54.805332] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 70%] Built target ament_cmake_python_copy_ros2_aruco_interfaces\n'}
+[54.805438] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 70%] Built target ros2_aruco_interfaces__rosidl_typesupport_c\n'}
+[54.808023] (ros2_aruco_interfaces) StdoutLine: {'line': b'[ 70%] Built target ros2_aruco_interfaces__rosidl_typesupport_introspection_c\n'}
+[54.819884] (-) TimerEvent: {}

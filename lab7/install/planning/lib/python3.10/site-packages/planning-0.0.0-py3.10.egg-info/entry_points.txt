@@ -1,0 +1,6 @@
+[console_scripts]
+ik = planning.ik:main
+main = planning.main:main
+tf = planning.static_tf_transform:main
+transform_cube_pose = planning.transform_cube_pose:main
+
