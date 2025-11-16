@@ -2,19 +2,38 @@ import rclpy
 from rclpy.node import Node
 import tf2_ros
 from ros2_aruco_interfaces.msg import ArucoMarkers
-# import yaml
 
 class TagIdentification(Node):
+    '''
+    Notes;
+    - current aruco dictionary is 5x5 250 (can go up to 250 codes)
+        - theres a tag generator in ros2_aruco folder :D
+    - can technically work with very small tags, but seems like pose is unstable,
+        seems stablish around 20mm which is roughly size of bottlecap
+    - uh colcon build scares me, idk why it yells at me when I build in project 
+        folder instead of in normal lab folder
+        - something with how ArucoMarkers msg was built I think
+    - aruco_node publishes all markers and marker poses to topic "ar_markers" with 
+        message type ArucoMarkers
+        ---
+        std_msgs/Header header
+
+        int64[] marker_ids
+        geometry_msgs/Pose[] poses
+        ---
+    '''
     object_dict = {
-        'ar_marker_15': 'mmm bread'
+        15: 'mmm bread'
     }
 
     def __init__(self):
         super().__init__("ar_tag_identification_node")
 
-        self.tf_buffer = tf2_ros.Buffer()
-        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        #Base Marker parameter, TODO: put parameter in launch file
+        self.declare_parameter('base_marker', 7)
+        self.base_marker = self.get_parameter('base_marker').value
 
+        # "aruco_markers" subscriber
         self.aruco_marker_sub = self.create_subscription(
             ArucoMarkers,
             'aruco_markers',
@@ -24,26 +43,24 @@ class TagIdentification(Node):
 
         self.items = {}
 
-        self.timer = self.create_timer(10, self.print_markers)
-        # self.timer = self.create_timer(10, self.get_frames)
+        # For testing purposes, not needed for actual functionality
+        self.timer = self.create_timer(0.5, self.print_markers)
 
-    # def get_frames(self):
-    #     # Got how get all frames from following:
-    #     # https://robotics.stackexchange.com/questions/95228/how-to-get-list-of-all-tf-frames-programatically
-        
-    #     # frames_dict = yaml.safe_load(self.tf_buffer.all_frames_as_yaml())
-    #     # frames_list = list(frames_dict.keys()) 
-    #     # ar_markers_list = list(filter(lambda item: 'ar_marker' in item, frames_list))
-    #     self.get_logger().info(self.tf_buffer.all_frames_as_yaml())
     def aruco_marker_callback(self, msg: ArucoMarkers):
-        marker_ids = msg.marker_ids
+        # Iterates through marker ids, identifies ids and stores poses in dictionary
+        marker_ids = msg.marker_ids.tolist()
         for i, id in enumerate(marker_ids):
-            if id != 'ar_marker_7': #CHANGE TO BASE LINK ARUCO TAG
-                self.items[TagIdentification.object_dict[id]] = msg.poses[i]
+            if id != self.base_marker: 
+                item = TagIdentification.object_dict[id]
+                if item:
+                    self.items[TagIdentification.object_dict[id]] = msg.poses[i]
+    
+    # For testing purposes, not needed for actual functionality
     def print_markers(self):
-        if self.items.values:
-            for id, item in self.items:
-                self.get_logger().info(f"Item: {item}, ID: {id}")
+        if self.items:
+            for item in self.items.keys():
+                self.get_logger().info(f"Item: {item}")
+                print(self.items[item])
 
 
 

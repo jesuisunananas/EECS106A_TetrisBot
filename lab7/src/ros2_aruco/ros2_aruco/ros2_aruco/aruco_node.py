@@ -225,6 +225,8 @@ class ArucoNode(rclpy.node.Node):
         corners, marker_ids, rejected = cv2.aruco.detectMarkers(
             cv_image, self.aruco_dictionary, parameters=self.aruco_parameters
         )
+        for id in marker_ids:
+            self.get_logger().info(id)
 
         if marker_ids is not None:
             # process each marker individually to allow for diff marker sizes
@@ -236,7 +238,8 @@ class ArucoNode(rclpy.node.Node):
             goal_markers = []
             final_marker_ids = []
             for i, marker_id in enumerate(marker_ids):
-                marker_size = self.marker_size_map[marker_id[0]]
+                # marker_size = self.marker_size_map[marker_id[0]]
+                marker_size = 0.15 # NOTE: Not sure why marker_size is relevant but gonna do this so when id not in marker_size_map, it doesnt break
                 if marker_size == 0.05:
                     turtlebot_corners.append(corners[i])
                     turtlebot_markers.append(marker_id)
