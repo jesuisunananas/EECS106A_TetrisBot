@@ -2,9 +2,9 @@ import numpy as np
 
 class Box:
     def __init__(self, length, width, height):
-        self.length = length
-        self.width = width
-        self.height = height
+        self._length = length
+        self._width = width
+        self._height = height
 
     @property
     def length(self):
@@ -38,9 +38,9 @@ class Box:
 
 class Bin:
     def __init__(self, length, width, height):
-        self.length = length
-        self.width = width
-        self.height = height
+        self._length = length
+        self._width = width
+        self._height = height
         self.height_map = np.zeros((length, width), dtype=int)
     
     @property
