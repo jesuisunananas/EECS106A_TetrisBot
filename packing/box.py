@@ -2,9 +2,9 @@ import numpy as np
 
 class Box:
     def __init__(self, length, width, height):
-        self._length = length
-        self._width = width
-        self._height = height
+        self.length = length
+        self.width = width
+        self.height = height
 
     @property
     def length(self):
@@ -12,8 +12,8 @@ class Box:
 
     @length.setter
     def length(self, l):
-        if l < 0:
-            raise ValueError("length cannot be negative")
+        if l <= 0:
+            raise ValueError("length cannot be zero or negative")
         self._length = l
     
     @property
@@ -22,8 +22,8 @@ class Box:
 
     @width.setter
     def width(self, w):
-        if w < 0:
-            raise ValueError("width cannot be negative")
+        if w <= 0:
+            raise ValueError("width cannot be zero or negative")
         self._width = w
 
     @property
@@ -32,15 +32,15 @@ class Box:
 
     @height.setter
     def height(self, h):
-        if h < 0:
-            raise ValueError("height cannot be negative")
-        self._length = h
+        if h <= 0:
+            raise ValueError("height cannot be zero or negative")
+        self._height = h
 
 class Bin:
     def __init__(self, length, width, height):
-        self._length = length
-        self._width = width
-        self._height = height
+        self.length = length
+        self.width = width
+        self.height = height
         self.height_map = np.zeros((length, width), dtype=int)
     
     @property
@@ -49,8 +49,8 @@ class Bin:
 
     @length.setter
     def length(self, l):
-        if l < 0:
-            raise ValueError("length cannot be negative")
+        if l <= 0:
+            raise ValueError("length cannot be zero or negative")
         self._length = l
     
     @property
@@ -59,8 +59,8 @@ class Bin:
 
     @width.setter
     def width(self, w):
-        if w < 0:
-            raise ValueError("width cannot be negative")
+        if w <= 0:
+            raise ValueError("width cannot be zero or negative")
         self._width = w
 
     @property
@@ -69,6 +69,6 @@ class Bin:
 
     @height.setter
     def height(self, h):
-        if h < 0:
-            raise ValueError("height cannot be negative")
-        self._length = h
+        if h <= 0:
+            raise ValueError("height cannot be zero or negative")
+        self._height = h
