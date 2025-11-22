@@ -2,7 +2,6 @@ import numpy as np
 from box import Box, Bin
 
 bin = Bin(4,4,5)
-boxes = {}
 
 '''
 Bin(2,4,x) height map is initially:
@@ -15,18 +14,23 @@ when we add a Box(2, 1, 3) (from left-top point 0,0) height map becomes:
 
 2 questions we ask: where do we want to put it and is it legal?
 '''
-def add_box(x, y, box, b):
+def add_box(x, y, box: Box, b: Bin):
     if not can_add_box(x, y, box, b):
         return False
     submatrix = b.height_map[y:y+box.width, x:x+box.length]
     base_height = submatrix.max()
     top_height = base_height + box.height
     b.height_map[y:y + box.width, x:x + box.length] = top_height
-    b.boxes[box.name] = box.volume
+    b.boxes[box.name] = {
+        "box": box,
+        "x": x,
+        "y": y,
+        "z": base_height
+    }
+    update_access_priority(b)
     return True
-    
 
-def can_add_box(x, y, box, b):
+def can_add_box(x, y, box: Box, b: Bin):
     if x < 0: return False
     if y< 0: return False
     if x + box.length > b.height_map.shape[1]: return False
@@ -37,7 +41,12 @@ def can_add_box(x, y, box, b):
     if (((np.count_nonzero(submatrix == base_height)) / submatrix.size) * 100) < 50: return False
     return True
 
-def all_pos_for_box(box, b):
+def update_access_priority(b: Bin):
+    entries = list(b.boxes.items())
+    entries.sort(key=lambda item: item[1]["box"].fragility)
+    b.priority_list = [i for i, _ in entries]
+
+def all_pos_for_box(box: Box, b: Bin):
     hmap = b.height_map
     rows, cols = hmap.shape
     positions = []
@@ -52,7 +61,7 @@ def all_pos_for_box(box, b):
 
     return positions
 
-def place_box_with_rule(box, b):
+def place_box_with_rule(box: Box, b: Bin):
     """
     Choose candidate with:
       minimal z, then minimal y, then minimal x
@@ -66,7 +75,7 @@ def place_box_with_rule(box, b):
     add_box(best_x, best_y, box, b)
     return best_x, best_y, best_z
 
-def compute_compactness(bin):
+def compute_compactness(bin: Bin):
     max_height = np.max(bin.height_map)
     bounding_volume = max_height * bin.length * bin.width
     object_volume = 0

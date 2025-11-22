@@ -8,7 +8,7 @@ pip install tensorflow[and-cuda]
 pip install pytest
 ```
 
-To run tests:
+To run tests (from inside packing dir):
 ```
 pytest
 ```
