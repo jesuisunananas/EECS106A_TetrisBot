@@ -2,28 +2,14 @@ import numpy as np
 from scipy.spatial.transform import RigidTransform, Rotation
 
 class Box:
-    def __init__(self, length, width, height):
+    def __init__(self, name, length, width, height, fragility=1.0):
+        self.name = name
         self.length = length
         self.width = width
         self.height = height
-        
-        # Box properties:
-        self.volume = length * width * height
-        self.density = 1.0 # probably porportional to fragility?
-        self.access_priority = 0.0
-        self.id = 0
-        self.tf # maybe from scipy.spatial.transform.RigidTransform
-        self.rotation # maybe from scipy.spatial.transform.Rotation
+        self.volume = self.length * self.width * self.height
+        self.fragility = fragility
 
-    @property
-    def mass(self):
-        return self._density * self._length * self._width * self._height
-    
-    @property
-    def volume(self):
-        return self._length * self._width * self._height
-
-        
     @property
     def length(self):
         return self._length
@@ -55,19 +41,9 @@ class Box:
         if h <= 0:
             raise ValueError("height cannot be zero or negative")
         self._height = h
-
-
-    @property
-    def density(self):
-        return self._density
     
-    @density.setter
-    def volume(self, density):
-        if density <= 0:
-            raise ValueError("density cannot be zero or negative")
-        self._density = density
-
-
+    def compute_fragility():
+        pass
 
 class Bin:
     def __init__(self, length, width, height):
@@ -75,6 +51,8 @@ class Bin:
         self.width = width
         self.height = height
         self.height_map = np.zeros((length, width), dtype=int)
+        self.priority_list = []
+        self.boxes = {}
     
     @property
     def length(self):

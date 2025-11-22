@@ -22,6 +22,7 @@ def add_box(x, y, box, b):
     base_height = submatrix.max()
     top_height = base_height + box.height
     b.height_map[y:y + box.width, x:x + box.length] = top_height
+    b.boxes[box.name] = box.volume
     return True
     
 
@@ -65,8 +66,13 @@ def place_box_with_rule(box, b):
     add_box(best_x, best_y, box, b)
     return best_x, best_y, best_z
 
-def compute_compactness():
-    pass
+def compute_compactness(bin):
+    max_height = np.max(bin.height_map)
+    bounding_volume = max_height * bin.length * bin.width
+    object_volume = 0
+    for i in bin.boxes:
+        object.volume += i.volume
+    C_i = object_volume / bounding_volume
 
 def compute_pyramid():
     pass
