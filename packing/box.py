@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.spatial.transform import RigidTransform, Rotation
 
 class Box:
     def __init__(self, length, width, height):
@@ -10,6 +11,9 @@ class Box:
         self.volume = length * width * height
         self.density = 1.0 # probably porportional to fragility?
         self.access_priority = 0.0
+        self.id = 0
+        self.tf # maybe from scipy.spatial.transform.RigidTransform
+        self.rotation # maybe from scipy.spatial.transform.Rotation
 
     @property
     def mass(self):
