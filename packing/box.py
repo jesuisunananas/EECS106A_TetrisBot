@@ -1,10 +1,13 @@
 import numpy as np
 
 class Box:
-    def __init__(self, length, width, height):
+    def __init__(self, name, length, width, height, fragility=1.0):
+        self.name = name
         self.length = length
         self.width = width
         self.height = height
+        self.volume = self.length * self.width * self.height
+        self.fragility = fragility
 
     @property
     def length(self):
@@ -35,6 +38,9 @@ class Box:
         if h <= 0:
             raise ValueError("height cannot be zero or negative")
         self._height = h
+    
+    def compute_fragility():
+        pass
 
 class Bin:
     def __init__(self, length, width, height):
@@ -42,6 +48,8 @@ class Bin:
         self.width = width
         self.height = height
         self.height_map = np.zeros((length, width), dtype=int)
+        self.priority_list = []
+        self.boxes = {}
     
     @property
     def length(self):
