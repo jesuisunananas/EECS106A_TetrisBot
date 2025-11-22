@@ -37,9 +37,7 @@ from rclpy.qos import qos_profile_sensor_data
 from cv_bridge import CvBridge
 import numpy as np
 import cv2
-import math
-# import tf_transformations
-# from autolab_core import transformations
+from scipy.spatial.transform import Rotation
 from sensor_msgs.msg import CameraInfo
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import PoseArray, Pose, TransformStamped
@@ -47,37 +45,9 @@ from ros2_aruco_interfaces.msg import ArucoMarkers
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from tf2_ros import TransformBroadcaster
 
-def quaternion_from_matrix(matrix):
-    """Return quaternion from rotation matrix.
-
-    >>> R = rotation_matrix(0.123, (1, 2, 3))
-    >>> q = quaternion_from_matrix(R)
-    >>> numpy.allclose(q, [0.0164262, 0.0328524, 0.0492786, 0.9981095])
-    True
-
-    """
-    q = np.empty((4,), dtype=np.float64)
-    M = np.array(matrix, dtype=np.float64, copy=False)[:4, :4]
-    t = np.trace(M)
-    if t > M[3, 3]:
-        q[3] = t
-        q[2] = M[1, 0] - M[0, 1]
-        q[1] = M[0, 2] - M[2, 0]
-        q[0] = M[2, 1] - M[1, 2]
-    else:
-        i, j, k = 0, 1, 2
-        if M[1, 1] > M[0, 0]:
-            i, j, k = 1, 2, 0
-        if M[2, 2] > M[i, i]:
-            i, j, k = 2, 0, 1
-        t = M[i, i] - (M[j, j] + M[k, k]) + M[3, 3]
-        q[i] = t
-        q[j] = M[i, j] + M[j, i]
-        q[k] = M[k, i] + M[i, k]
-        q[3] = M[k, j] - M[j, k]
-    q *= 0.5 / math.sqrt(t * M[3, 3])
-    return q
-
+DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but gonna do this so when id not in marker_size_map, it doesnt break
+BOX_MARKER_SIZE = 0.15
+BIN_MARKER_SIZE = 0.20
 
 class ArucoNode(rclpy.node.Node):
     def __init__(self):
@@ -86,7 +56,7 @@ class ArucoNode(rclpy.node.Node):
         # Declare and read parameters
         self.declare_parameter(
             name="marker_size",
-            value=0.0625,
+            value=DEFAULT_MARKER_SIZE,
             descriptor=ParameterDescriptor(
                 type=ParameterType.PARAMETER_DOUBLE,
                 description="Size of the markers in meters.",
@@ -135,8 +105,15 @@ class ArucoNode(rclpy.node.Node):
         )
         self.get_logger().info(f"Marker size: {self.marker_size}")
         
-        self.marker_size_map = {1: 0.15, 2: 0.15, 3: 0.15, 4: 0.15, 5: 0.15, 11: 0.15, 
-                                6: 0.15, 7: 0.15, 8: 0.15, 9: 0.15, 10: 0.15}
+        # Define marker IDs for boxes and bins
+        box_ids = [1, 2, 3, 4, 5, 11]
+        bin_ids = [6, 7, 8, 9, 10]
+        
+        # Build marker_size_map from lists
+        self.marker_size_map = {
+            **{marker_id: BOX_MARKER_SIZE for marker_id in box_ids},
+            **{marker_id: BIN_MARKER_SIZE for marker_id in bin_ids}
+        }
         self.get_logger().info(f"Marker size map for marker ids is: {self.marker_size_map}")
 
         dictionary_id_name = (
@@ -229,55 +206,25 @@ class ArucoNode(rclpy.node.Node):
             self.get_logger().info(id)
 
         if marker_ids is not None:
-            # process each marker individually to allow for diff marker sizes
-            rvecs = []
-            tvecs = []
-            turtlebot_corners = []
-            turtlebot_markers = []
-            goal_corners = []
-            goal_markers = []
-            final_marker_ids = []
+            # Organize markers with their corresponding sizes and corners
+            marker_data = []  # List of (index, marker_id, marker_size, corners)
+            
             for i, marker_id in enumerate(marker_ids):
-                # marker_size = self.marker_size_map[marker_id[0]]
-                marker_size = 0.15 # NOTE: Not sure why marker_size is relevant but gonna do this so when id not in marker_size_map, it doesnt break
-                if marker_size == 0.05:
-                    turtlebot_corners.append(corners[i])
-                    turtlebot_markers.append(marker_id)
-                elif marker_size == 0.15:
-                    goal_corners.append(corners[i])
-                    goal_markers.append(marker_id)
-
-            if len(goal_markers) > 0:
-                goal_rvecs, goal_tvecs = [], []
-                if cv2.__version__ > "4.0.0":
-                    goal_rvecs, goal_tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
-                        goal_corners, 0.15, self.intrinsic_mat, self.distortion
-                    )
-                else:
-                    goal_rvecs, goal_tvecs = cv2.aruco.estimatePoseSingleMarkers(
-                        goal_corners, goal_markers, self.intrinsic_mat, self.distortion
-                    )
-                self.get_logger().info(f"info is {goal_rvecs}, {goal_tvecs}")
-                self.get_logger().info(f"info is {goal_markers}")
-                rvecs.extend(goal_rvecs)
-                tvecs.extend(goal_tvecs)
-                final_marker_ids.extend(goal_markers)
-
-            if len(turtlebot_markers) > 0:
-                turtlebot_rvecs, turtlebot_tvecs = [], []
-                if cv2.__version__ > "4.0.0":
-                    turtlebot_rvecs, turtlebot_tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
-                        turtlebot_corners, 0.05, self.intrinsic_mat, self.distortion
-                    )
-                else:
-                    turtlebot_rvecs, turtlebot_tvecs = cv2.aruco.estimatePoseSingleMarkers(
-                        turtlebot_corners, turtlebot_markers, self.intrinsic_mat, self.distortion
-                    )
-                rvecs.extend(turtlebot_rvecs)
-                tvecs.extend(turtlebot_tvecs)
-                final_marker_ids.extend(turtlebot_markers)
-
-            for i, marker_id in enumerate(final_marker_ids):
+                marker_size = self.marker_size_map.get(marker_id[0], DEFAULT_MARKER_SIZE)
+                marker_data.append((i, marker_id, marker_size, corners[i]))
+            
+            # Estimate poses for all markers at once
+            if cv2.__version__ > "4.0.0":
+                rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+                    corners, self.marker_size, self.intrinsic_mat, self.distortion
+                )
+            else:
+                rvecs, tvecs = cv2.aruco.estimatePoseSingleMarkers(
+                    corners, marker_ids, self.intrinsic_mat, self.distortion
+                )
+            
+            # Process all markers
+            for i, marker_id in enumerate(marker_ids):
                 pose = Pose()
                 pose.position.x = tvecs[i][0][0]
                 pose.position.y = tvecs[i][0][1]
@@ -286,9 +233,8 @@ class ArucoNode(rclpy.node.Node):
                 rot_matrix = np.eye(4)
                 rot_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
 
-                # quat = tf_transformations.quaternion_from_matrix(rot_matrix)
-                # quat = transformations.quaternion_from_matrix(rot_matrix)
-                quat = quaternion_from_matrix(rot_matrix)
+                # Convert rotation matrix to quaternion
+                quat = Rotation.from_matrix(rot_matrix[0:3, 0:3]).as_quat()
 
                 pose.orientation.x = quat[0]
                 pose.orientation.y = quat[1]
@@ -299,8 +245,6 @@ class ArucoNode(rclpy.node.Node):
                 transform = TransformStamped()
                 transform.header.stamp = img_msg.header.stamp
                 if self.camera_frame == "":
-                    # Note the info_msg header is better practice just testing this
-                    # transform.header.frame_id = self.info_msg.header.frame_id
                     transform.header.frame_id = "camera1"
                 else:
                     transform.header.frame_id = self.camera_frame
