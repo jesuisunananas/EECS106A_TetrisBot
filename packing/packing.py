@@ -110,8 +110,8 @@ def compute_access_cost(b: Bin):
         a_c += z_i * p_i
     return a_c
 
-def compute_fragility_penalty():
-    pass
+def compute_fragility_penalty(b: Bin):
+    
 
 b = Box(1, 1, 5)
 b1 = Box(1,2,2)
