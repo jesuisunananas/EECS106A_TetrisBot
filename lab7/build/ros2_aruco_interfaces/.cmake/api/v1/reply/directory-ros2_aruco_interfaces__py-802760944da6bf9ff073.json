@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "ros2_aruco_interfaces__py",
+		"source" : "/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py"
+	}
+}

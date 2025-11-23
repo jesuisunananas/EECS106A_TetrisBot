@@ -3,7 +3,7 @@ from rclpy.node import Node
 import tf2_ros
 from ros2_aruco_interfaces.msg import ArucoMarkers
 # import consolidated marker descriptions as a single source of truth
-from ros2_aruco.ros2_aruco.aruco_constants import (
+from ros2_aruco.aruco_constants import (
     BOX_MARKER_IDS,
     BIN_MARKER_IDS,
     BOX_MARKER_SIZE,
@@ -21,9 +21,7 @@ class TagIdentification(Node):
         - theres a tag generator in ros2_aruco folder :D
     - can technically work with very small tags, but seems like pose is unstable,
         seems stablish around 20mm which is roughly size of bottlecap
-    - uh colcon build scares me, idk why it yells at me when I build in project 
-        folder instead of in normal lab folder
-        - something with how ArucoMarkers msg was built I think
+    - if colcon build yells at you, maybe delete existing build folder
     - aruco_node publishes all markers and marker poses to topic "ar_markers" with 
         message type ArucoMarkers
         ---
@@ -76,10 +74,10 @@ class TagIdentification(Node):
     
     # For testing purposes, not needed for actual functionality
     def print_markers(self):
-        if self.items:
-            for item in self.items.keys():
+        if self.found_boxes:
+            for item in self.found_boxes.keys():
                 self.get_logger().info(f"Item: {item}")
-                print(self.items[item])
+                print(self.found_boxes[item])
 
 
 

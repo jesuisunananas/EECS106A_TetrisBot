@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/src/ros2_aruco/ros2_aruco_interfaces
+CMAKE_SOURCE_DIR = /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/ros2_aruco/ros2_aruco_interfaces
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces
+CMAKE_BINARY_DIR = /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces
 
 # Utility rule file for ros2_aruco_interfaces__py.
 
@@ -151,8 +151,8 @@ rosidl_generator_py/ros2_aruco_interfaces/_ros2_aruco_interfaces_s.ep.rosidl_typ
 rosidl_generator_py/ros2_aruco_interfaces/_ros2_aruco_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/humble/share/std_msgs/msg/UInt8MultiArray.idl
 rosidl_generator_py/ros2_aruco_interfaces/_ros2_aruco_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/humble/share/builtin_interfaces/msg/Duration.idl
 rosidl_generator_py/ros2_aruco_interfaces/_ros2_aruco_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c: /opt/ros/humble/share/builtin_interfaces/msg/Time.idl
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating Python code for ROS interfaces"
-	cd /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py && /usr/bin/python3 /opt/ros/humble/share/rosidl_generator_py/cmake/../../../lib/rosidl_generator_py/rosidl_generator_py --generator-arguments-file /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/rosidl_generator_py__arguments.json --typesupport-impls "rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c;rosidl_typesupport_c"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --blue --bold --progress-dir=/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Generating Python code for ROS interfaces"
+	cd /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py && /usr/bin/python3 /opt/ros/humble/share/rosidl_generator_py/cmake/../../../lib/rosidl_generator_py/rosidl_generator_py --generator-arguments-file /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/rosidl_generator_py__arguments.json --typesupport-impls "rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c;rosidl_typesupport_c"
 
 rosidl_generator_py/ros2_aruco_interfaces/_ros2_aruco_interfaces_s.ep.rosidl_typesupport_introspection_c.c: rosidl_generator_py/ros2_aruco_interfaces/_ros2_aruco_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
 	@$(CMAKE_COMMAND) -E touch_nocreate rosidl_generator_py/ros2_aruco_interfaces/_ros2_aruco_interfaces_s.ep.rosidl_typesupport_introspection_c.c
@@ -184,10 +184,10 @@ ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/build: ros2_a
 .PHONY : ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/build
 
 ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/clean:
-	cd /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py && $(CMAKE_COMMAND) -P CMakeFiles/ros2_aruco_interfaces__py.dir/cmake_clean.cmake
+	cd /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py && $(CMAKE_COMMAND) -P CMakeFiles/ros2_aruco_interfaces__py.dir/cmake_clean.cmake
 .PHONY : ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/clean
 
 ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/depend:
-	cd /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/src/ros2_aruco/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/ros2_aruco/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : ros2_aruco_interfaces__py/CMakeFiles/ros2_aruco_interfaces__py.dir/depend
 

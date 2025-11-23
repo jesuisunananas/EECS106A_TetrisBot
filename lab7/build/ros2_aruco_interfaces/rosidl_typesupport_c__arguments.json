@@ -1,9 +1,9 @@
 {
   "package_name": "ros2_aruco_interfaces",
-  "output_dir": "/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/rosidl_typesupport_c/ros2_aruco_interfaces",
+  "output_dir": "/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/rosidl_typesupport_c/ros2_aruco_interfaces",
   "template_dir": "/opt/ros/humble/share/rosidl_typesupport_c/resource",
   "idl_tuples": [
-    "/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/rosidl_adapter/ros2_aruco_interfaces:msg/ArucoMarkers.idl"
+    "/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/rosidl_adapter/ros2_aruco_interfaces:msg/ArucoMarkers.idl"
   ],
   "ros_interface_dependencies": [
     "geometry_msgs:/opt/ros/humble/share/geometry_msgs/msg/Accel.idl",
@@ -78,7 +78,7 @@
     "/opt/ros/humble/share/rosidl_typesupport_c/resource/idl__type_support.cpp.em",
     "/opt/ros/humble/share/rosidl_typesupport_c/resource/msg__type_support.cpp.em",
     "/opt/ros/humble/share/rosidl_typesupport_c/resource/srv__type_support.cpp.em",
-    "/home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/rosidl_adapter/ros2_aruco_interfaces/msg/ArucoMarkers.idl",
+    "/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/rosidl_adapter/ros2_aruco_interfaces/msg/ArucoMarkers.idl",
     "/opt/ros/humble/share/geometry_msgs/msg/Accel.idl",
     "/opt/ros/humble/share/geometry_msgs/msg/AccelStamped.idl",
     "/opt/ros/humble/share/geometry_msgs/msg/AccelWithCovariance.idl",

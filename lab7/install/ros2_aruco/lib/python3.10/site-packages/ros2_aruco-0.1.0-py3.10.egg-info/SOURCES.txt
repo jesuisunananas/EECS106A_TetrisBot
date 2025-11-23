@@ -13,6 +13,7 @@ config/aruco_parameters_old.yaml
 launch/aruco_recognition.launch.py
 resource/ros2_aruco
 ros2_aruco/__init__.py
+ros2_aruco/aruco_constants.py
 ros2_aruco/aruco_generate_marker.py
 ros2_aruco/aruco_node.py
 test/test_copyright.py

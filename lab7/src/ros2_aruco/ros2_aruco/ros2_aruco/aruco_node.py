@@ -45,7 +45,7 @@ from ros2_aruco_interfaces.msg import ArucoMarkers
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from tf2_ros import TransformBroadcaster
 
-from aruco_constants import BOX_MARKER_SIZE, BIN_MARKER_SIZE, DEFAULT_MARKER_SIZE 
+from ros2_aruco.aruco_constants import BOX_MARKER_SIZE, BIN_MARKER_SIZE, DEFAULT_MARKER_SIZE, BOX_MARKER_IDS, BIN_MARKER_IDS 
 # I've included some macros here ^
 
 class ArucoNode(rclpy.node.Node):
@@ -105,8 +105,8 @@ class ArucoNode(rclpy.node.Node):
         self.get_logger().info(f"Marker size: {self.marker_size}")
         
         # Build marker_size_map from lists
-        box_ids = self.get_parameter("box_marker_ids").get_parameter_value().integer_array_value
-        bin_ids = self.get_parameter("bin_marker_ids").get_parameter_value().integer_array_value
+        box_ids = BOX_MARKER_IDS
+        bin_ids = BIN_MARKER_IDS
         self.get_logger().info(f"Box marker IDs: {box_ids}")
         self.get_logger().info(f"Bin marker IDs: {bin_ids}")
         
@@ -202,8 +202,8 @@ class ArucoNode(rclpy.node.Node):
         corners, marker_ids, rejected = cv2.aruco.detectMarkers(
             cv_image, self.aruco_dictionary, parameters=self.aruco_parameters
         )
-        for id in marker_ids:
-            self.get_logger().info(id)
+        # for id in marker_ids:
+        #     self.get_logger().info(id)
 
         if marker_ids is not None:
             # Organize markers with their corresponding sizes and corners

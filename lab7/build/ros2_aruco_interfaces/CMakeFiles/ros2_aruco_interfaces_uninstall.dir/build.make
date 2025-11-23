@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/src/ros2_aruco/ros2_aruco_interfaces
+CMAKE_SOURCE_DIR = /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/ros2_aruco/ros2_aruco_interfaces
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces
+CMAKE_BINARY_DIR = /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces
 
 # Utility rule file for ros2_aruco_interfaces_uninstall.
 
@@ -67,7 +67,7 @@ include CMakeFiles/ros2_aruco_interfaces_uninstall.dir/compiler_depend.make
 include CMakeFiles/ros2_aruco_interfaces_uninstall.dir/progress.make
 
 CMakeFiles/ros2_aruco_interfaces_uninstall:
-	/usr/bin/cmake -P /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/ament_cmake_uninstall_target/ament_cmake_uninstall_target.cmake
+	/usr/bin/cmake -P /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/ament_cmake_uninstall_target/ament_cmake_uninstall_target.cmake
 
 ros2_aruco_interfaces_uninstall: CMakeFiles/ros2_aruco_interfaces_uninstall
 ros2_aruco_interfaces_uninstall: CMakeFiles/ros2_aruco_interfaces_uninstall.dir/build.make
@@ -82,6 +82,6 @@ CMakeFiles/ros2_aruco_interfaces_uninstall.dir/clean:
 .PHONY : CMakeFiles/ros2_aruco_interfaces_uninstall.dir/clean
 
 CMakeFiles/ros2_aruco_interfaces_uninstall.dir/depend:
-	cd /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/src/ros2_aruco/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/src/ros2_aruco/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-acy/ros_workspaces/lab7/build/ros2_aruco_interfaces/CMakeFiles/ros2_aruco_interfaces_uninstall.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/ros2_aruco/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/ros2_aruco/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/ros2_aruco_interfaces/CMakeFiles/ros2_aruco_interfaces_uninstall.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/ros2_aruco_interfaces_uninstall.dir/depend
 

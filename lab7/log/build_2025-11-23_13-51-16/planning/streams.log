@@ -1,0 +1,47 @@
+[2.152s] Invoking command in '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/planning': PYTHONPATH=/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/planning build --build-base /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build install --record /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/install.log --single-version-externally-managed install_data
+[2.393s] running egg_info
+[2.393s] creating ../../build/planning/planning.egg-info
+[2.394s] writing ../../build/planning/planning.egg-info/PKG-INFO
+[2.399s] writing dependency_links to ../../build/planning/planning.egg-info/dependency_links.txt
+[2.402s] writing entry points to ../../build/planning/planning.egg-info/entry_points.txt
+[2.405s] writing requirements to ../../build/planning/planning.egg-info/requires.txt
+[2.406s] writing top-level names to ../../build/planning/planning.egg-info/top_level.txt
+[2.409s] writing manifest file '../../build/planning/planning.egg-info/SOURCES.txt'
+[2.418s] reading manifest file '../../build/planning/planning.egg-info/SOURCES.txt'
+[2.421s] writing manifest file '../../build/planning/planning.egg-info/SOURCES.txt'
+[2.423s] running build
+[2.423s] running build_py
+[2.424s] creating /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build
+[2.425s] creating /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib
+[2.426s] creating /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning
+[2.428s] copying planning/__init__.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning
+[2.432s] copying planning/ik.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning
+[2.438s] copying planning/main.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning
+[2.445s] copying planning/static_tf_transform.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning
+[2.450s] copying planning/transform_cube_pose.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning
+[2.454s] running install
+[2.455s] running install_lib
+[2.459s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning/__init__.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning
+[2.465s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning/ik.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning
+[2.471s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning/main.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning
+[2.477s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning/static_tf_transform.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning
+[2.484s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build/lib/planning/transform_cube_pose.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning
+[2.491s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning/__init__.py to __init__.cpython-310.pyc
+[2.499s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning/ik.py to ik.cpython-310.pyc
+[2.506s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning/main.py to main.cpython-310.pyc
+[2.514s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning/static_tf_transform.py to static_tf_transform.cpython-310.pyc
+[2.521s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning/transform_cube_pose.py to transform_cube_pose.cpython-310.pyc
+[2.528s] running install_data
+[2.531s] copying resource/planning -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/share/ament_index/resource_index/packages
+[2.534s] copying package.xml -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/share/planning
+[2.539s] copying launch/lab7_bringup.launch.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/share/planning/launch
+[2.544s] running install_egg_info
+[2.548s] removing '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning-0.0.0-py3.10.egg-info' (and everything under it)
+[2.554s] Copying ../../build/planning/planning.egg-info to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning-0.0.0-py3.10.egg-info
+[2.585s] running install_scripts
+[2.609s] Installing ik script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[2.612s] Installing main script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[2.615s] Installing tf script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[2.617s] Installing transform_cube_pose script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[2.620s] writing list of installed files to '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/install.log'
+[2.660s] Invoked command in '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/planning' returned '0': PYTHONPATH=/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/planning build --build-base /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build install --record /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/install.log --single-version-externally-managed install_data

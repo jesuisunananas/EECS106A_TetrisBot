@@ -1,0 +1,41 @@
+[2.176s] Invoking command in '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/perception': PYTHONPATH=/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/perception build --build-base /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build install --record /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/install.log --single-version-externally-managed install_data
+[2.389s] running egg_info
+[2.390s] creating ../../build/perception/perception.egg-info
+[2.391s] writing ../../build/perception/perception.egg-info/PKG-INFO
+[2.394s] writing dependency_links to ../../build/perception/perception.egg-info/dependency_links.txt
+[2.396s] writing entry points to ../../build/perception/perception.egg-info/entry_points.txt
+[2.398s] writing requirements to ../../build/perception/perception.egg-info/requires.txt
+[2.400s] writing top-level names to ../../build/perception/perception.egg-info/top_level.txt
+[2.402s] writing manifest file '../../build/perception/perception.egg-info/SOURCES.txt'
+[2.410s] reading manifest file '../../build/perception/perception.egg-info/SOURCES.txt'
+[2.412s] writing manifest file '../../build/perception/perception.egg-info/SOURCES.txt'
+[2.414s] running build
+[2.414s] running build_py
+[2.415s] creating /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build
+[2.415s] creating /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib
+[2.416s] creating /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception
+[2.418s] copying perception/__init__.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception
+[2.421s] copying perception/interactive_plane.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception
+[2.435s] copying perception/process_pointcloud.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception
+[2.446s] copying perception/ar_tag_identify.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception
+[2.449s] running install
+[2.450s] running install_lib
+[2.454s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception/__init__.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception
+[2.457s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception/interactive_plane.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception
+[2.462s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception/process_pointcloud.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception
+[2.468s] copying /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build/lib/perception/ar_tag_identify.py -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception
+[2.475s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception/__init__.py to __init__.cpython-310.pyc
+[2.481s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception/interactive_plane.py to interactive_plane.cpython-310.pyc
+[2.488s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception/process_pointcloud.py to process_pointcloud.cpython-310.pyc
+[2.494s] byte-compiling /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception/ar_tag_identify.py to ar_tag_identify.cpython-310.pyc
+[2.500s] running install_data
+[2.502s] copying resource/perception -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/share/ament_index/resource_index/packages
+[2.507s] copying package.xml -> /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/share/perception
+[2.512s] running install_egg_info
+[2.516s] removing '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception-0.0.0-py3.10.egg-info' (and everything under it)
+[2.524s] Copying ../../build/perception/perception.egg-info to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages/perception-0.0.0-py3.10.egg-info
+[2.564s] running install_scripts
+[2.589s] Installing interactive_plane script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/perception
+[2.592s] Installing process_pointcloud script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/perception
+[2.595s] writing list of installed files to '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/install.log'
+[2.611s] Invoked command in '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/perception' returned '0': PYTHONPATH=/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/perception/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/perception build --build-base /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/build install --record /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/perception/install.log --single-version-externally-managed install_data

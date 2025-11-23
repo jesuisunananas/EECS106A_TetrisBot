@@ -1,4 +1,5 @@
 [console_scripts]
+ar_tag_identify = perception.ar_tag_identify:main
 interactive_plane = perception.interactive_plane:main
 process_pointcloud = perception.process_pointcloud:main
 

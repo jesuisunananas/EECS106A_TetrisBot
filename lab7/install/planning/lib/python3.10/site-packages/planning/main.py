@@ -58,9 +58,9 @@ class UR7e_CubeGrasp(Node):
 
 
         # NOTE extract cube position (base_link frame), Ziteng believe we need it, not sure
-        cx = float(cube_pose.point.x)
-        cy = float(cube_pose.point.y)
-        cz = float(cube_pose.point.z)
+        x_initial = float(cube_pose.point.x)
+        y_initial = float(cube_pose.point.y)
+        z_initial = float(cube_pose.point.z)
 
         # 1) Move to Pre-Grasp Position (gripper above the cube)
         '''
@@ -69,41 +69,41 @@ class UR7e_CubeGrasp(Node):
         y offset: -0.035 (Think back to lab 5, why is this needed?)
         z offset: +0.185 (to be above the cube by accounting for gripper length)
         '''
-        pre_dx, pre_dy, pre_dz = 0.0, -0.035, 0.185
-        grasp_dz_min = 0.16
-
-        def _append_ik_target(x, y, z, note):
-            js = self.ik_planner.compute_ik(self.joint_state, x, y, z)
-            if js is None:
-                self.get_logger().error(f"IK failed for {note} at ({x:.3f}, {y:.3f}, {z:.3f})")
-                return False
-            self.job_queue.append(js)
-            self.get_logger().info(f"Queued {note} IK.")
-            return True
-
-        pre_x = cx + pre_dx
-        pre_y = cy + pre_dy
-        pre_z = cz + pre_dz
-        if not _append_ik_target(pre_x, pre_y, pre_z, "pre-grasp"):
-            return
+        x_offset, y_offset, z_offset = 0.0, -0.035, 0.185
+        x_pre_grasp = x_offset + x_initial
+        y_pre_grasp = y_offset + y_initial
+        z_pre_grasp = z_offset + z_initial
+        target_pre_grasp_pose = self.ik_planner.compute_ik(self.joint_state, x_pre_grasp, y_pre_grasp, z_pre_grasp)
+        if target_pre_grasp_pose is None:
+            self.get_logger().error(f"IK failed for pre grasp")
+            return False
+        self.job_queue.append(target_pre_grasp_pose)
 
         # 2) Move to Grasp Position (lower the gripper to the cube)
         '''
         Note that this will again be defined relative to the cube pose. 
         DO NOT CHANGE z offset lower than +0.16. 
         '''
-        grasp_x = cx + pre_dx
-        grasp_y = cy + pre_dy
-        grasp_z = max(cz + grasp_dz_min, cz + 0.16)
-        if not _append_ik_target(grasp_x, grasp_y, grasp_z, "grasp"):
-            return
+        grasp_dz_min = 0.16
+        grasp_x = x_initial + x_offset
+        grasp_y = y_initial + y_offset
+        grasp_z = max(z_initial + grasp_dz_min, z_initial + 0.16)
+
+        target_grasp_pose = self.ik_planner.compute_ik(self.joint_state, grasp_x, grasp_y, grasp_z)
+        if not target_grasp_pose:
+            self.get_logger().error(f"IK failed for grasp pose")
+            return False
+        self.job_queue.append(target_grasp_pose)
 
         # 3) Close the gripper. See job_queue entries defined in init above for how to add this action.
         self.job_queue.append('toggle_grip')
         
         # 4) Move back to Pre-Grasp Position
-        if not _append_ik_target(pre_x, pre_y, pre_z, "retreat-to-pre-grasp"):
-            return
+        target_retreat_pose = self.ik_planner.compute_ik(self.joint_state, x_pre_grasp, y_pre_grasp, z_pre_grasp)
+        if not target_retreat_pose:
+            self.get_logger().error(f"IK failed for retreat pose")
+            return False
+        self.job_queue.append(target_retreat_pose)
 
         # 5) Move to release Position
         '''
@@ -111,11 +111,14 @@ class UR7e_CubeGrasp(Node):
         Which offset will you change to achieve this and in what direction?
         '''
         place_dx = 0.4
-        place_x = cx + place_dx
-        place_y = cy + pre_dy
+        place_x = x_initial + place_dx
+        place_y = y_initial + y_offset
         place_z = grasp_z
-        if not _append_ik_target(place_x, place_y, place_z, "place"):
-            return
+        target_move_pose = self.ik_planner.compute_ik(self.joint_state, place_x, place_y, place_z)
+        if not target_move_pose:
+            self.get_logger().error(f"IK failed for move pose")
+            return False
+        self.job_queue.append(target_move_pose)
 
         # 6) Release the gripper
         self.job_queue.append('toggle_grip')
