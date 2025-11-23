@@ -1,4 +1,5 @@
-import numpy as np
+import numpy as np # pyright: ignore[reportMissingImports]
+import uuid
 
 class BigBox:
     def __init__(self, length, width, height):
@@ -41,8 +42,10 @@ class BigBox:
         return self.length * self.width * self.height
 
 class Box(BigBox):
-    def __init__(self, length, width, height, fragility=1.0, name="bob"):
+    def __init__(self, length, width, height, fragility=1.0, name=None):
         super().__init__(length, width, height)
+        if name is None:
+            name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
         self.name = name
         # fragility is a distribution between 0 to 1, 1 being not fragile
         self.fragility = fragility

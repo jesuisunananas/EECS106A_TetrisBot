@@ -1,4 +1,4 @@
-import numpy as np
+import numpy as np # pyright: ignore[reportMissingImports]
 from box import Box, Bin
 
 bin = Bin(4,4,5)
@@ -38,7 +38,9 @@ def can_add_box(x, y, box: Box, b: Bin):
     submatrix = b.height_map[y:y+box.width, x:x+box.length]
     if np.any((submatrix + box.height) > b.height): return False
     base_height = submatrix.max()
-    if (((np.count_nonzero(submatrix == base_height)) / submatrix.size) * 100) < 50: return False
+    support_ratio = np.count_nonzero(submatrix == base_height) / submatrix.size
+    if support_ratio < 0.5:
+        return False
     return True
 
 def update_access_priority(b: Bin):
@@ -75,24 +77,40 @@ def place_box_with_rule(box: Box, b: Bin):
     add_box(best_x, best_y, box, b)
     return best_x, best_y, best_z
 
-def compute_compactness(bin: Bin):
-    max_height = np.max(bin.height_map)
-    bounding_volume = max_height * bin.length * bin.width
+def compute_compactness(b: Bin):
+    max_height = np.max(b.height_map)
+    bounding_volume = max_height * b.length * b.width
     object_volume = 0
-    for i in bin.boxes:
-        object.volume += i.volume
+    for i in b.boxes.values():
+        object_volume += i["box"].volume
     C_i = object_volume / bounding_volume
+    return C_i
 
-def compute_pyramid():
-    pass
+def compute_pyramid(b: Bin):
+    object_volume = 0
+    mask = np.zeros_like(b.height_map, dtype=bool)
+    for entry in b.boxes.values():
+        box = entry["box"]
+        x = entry["x"]
+        y = entry["y"]
+        mask[y:y + box.width, x:x + box.length] = True
+    for i in b.boxes.values():
+        object_volume += i["box"].volume
+    region_volume = float(b.height_map[mask].sum())
+    if region_volume == 0:
+        return 0.0
+    return object_volume / region_volume
 
-def compute_access_cost():
-    pass
+def compute_access_cost(b: Bin):
+    a_c = 0
+    for i, box in enumerate(b.priority_list):
+        curr_box = b.boxes[box]
+        p_i = len(b.priority_list) - i
+        z_i = b.height - (curr_box["box"].height + curr_box["z"])
+        a_c += z_i * p_i
+    return a_c
 
 def compute_fragility_penalty():
-    pass
-
-def compute_access_priority():
     pass
 
 b = Box(1, 1, 5)
