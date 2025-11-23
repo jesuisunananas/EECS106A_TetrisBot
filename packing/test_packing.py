@@ -3,6 +3,7 @@ import pytest
 from box import Box, Bin
 from packing import place_box_with_rule
 
+"""I think these ones are outdated, now that I've added some more parameters..."""
 
 class TestPlacementSequence:
 

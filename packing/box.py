@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.spatial.transform import RigidTransform, Rotation
 
 class Box:
     def __init__(self, name, length, width, height, fragility=1.0):
@@ -13,29 +12,27 @@ class Box:
     @property
     def length(self):
         return self._length
-    
+
     @length.setter
     def length(self, l):
         if l <= 0:
             raise ValueError("length cannot be zero or negative")
         self._length = l
-        
-        
+    
     @property
     def width(self):
         return self._width
-    
+
     @width.setter
     def width(self, w):
         if w <= 0:
             raise ValueError("width cannot be zero or negative")
         self._width = w
 
-
     @property
     def height(self):
         return self._height
-    
+
     @height.setter
     def height(self, h):
         if h <= 0:
