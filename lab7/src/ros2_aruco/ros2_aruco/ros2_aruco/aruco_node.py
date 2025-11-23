@@ -45,14 +45,13 @@ from ros2_aruco_interfaces.msg import ArucoMarkers
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from tf2_ros import TransformBroadcaster
 
-DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but gonna do this so when id not in marker_size_map, it doesnt break
-BOX_MARKER_SIZE = 0.15
-BIN_MARKER_SIZE = 0.20
+from aruco_constants import BOX_MARKER_SIZE, BIN_MARKER_SIZE, DEFAULT_MARKER_SIZE 
+# I've included some macros here ^
 
 class ArucoNode(rclpy.node.Node):
     def __init__(self):
         super().__init__("aruco_node")
-
+        
         # Declare and read parameters
         self.declare_parameter(
             name="marker_size",
@@ -105,11 +104,12 @@ class ArucoNode(rclpy.node.Node):
         )
         self.get_logger().info(f"Marker size: {self.marker_size}")
         
-        # Define marker IDs for boxes and bins
-        box_ids = [1, 2, 3, 4, 5, 11]
-        bin_ids = [6, 7, 8, 9, 10]
-        
         # Build marker_size_map from lists
+        box_ids = self.get_parameter("box_marker_ids").get_parameter_value().integer_array_value
+        bin_ids = self.get_parameter("bin_marker_ids").get_parameter_value().integer_array_value
+        self.get_logger().info(f"Box marker IDs: {box_ids}")
+        self.get_logger().info(f"Bin marker IDs: {bin_ids}")
+        
         self.marker_size_map = {
             **{marker_id: BOX_MARKER_SIZE for marker_id in box_ids},
             **{marker_id: BIN_MARKER_SIZE for marker_id in bin_ids}

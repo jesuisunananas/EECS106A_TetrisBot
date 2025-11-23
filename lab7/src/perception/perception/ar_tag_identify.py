@@ -2,6 +2,17 @@ import rclpy
 from rclpy.node import Node
 import tf2_ros
 from ros2_aruco_interfaces.msg import ArucoMarkers
+# import consolidated marker descriptions as a single source of truth
+from ros2_aruco.ros2_aruco.aruco_constants import (
+    BOX_MARKER_IDS,
+    BIN_MARKER_IDS,
+    BOX_MARKER_SIZE,
+    BIN_MARKER_SIZE,
+    DEFAULT_MARKER_SIZE,
+    MARKER_ID_DESCRIPTIONS,
+)
+# I've included all the marker IDs here! 
+# They are in the ros2_aruco package
 
 class TagIdentification(Node):
     '''
@@ -22,14 +33,14 @@ class TagIdentification(Node):
         geometry_msgs/Pose[] poses
         ---
     '''
-    object_dict = {
-        15: 'mmm bread'
-    }
+    
+    # Object descriptions moved to ros2_aruco package
+    object_dict = MARKER_ID_DESCRIPTIONS
 
     def __init__(self):
         super().__init__("ar_tag_identification_node")
 
-        #Base Marker parameter, TODO: put parameter in launch file
+        # Base Marker parameter (set via launch file)
         self.declare_parameter('base_marker', 7)
         self.base_marker = self.get_parameter('base_marker').value
 
@@ -41,7 +52,9 @@ class TagIdentification(Node):
             10
         )
 
-        self.items = {}
+        self.found_boxes = {}
+        self.found_bins = {}
+        self.unknown_item = {}
 
         # For testing purposes, not needed for actual functionality
         self.timer = self.create_timer(0.5, self.print_markers)
@@ -50,10 +63,16 @@ class TagIdentification(Node):
         # Iterates through marker ids, identifies ids and stores poses in dictionary
         marker_ids = msg.marker_ids.tolist()
         for i, id in enumerate(marker_ids):
-            if id != self.base_marker: 
-                item = TagIdentification.object_dict[id]
-                if item:
-                    self.items[TagIdentification.object_dict[id]] = msg.poses[i]
+            if id != self.base_marker:
+                item = TagIdentification.object_dict.get(id)
+                
+                # organise the item based on its id
+                if item and id in BOX_MARKER_IDS:
+                    self.found_boxes[item] = msg.poses[i]
+                elif item and id in BIN_MARKER_IDS:
+                    self.found_bins[item] = msg.poses[i]
+                else:
+                    self.unknown_item[item] = msg.poses[i]
     
     # For testing purposes, not needed for actual functionality
     def print_markers(self):
