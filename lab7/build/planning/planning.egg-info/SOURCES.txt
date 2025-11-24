@@ -12,6 +12,7 @@ launch/lab7_bringup.launch.py
 planning/__init__.py
 planning/ik.py
 planning/main.py
+planning/moveit_collisions.py
 planning/static_tf_transform.py
 planning/transform_cube_pose.py
 resource/planning

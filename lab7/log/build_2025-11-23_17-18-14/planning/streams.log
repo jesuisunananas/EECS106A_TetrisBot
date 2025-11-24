@@ -1,0 +1,24 @@
+[1.317s] Invoking command in '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/planning': PYTHONPATH=/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/planning build --build-base /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build install --record /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/install.log --single-version-externally-managed install_data
+[1.543s] running egg_info
+[1.544s] writing ../../build/planning/planning.egg-info/PKG-INFO
+[1.548s] writing dependency_links to ../../build/planning/planning.egg-info/dependency_links.txt
+[1.552s] writing entry points to ../../build/planning/planning.egg-info/entry_points.txt
+[1.555s] writing requirements to ../../build/planning/planning.egg-info/requires.txt
+[1.558s] writing top-level names to ../../build/planning/planning.egg-info/top_level.txt
+[1.565s] reading manifest file '../../build/planning/planning.egg-info/SOURCES.txt'
+[1.567s] writing manifest file '../../build/planning/planning.egg-info/SOURCES.txt'
+[1.571s] running build
+[1.572s] running build_py
+[1.572s] running install
+[1.572s] running install_lib
+[1.578s] running install_data
+[1.578s] running install_egg_info
+[1.580s] removing '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning-0.0.0-py3.10.egg-info' (and everything under it)
+[1.585s] Copying ../../build/planning/planning.egg-info to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages/planning-0.0.0-py3.10.egg-info
+[1.622s] running install_scripts
+[1.641s] Installing ik script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[1.645s] Installing main script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[1.648s] Installing tf script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[1.651s] Installing transform_cube_pose script to /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/planning
+[1.654s] writing list of installed files to '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/install.log'
+[1.707s] Invoked command in '/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/src/planning' returned '0': PYTHONPATH=/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/install/planning/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/planning build --build-base /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/build install --record /home/cc/ee106a/fa25/class/ee106a-ahn/ros_workspaces/proj/EECS106A_TetrisBot/lab7/build/planning/install.log --single-version-externally-managed install_data
