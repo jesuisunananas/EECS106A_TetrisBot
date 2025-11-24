@@ -8,6 +8,7 @@ setup.py
 ../../build/perception/perception.egg-info/requires.txt
 ../../build/perception/perception.egg-info/top_level.txt
 ../../build/perception/perception.egg-info/zip-safe
+launch/perception.launch.py
 perception/__init__.py
 perception/ar_tag_identify.py
 perception/interactive_plane.py
