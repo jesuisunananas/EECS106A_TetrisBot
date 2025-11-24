@@ -122,7 +122,7 @@ def footprint_overlap(b1: Box, b2: Box, b: Bin):
 
 # check if b2 is stacked on b1
 def vertical_stacking(b1: Box, b2: Box, b: Bin):
-    z_top = b1.height + b[b1.name]["z"]
+    z_top = b1.height + b.boxes[b1.name]["z"]
     z_base = b.boxes[b2.name]["z"]
     return z_base >= z_top
 
@@ -146,7 +146,7 @@ def compute_fragility_penalty(b: Bin, scaling_factor=0.2):
         load_on_box = 0
         capacity = alpha * j["box"].fragility * float(j["box"].volume)
         for _, k in b.boxes.items():
-            if not vertical_stacking(j["box"], k["box"]):
+            if not vertical_stacking(j["box"], k["box"], b):
                 continue
             load_on_box += weight_on_box(j["box"], k["box"], b)
         penalty += scaling_factor * float(max(0.0, (load_on_box - capacity)))

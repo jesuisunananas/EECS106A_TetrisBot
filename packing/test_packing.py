@@ -1,7 +1,7 @@
-import numpy as np
-import pytest
+import numpy as np # type: ignore
+import pytest # type: ignore
 from box import Box, Bin
-from packing import place_box_with_rule
+from heuristics import place_box_with_rule
 
 
 class TestPlacementSequence:
