@@ -14,6 +14,7 @@ planning/ik.py
 planning/main.py
 planning/moveit_collisions.py
 planning/static_tf_transform.py
+planning/test_planning.py
 planning/transform_cube_pose.py
 resource/planning
 test/test_copyright.py

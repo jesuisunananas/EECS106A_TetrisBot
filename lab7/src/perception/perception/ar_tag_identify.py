@@ -99,26 +99,36 @@ class TagIdentification(Node):
                 if item and id in BOX_MARKER_IDS:
                     try:
                         tf = self.tf_buffer.lookup_transform(f'ar_marker_{id}', source_frame, rclpy.time.Time())
+                        # self.get_logger().info("doing pose")
+                        new_found_boxes[item] = tf
                     except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
 
-                    self.get_logger().info("doing pose")
-                    new_found_boxes[item] = tf
+                    # self.get_logger().info("doing pose")
+                    # new_found_boxes[item] = tf
                     # new_found_boxes[item] = do_transform_pose(msg.poses[i], tf)
                     # self.add_collision_object(msg.poses[i], 'box')
                 elif item and id in BIN_MARKER_IDS:
                     try:
                         tf = self.tf_buffer.lookup_transform(f'ar_marker_{id}', source_frame, rclpy.time.Time())
+                        # self.get_logger().info("doing pose")
+                        new_found_bins[item] = tf
                     except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
 
-                    self.get_logger().info("doing pose")
-                    new_found_bins[item] = tf
+                    # self.get_logger().info("doing pose")
+                    # new_found_bins[item] = tf
                     # new_found_bins[item] = do_transform_pose(msg.poses[i], tf)
                     # self.add_collision_object(msg.poses[i], 'bin')
                 else:
-                    self.get_logger().info("doing pose")
-                    new_unknown_items[item] = tf
+                    try:
+                        tf = self.tf_buffer.lookup_transform(f'ar_marker_{id}', source_frame, rclpy.time.Time())
+                        # self.get_logger().info("doing pose")
+                        new_unknown_items[item] = tf
+                    except tf2_ros.TransformException as ex:
+                        self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
+                    # self.get_logger().info("doing pose")
+                    # new_unknown_items[item] = tf
                     # new_unknown_items[item] = do_transform_pose(msg.poses[i], tf)
 
         self.found_bins = new_found_bins
@@ -131,7 +141,7 @@ class TagIdentification(Node):
             self.get_logger().info("------------------------------------------")
             for item in self.found_boxes.keys():
                 self.get_logger().info(f"Item: {item}")
-                # print(self.found_boxes[item])
+                print(self.found_boxes[item])
     
     def add_collision_object(self, pose, obj_type):
         """Helper function that adds collision object to the planning scene."""

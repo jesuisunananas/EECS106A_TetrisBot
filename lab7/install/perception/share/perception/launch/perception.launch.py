@@ -106,7 +106,7 @@ def generate_launch_description():
         realsense_launch,
         aruco_launch,
         static_base_world,
-        # moveit_launch,
+        moveit_launch,
         ar_tag_identification_node,
         shutdown_on_any_exit
     ])
