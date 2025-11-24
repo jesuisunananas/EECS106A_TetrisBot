@@ -79,6 +79,8 @@ def place_box_with_rule(box: Box, b: Bin):
 
 def compute_compactness(b: Bin):
     max_height = np.max(b.height_map)
+    if max_height == 0.0:
+        return ValueError("max_height has to be greater than 0")
     bounding_volume = max_height * b.length * b.width
     object_volume = 0
     for i in b.boxes.values():
@@ -94,8 +96,7 @@ def compute_pyramid(b: Bin):
         x = entry["x"]
         y = entry["y"]
         mask[y:y + box.width, x:x + box.length] = True
-    for i in b.boxes.values():
-        object_volume += i["box"].volume
+        object_volume += entry["box"].volume
     region_volume = float(b.height_map[mask].sum())
     if region_volume == 0:
         return 0.0
@@ -109,9 +110,49 @@ def compute_access_cost(b: Bin):
         z_i = b.height - (curr_box["box"].height + curr_box["z"])
         a_c += z_i * p_i
     return a_c
+    
+def footprint_overlap(b1: Box, b2: Box, b: Bin):
+    x_j = b.boxes[b1.name]["x"]
+    y_j = b.boxes[b1.name]["y"]
+    x_k = b.boxes[b2.name]["x"]
+    y_k = b.boxes[b2.name]["y"] 
+    x_overlap = max(0, min(x_j + b1.length, x_k + b2.length) - max(x_j, x_k))
+    y_overlap = max(0, min(y_j + b1.width, y_k + b2.width) - max(y_j, y_k))
+    return x_overlap * y_overlap
 
-def compute_fragility_penalty(b: Bin):
-    pass
+# check if b2 is stacked on b1
+def vertical_stacking(b1: Box, b2: Box, b: Bin):
+    z_top = b1.height + b[b1.name]["z"]
+    z_base = b.boxes[b2.name]["z"]
+    return z_base >= z_top
+
+def weight_on_box(lower: Box, upper: Box, b: Bin):
+    #densityconstant of object p*volume = weight can experiment with p
+    p = 1.0
+    area_overlap = footprint_overlap(lower, upper, b)
+    if area_overlap == 0.0:
+        return 0.0
+    area_upper = upper.length * upper.width
+    fraction_on_lower = area_overlap / area_upper
+    return fraction_on_lower * p * upper.volume
+
+def compute_fragility_penalty(b: Bin, scaling_factor=0.2):
+    # we will have to dynamically change scaling factor
+    #load_on_box = {}
+    penalty = 0.0
+    # alpha determines how much weight box can tolerate before it is overloaded
+    alpha = 1.0
+    for _, j in b.boxes.items():
+        load_on_box = 0
+        capacity = alpha * j["box"].fragility * float(j["box"].volume)
+        for _, k in b.boxes.items():
+            if not vertical_stacking(j["box"], k["box"]):
+                continue
+            load_on_box += weight_on_box(j["box"], k["box"], b)
+        penalty += scaling_factor * float(max(0.0, (load_on_box - capacity)))
+    return penalty
+        
+
 
 b = Box(1, 1, 5)
 b1 = Box(1,2,2)
