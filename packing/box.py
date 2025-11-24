@@ -13,6 +13,9 @@ class Box:
         # pose and ID from Kevin
         self.id = id
         self.pose = pose
+    
+    def __hash__(self):
+      return hash((self.id, self.name))
 
     """Kevin: these are for updating the poses for the box"""
     @property
@@ -22,17 +25,6 @@ class Box:
     @pose.setter
     def pose(self, pose: PoseStamped):
         self._pose = pose
-        
-    """Kevin: these are for updating the ids for the box"""
-    @property
-    def id(self):
-        return self._id
-
-    @id.setter
-    def id(self, id):
-        if id < 0:
-            raise ValueError("I don't think id's can be negative")
-        self._id = id
         
     @property
     def length(self):
@@ -68,7 +60,8 @@ class Box:
         pass
 
 class Bin:
-    def __init__(self, length, width, height, id, pose: PoseStamped = None):
+    def __init__(self, name, length, width, height, id, pose: PoseStamped = None):
+        self.name = name
         self.length = length
         self.width = width
         self.height = height
@@ -80,7 +73,10 @@ class Bin:
         self.id = id
         self.pose = pose
     
-    """Kevin: these are for updating the poses for the box"""
+    def __hash__(self):
+      return hash((self.id, self.name))
+    
+    """Kevin: these are for updating the poses for the bin"""
     @property
     def pose(self):
         return self._pose
@@ -88,17 +84,6 @@ class Bin:
     @pose.setter
     def pose(self, pose: PoseStamped):
         self._pose = pose
-        
-    """Kevin: these are for updating the ids for the box"""
-    @property
-    def id(self):
-        return self._id
-
-    @id.setter
-    def id(self, id):
-        if id < 0:
-            raise ValueError("I don't think id's can be negative")
-        self._id = id
     
     @property
     def length(self):
