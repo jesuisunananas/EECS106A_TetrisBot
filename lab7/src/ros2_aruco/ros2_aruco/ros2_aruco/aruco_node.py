@@ -45,7 +45,7 @@ from ros2_aruco_interfaces.msg import ArucoMarkers
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from tf2_ros import TransformBroadcaster
 
-from ros2_aruco.aruco_constants import BOX_MARKER_SIZE, BIN_MARKER_SIZE, DEFAULT_MARKER_SIZE, BOX_MARKER_IDS, BIN_MARKER_IDS 
+from ros2_aruco.aruco_constants import BOXES, BINS, BOX_MARKER_SIZE, BIN_MARKER_SIZE, DEFAULT_MARKER_SIZE, BOX_MARKER_IDS, BIN_MARKER_IDS 
 # I've included some macros here ^
 
 class ArucoNode(rclpy.node.Node):
@@ -262,6 +262,13 @@ class ArucoNode(rclpy.node.Node):
                 pose_array.poses.append(pose)
                 markers.poses.append(pose)
                 markers.marker_ids.append(marker_id[0])
+                
+                if marker_id in BOXES.keys():
+                    BOXES.get(marker_id).pose = pose
+                elif marker_id in BINS.keys():
+                    BINS.get(marker_id).pose = pose
+                else:
+                    self.get_logger().warn(f"I don't think id: {marker_id} is a box nor a bin")
 
             self.poses_pub.publish(pose_array)
             self.markers_pub.publish(markers)
