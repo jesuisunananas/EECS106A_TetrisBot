@@ -16,7 +16,7 @@ BOXES = {
 }
 
 BINS = {
-    6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
+    # 6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
     7: Bin(name='box', length=10.0, width=10.0, height=1.0, id=7),
 }
 
@@ -25,9 +25,11 @@ BIN_MARKER_IDS = BINS.keys()
 
 # Consolidated readable descriptions for all markers. Import this from
 # other packages to get a human-friendly name for each marker id.
-BOX_ID_DESCRIPTIONS = {box.id: box.name for box in BOXES.values()}
+BOX_ID_DESCRIPTIONS = {box.id: box.name for box in BOXES.values()} # id: name
 BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
 MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
+
+MARKER_ID = {**BOXES, **BINS}
 
 # Marker sizes in meters
 BOX_MARKER_SIZE = 0.15

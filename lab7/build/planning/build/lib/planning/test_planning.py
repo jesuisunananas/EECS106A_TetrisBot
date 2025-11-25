@@ -30,7 +30,7 @@ class Planner(Node):
 
 
         coll_obj = CollisionObject()
-        coll_obj.header.frame_id = 'world'
+        coll_obj.header.frame_id = 'base_link'
         coll_obj.id = '67'
         coll_obj.primitives = [box]
         coll_obj.primitive_poses = [box_pose]

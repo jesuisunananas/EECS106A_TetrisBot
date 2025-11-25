@@ -10,17 +10,19 @@ from ros2_aruco.aruco_constants import (
     BIN_MARKER_SIZE,
     DEFAULT_MARKER_SIZE,
     MARKER_ID_DESCRIPTIONS,
+    MARKER_ID,
 )
 # I've included all the marker IDs here! 
 # They are in the ros2_aruco package
 
-# from moveit.planning import MoveItPy
-
-# from geometry_msgs.msg import Pose
-# from moveit_msgs.msg import CollisionObject
-# from shape_msgs.msg import SolidPrimitive
+from moveit_msgs.srv import ApplyPlanningScene
+from moveit_msgs.msg import PlanningScene, CollisionObject
+from shape_msgs.msg import SolidPrimitive
+from geometry_msgs.msg import Pose
 
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
+
+from packing.box import Box, Bin 
 
 
 class TagIdentification(Node):
@@ -67,10 +69,9 @@ class TagIdentification(Node):
         self.timer = self.create_timer(1, self.print_markers)
 
         # Moveit planning scene
-        # self.panda = MoveItPy(node_name="moveit_py_planning_scene")
-        # self.panda_arm = panda.get_planning_component("panda_arm")
-        # self.planning_scene_monitor = panda.get_planning_scene_monitor()
-        # logger.info("MoveItPy instance created")
+        self.scene_cli = self.create_client(ApplyPlanningScene, '/apply_planning_scene')
+        while not self.scene_cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info("Waiting for /apply_planning_scene")
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
@@ -80,12 +81,6 @@ class TagIdentification(Node):
         source_frame = "camera_depth_optical_frame" 
         target_frame = "base_link"
 
-        # try:
-        #     tf = self.tf_buffer.lookup_transform(target_frame, source_frame, rclpy.time.Time())
-        # except tf2_ros.TransformException as ex:
-        #     self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
-        #     return None
-
         marker_ids = msg.marker_ids.tolist()
         new_found_boxes = {}
         new_found_bins = {}
@@ -93,14 +88,17 @@ class TagIdentification(Node):
         # self.clear_planning_scene()
         for i, id in enumerate(marker_ids):
             if id != self.base_marker:
-                item = TagIdentification.object_dict.get(id)
+                # item = TagIdentification.object_dict.get(id)
+                item = MARKER_ID.get(id)
 
                 # organise the item based on its id
-                if item and id in BOX_MARKER_IDS:
+                if isinstance(item, Box):
                     try:
                         tf = self.tf_buffer.lookup_transform(f'ar_marker_{id}', source_frame, rclpy.time.Time())
                         # self.get_logger().info("doing pose")
-                        new_found_boxes[item] = tf
+                        item.pose = tf
+                        new_found_boxes[item.name] = item
+                        self.add_collision_object(item)
                     except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
 
@@ -108,11 +106,13 @@ class TagIdentification(Node):
                     # new_found_boxes[item] = tf
                     # new_found_boxes[item] = do_transform_pose(msg.poses[i], tf)
                     # self.add_collision_object(msg.poses[i], 'box')
-                elif item and id in BIN_MARKER_IDS:
+                elif isinstance(item, Bin):
                     try:
                         tf = self.tf_buffer.lookup_transform(f'ar_marker_{id}', source_frame, rclpy.time.Time())
                         # self.get_logger().info("doing pose")
-                        new_found_bins[item] = tf
+                        item.pose = tf
+                        new_found_bins[item.name] = item
+                        self.add_collision_object(item)
                     except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
 
@@ -124,7 +124,7 @@ class TagIdentification(Node):
                     try:
                         tf = self.tf_buffer.lookup_transform(f'ar_marker_{id}', source_frame, rclpy.time.Time())
                         # self.get_logger().info("doing pose")
-                        new_unknown_items[item] = tf
+                        new_unknown_items[f'unknown_item_{i}'] = tf
                     except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
                     # self.get_logger().info("doing pose")
@@ -141,35 +141,52 @@ class TagIdentification(Node):
             self.get_logger().info("------------------------------------------")
             for item in self.found_boxes.keys():
                 self.get_logger().info(f"Item: {item}")
-                print(self.found_boxes[item])
+                # print(self.found_boxes[item])
     
-    def add_collision_object(self, pose, obj_type):
-        """Helper function that adds collision object to the planning scene."""
-        object_dimensions = [
-            (0.1, 0.4, 0.1),
-            (0.2, 0.4, 0.2),
-        ]
+    def add_collision_object(self, item):
+        box = SolidPrimitive()
+        box.type = SolidPrimitive.BOX
+        box.dimensions = [item.length, item.width, item.height]
+        # box.dimensions = [3.0,3.0,3.0]
+        # box_pose = Pose()
+        # box_pose.position.x = 1.0
+        # box_pose.position.y = 1.0
+        # box_pose.position.z = 1.0
+        # box_pose.orientation.w = 1.0
 
-        with self.planning_scene_monitor.read_write() as scene:
-            collision_object = CollisionObject()
-            collision_object.header.frame_id = "base_link"
-            collision_object.id = "boxes"
 
-            box = SolidPrimitive()
-            box.type = SolidPrimitive.BOX
-            box.dimensions = object_dimensions[0] if obj_type == 'box' else object_dimensions[1]
+        coll_obj = CollisionObject()
+        coll_obj.header.frame_id = 'base_link'
+        coll_obj.id = item.id
+        coll_obj.primitives = [box]
+        coll_obj.primitive_poses = [item.pose]
+        coll_obj.operation = CollisionObject.ADD
 
-            collision_object.primitives.append(box)
-            collision_object.primitive_poses.append(pose)
-            collision_object.operation = CollisionObject.ADD
+        scene_msg = PlanningScene()
+        scene_msg.world.collision_objects.append(coll_obj)
+        scene_msg.is_diff = True
 
-            scene.apply_collision_object(collision_object)
-            scene.current_state.update()  # Important to ensure the scene is updated
+        req = ApplyPlanningScene.Request()
+        req.scene = scene_msg
 
-    def clear_planning_scene(self):
-        with self.planning_scene_monitor.read_write() as scene:
-            scene.remove_all_collision_objects()
-            scene.current_state.update()
+        self.get_logger().info('Calling service')
+        future = self.scene_cli.call_async(req)
+        future.add_done_callback(self.collision_response_callback)
+
+    def collision_response_callback(self, future):
+        try:
+            response = future.result()
+            if response.success:
+                self.get_logger().info('Success')
+            else:
+                self.get_logger().info('Fail add')
+        except Exception as e:
+            self.get_logger().info(f'Fail: {e}')
+
+    # def clear_planning_scene(self):
+    #     with self.planning_scene_monitor.read_write() as scene:
+    #         scene.remove_all_collision_objects()
+    #         scene.current_state.update()
 
 
 def main(args=None):
