@@ -1,5 +1,5 @@
 *.pyc
 __pycache__/
-lab7/build/
-lab7/install/
+/lab7/build
+/lab7/install
 .pytest_cache
