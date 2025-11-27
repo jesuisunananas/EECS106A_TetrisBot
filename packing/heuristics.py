@@ -80,7 +80,7 @@ def place_box_with_rule(box: Box, b: Bin):
 def compute_compactness(b: Bin):
     max_height = np.max(b.height_map)
     if max_height == 0.0:
-        return ValueError("max_height has to be greater than 0")
+        return 0.0
     bounding_volume = max_height * b.length * b.width
     object_volume = 0
     for i in b.boxes.values():

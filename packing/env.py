@@ -26,8 +26,8 @@ class PackingEnv:
                 b.length, b.width, b.height,
                 b.volume,
                 b.fragility,
-                b.length / 4,
-                b.width  / 4
+                b.length / self.bin_dims[0],
+                b.width  / self.bin_dims[1]
             ])
         
         X = torch.tensor(X, dtype=torch.float32).unsqueeze(0)
@@ -55,5 +55,5 @@ class PackingEnv:
         F = heuristics.compute_fragility_penalty(b)
 
         # Combine your metrics
-        reward = C + P - 0.1*A
+        reward = C + P - 0.05*A - 0.05*F
         return reward

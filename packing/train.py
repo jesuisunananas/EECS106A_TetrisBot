@@ -1,51 +1,47 @@
-import torch # type: ignore
+# train.py
+import torch
+import torch.nn.functional as F  
 
-def train_step(policy, critic, env, optimizer_policy, optimizer_critic):
+def train_step(policy, critic, env,
+               optimizer_policy, optimizer_critic,
+               entropy_coeff=0.01):
+    """
+    Single actor-critic update with batch size 1.
+    """
 
-    X = env.reset()                     # (1, N, F)
-    selections = policy(X, training=True)
+    # ----- 1. Sample an episode -----
+    X = env.reset()  # (1, N, F)
 
-    # selections is list length N, each tensor shape (1,)
-    indices = torch.stack(selections, dim=1)  # (1, N)
+    indices, log_probs, entropies = policy(
+        X,
+        training=True,
+        return_log_probs=True,
+        return_entropy=True,
+    )  # indices, log_probs, entropies: (1, N, *)
 
-    # Compute log-probs
-    log_probs = []
-    B, N, H = 1, len(selections), None
+    ordering = indices[0]           # (N,)
+    reward_scalar = env.step(ordering)
+    reward = torch.tensor([reward_scalar], dtype=torch.float32, device=X.device)  # (1,)
 
-    # Rerun the decoder manually to record log_probs
-    enc = policy.encoder(X)
-    mask = torch.zeros(1, env.n_objects).bool()
-    prev = torch.zeros(1, enc.size(-1))
-    h = torch.zeros(1, enc.size(-1))
-    
-    for t, idx in enumerate(selections):
-        h = policy.decoder.gru(prev, h)
-        W1e = policy.decoder.W1(enc)
-        W2h = policy.decoder.W2(h).unsqueeze(1)
-        u = policy.decoder.v(torch.tanh(W1e + W2h)).squeeze(-1)
-        u.masked_fill_(mask, -1e9)
-        probs = F.softmax(u, dim=-1)
-        
-        log_probs.append(torch.log(probs[0, idx]))
-        
-        mask[0, idx] = True
-        prev = enc[0, idx]
+    # ----- 2. Critic -----
+    value = critic(X)  # (1,)
+    advantage = reward - value  # (1,)
 
-    log_probs = torch.stack(log_probs).sum()
+    # ----- 3. Losses -----
 
-    # Compute reward
-    reward = env.step(indices[0])
+    # Actor: - E[ advantage * sum_t log π(a_t | X) ]
+    log_prob_sum = log_probs.sum(dim=1)  # (1,)
+    actor_loss = -(advantage.detach() * log_prob_sum).mean()
 
-    # Critic value
-    value = critic(X)  # scalar
+    # Entropy regularization (encourage exploration)
+    if entropies is not None and entropy_coeff is not None and entropy_coeff > 0.0:
+        entropy_term = entropies.sum(dim=1).mean()
+        actor_loss -= entropy_coeff * entropy_term
 
-    advantage = reward - value
+    # Critic: MSE between reward and value
+    critic_loss = advantage.pow(2).mean()
 
-    # Losses
-    actor_loss = - advantage * log_probs
-    critic_loss = advantage.pow(2)
-
-    # Update
+    # ----- 4. Optimize -----
     optimizer_policy.zero_grad()
     actor_loss.backward()
     optimizer_policy.step()
@@ -54,4 +50,4 @@ def train_step(policy, critic, env, optimizer_policy, optimizer_critic):
     critic_loss.backward()
     optimizer_critic.step()
 
-    return reward, actor_loss.item(), critic_loss.item()
+    return reward_scalar, actor_loss.item(), critic_loss.item()
