@@ -7,6 +7,9 @@
   <maintainer email="danielmunicio360@gmail.com">ee106a-tah</maintainer>
   <license>TODO: License declaration</license>
 
+  <!-- for accessing constants: -->
+  <depend>shared_things</depend> 
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

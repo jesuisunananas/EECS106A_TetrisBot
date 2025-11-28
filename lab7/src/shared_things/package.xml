@@ -1,15 +1,16 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>planning</name>
+  <name>shared_things</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="danielmunicio360@gmail.com">ee106a-tah</maintainer>
+  <maintainer email="yingk@berkeley.edu">ee106a-acy</maintainer>
   <license>TODO: License declaration</license>
 
-  <!-- for accessing constants: -->
-  <depend>shared_things</depend> 
-  
+  <!-- idk what this is for -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
