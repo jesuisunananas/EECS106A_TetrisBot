@@ -4,6 +4,8 @@ Marker IDs are configured via launch files.
 """
 
 from shared_things.packing import Box, Bin
+import cv2
+import numpy as np
 
 # Marker IDs (defaults, can be overridden via launch file)
 BOXES = {
@@ -17,7 +19,7 @@ BOXES = {
 
 BINS = {
     # 6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
-    7: Bin(name='box', length=10.0, width=10.0, height=1.0, id=7),
+    7: Bin(name='box', length=10, width=10, height=1, id=7),
 }
 
 BOX_MARKER_IDS = BOXES.keys()
@@ -59,3 +61,28 @@ def get_marker_size(marker_id):
         return BIN_MARKER_SIZE
     else:
         return DEFAULT_MARKER_SIZE
+
+# redefining estimatePoseSingleMarkers because CV2 is stupid and removed it for 4.7.0 apparently >>::((((
+def custom_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
+    '''
+    This will estimate the rvec and tvec for each of the marker corners detected by:
+       corners, ids, rejectedImgPoints = detector.detectMarkers(image)
+    corners - is an array of detected corners for each detected marker in the image
+    marker_size - is the size of the detected markers
+    mtx - is the camera matrix
+    distortion - is the camera distortion matrix
+    RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
+    '''
+    marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
+                              [marker_size / 2, marker_size / 2, 0],
+                              [marker_size / 2, -marker_size / 2, 0],
+                              [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
+    trash = []
+    rvecs = []
+    tvecs = []
+    for c in corners:
+        nada, R, t = cv2.solvePnP(marker_points, c, mtx, distortion, False, cv2.SOLVEPNP_IPPE_SQUARE)
+        rvecs.append(R)
+        tvecs.append(t)
+        trash.append(nada)
+    return np.array([rvecs]), np.array([tvecs]), trash

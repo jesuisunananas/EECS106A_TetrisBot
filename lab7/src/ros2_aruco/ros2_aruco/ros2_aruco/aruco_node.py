@@ -44,8 +44,9 @@ from geometry_msgs.msg import PoseArray, Pose, TransformStamped
 from ros2_aruco_interfaces.msg import ArucoMarkers
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from tf2_ros import TransformBroadcaster
+from pkg_resources import parse_version # to handle different CV2 versions :(
 
-from lab7.src.shared_things.shared_things.aruco_constants import (
+from shared_things.aruco_constants import (
     BOXES, 
     BINS, 
     BOX_MARKER_SIZE, 
@@ -54,7 +55,8 @@ from lab7.src.shared_things.shared_things.aruco_constants import (
     BOX_MARKER_IDS, 
     BIN_MARKER_IDS,
     MARKER_OBJECTS,
-    get_marker_size
+    get_marker_size,
+    custom_estimatePoseSingleMarkers
 )
 # I've included some macros here ^
 
@@ -167,10 +169,18 @@ class ArucoNode(rclpy.node.Node):
         self.intrinsic_mat = None
         self.distortion = None
 
-        self.aruco_dictionary = cv2.aruco.Dictionary_get(dictionary_id)
-        self.aruco_parameters = cv2.aruco.DetectorParameters_create()
+        #------------------------------CV2-Version-Patch-from-Kevin----------------------------------
+        if parse_version(cv2.__version__) >= parse_version("4.7.0"):
+            # cv2 version is newer:
+            self.aruco_dictionary = cv2.aruco.getPredefinedDictionary(dictionary_id)
+            self.aruco_parameters = cv2.aruco.DetectorParameters()
+            self.detector = cv2.aruco.ArucoDetector(self.aruco_dictionary, self.aruco_parameters)
+        else:
+            self.aruco_dictionary = cv2.aruco.Dictionary_get(dictionary_id)
+            self.aruco_parameters = cv2.aruco.DetectorParameters_create()
 
         self.bridge = CvBridge()
+        #==============================CV2-Version-Patch-from-Kevin==================================
 
     def info_callback(self, info_msg):
         self.info_msg = info_msg
@@ -197,9 +207,16 @@ class ArucoNode(rclpy.node.Node):
         markers.header.stamp = img_msg.header.stamp
         pose_array.header.stamp = img_msg.header.stamp
 
-        corners, marker_ids, rejected = cv2.aruco.detectMarkers(
-            cv_image, self.aruco_dictionary, parameters=self.aruco_parameters
-        )
+        #------------------------------CV2-Version-Patch-from-Kevin----------------------------------
+        if parse_version(cv2.__version__) >= parse_version("4.7.0"):
+            # again, if CV2 version is newer;
+            corners, marker_ids, rejected = self.detector.detectMarkers(cv_image)
+        else:
+            corners, marker_ids, rejected = cv2.aruco.detectMarkers(
+                cv_image, self.aruco_dictionary, parameters=self.aruco_parameters
+            )
+        #------------------------------CV2-Version-Patch-from-Kevin----------------------------------
+
         # for id in marker_ids:
         #     self.get_logger().info(id)
 
@@ -212,7 +229,11 @@ class ArucoNode(rclpy.node.Node):
                 marker_data.append((i, marker_id, marker_size, corners[i]))
             
             # Estimate poses for all markers at once
-            if cv2.__version__ > "4.0.0":
+            if parse_version(cv2.__version__) >= parse_version("4.7.0"):
+                rvecs, tvecs, _ = custom_estimatePoseSingleMarkers(
+                    corners, self.marker_size, self.intrinsic_mat, self.distortion
+                )
+            elif cv2.__version__ > "4.0.0":
                 rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
                     corners, self.marker_size, self.intrinsic_mat, self.distortion
                 )
@@ -224,9 +245,9 @@ class ArucoNode(rclpy.node.Node):
             # Process all markers
             for i, marker_id in enumerate(marker_ids):
                 pose = Pose()
-                pose.position.x = tvecs[i][0][0]
-                pose.position.y = tvecs[i][0][1]
-                pose.position.z = tvecs[i][0][2]
+                pose.position.x = float(tvecs[i][0][0])
+                pose.position.y = float(tvecs[i][0][1])
+                pose.position.z = float(tvecs[i][0][2])
 
                 rot_matrix = np.eye(4)
                 rot_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rvecs[i][0]))[0]
@@ -260,6 +281,9 @@ class ArucoNode(rclpy.node.Node):
                 pose_array.poses.append(pose)
                 markers.poses.append(pose)
                 markers.marker_ids.append(marker_id[0])
+
+            self.get_logger().info(f"markers detected: {markers}")
+            self.get_logger().info(f"marker poses: {pose_array}")
 
             self.poses_pub.publish(pose_array)
             self.markers_pub.publish(markers)
