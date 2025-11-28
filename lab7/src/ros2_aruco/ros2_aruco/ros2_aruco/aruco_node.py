@@ -45,7 +45,17 @@ from ros2_aruco_interfaces.msg import ArucoMarkers
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from tf2_ros import TransformBroadcaster
 
-from ros2_aruco.aruco_constants import BOXES, BINS, BOX_MARKER_SIZE, BIN_MARKER_SIZE, DEFAULT_MARKER_SIZE, BOX_MARKER_IDS, BIN_MARKER_IDS 
+from lab7.src.shared_things.shared_things.aruco_constants import (
+    BOXES, 
+    BINS, 
+    BOX_MARKER_SIZE, 
+    BIN_MARKER_SIZE, 
+    DEFAULT_MARKER_SIZE, 
+    BOX_MARKER_IDS, 
+    BIN_MARKER_IDS,
+    MARKER_OBJECTS,
+    get_marker_size
+)
 # I've included some macros here ^
 
 class ArucoNode(rclpy.node.Node):
@@ -103,18 +113,6 @@ class ArucoNode(rclpy.node.Node):
             self.get_parameter("marker_size").get_parameter_value().double_value
         )
         self.get_logger().info(f"Marker size: {self.marker_size}")
-        
-        # Build marker_size_map from lists
-        box_ids = BOX_MARKER_IDS
-        bin_ids = BIN_MARKER_IDS
-        self.get_logger().info(f"Box marker IDs: {box_ids}")
-        self.get_logger().info(f"Bin marker IDs: {bin_ids}")
-        
-        self.marker_size_map = {
-            **{marker_id: BOX_MARKER_SIZE for marker_id in box_ids},
-            **{marker_id: BIN_MARKER_SIZE for marker_id in bin_ids}
-        }
-        self.get_logger().info(f"Marker size map for marker ids is: {self.marker_size_map}")
 
         dictionary_id_name = (
             self.get_parameter("aruco_dictionary_id").get_parameter_value().string_value
@@ -210,7 +208,7 @@ class ArucoNode(rclpy.node.Node):
             marker_data = []  # List of (index, marker_id, marker_size, corners)
             
             for i, marker_id in enumerate(marker_ids):
-                marker_size = self.marker_size_map.get(marker_id[0], DEFAULT_MARKER_SIZE)
+                marker_size = get_marker_size(marker_id[0]) # <- new function imported from aruco_constants.py!!
                 marker_data.append((i, marker_id, marker_size, corners[i]))
             
             # Estimate poses for all markers at once
@@ -262,13 +260,6 @@ class ArucoNode(rclpy.node.Node):
                 pose_array.poses.append(pose)
                 markers.poses.append(pose)
                 markers.marker_ids.append(marker_id[0])
-                
-                if marker_id in BOXES.keys():
-                    BOXES.get(marker_id).pose = pose
-                elif marker_id in BINS.keys():
-                    BINS.get(marker_id).pose = pose
-                else:
-                    self.get_logger().warn(f"I don't think id: {marker_id} is a box nor a bin")
 
             self.poses_pub.publish(pose_array)
             self.markers_pub.publish(markers)
