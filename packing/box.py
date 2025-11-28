@@ -1,8 +1,7 @@
 import numpy as np
-from geometry_msgs.msg import PoseStamped
 
 class Box:
-    def __init__(self, name, length, width, height, id, pose: PoseStamped = None, fragility=1.0):
+    def __init__(self, name, length, width, height, id, fragility=1.0):
         self.name = name
         self.length = length
         self.width = width
@@ -10,22 +9,15 @@ class Box:
         self.volume = self.length * self.width * self.height
         self.fragility = fragility
         
-        # pose and ID from Kevin
+        # ID from Kevin:
+        # "It seems like dynamic data like poses should be 
+        # published and retrieved from topics, while static 
+        # data like size could be defined in a shared package."
         self.id = id
-        self.pose = pose
     
     def __hash__(self):
       return hash((self.id, self.name))
 
-    """Kevin: these are for updating the poses for the box"""
-    @property
-    def pose(self):
-        return self._pose
-
-    @pose.setter
-    def pose(self, pose: PoseStamped):
-        self._pose = pose
-        
     @property
     def length(self):
         return self._length
@@ -60,7 +52,7 @@ class Box:
         pass
 
 class Bin:
-    def __init__(self, name, length, width, height, id, pose: PoseStamped = None):
+    def __init__(self, name, length, width, height, id):
         self.name = name
         self.length = length
         self.width = width
@@ -71,19 +63,9 @@ class Bin:
         
         # pose from Kevin
         self.id = id
-        self.pose = pose
     
     def __hash__(self):
       return hash((self.id, self.name))
-    
-    """Kevin: these are for updating the poses for the bin"""
-    @property
-    def pose(self):
-        return self._pose
-
-    @pose.setter
-    def pose(self, pose: PoseStamped):
-        self._pose = pose
     
     @property
     def length(self):
