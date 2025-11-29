@@ -2,4 +2,6 @@
 __pycache__/
 /lab7/build
 /lab7/install
+/lab7/log
+/log
 .pytest_cache
