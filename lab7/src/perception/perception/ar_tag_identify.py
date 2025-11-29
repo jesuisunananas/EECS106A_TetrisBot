@@ -3,31 +3,12 @@ from rclpy.node import Node
 import tf2_ros
 from ros2_aruco_interfaces.msg import ArucoMarkers
 # import consolidated marker descriptions as a single source of truth
-from shared_things.shared_things.aruco_constants import (
-    BOX_MARKER_IDS,
-    BIN_MARKER_IDS,
-    BOX_MARKER_SIZE,
-    BIN_MARKER_SIZE,
-    DEFAULT_MARKER_SIZE,
-    MARKER_ID_DESCRIPTIONS,
-    MARKER_OBJECTS,
-    get_object_by_id,
-    is_box,
-    is_bin,
-    get_marker_size
-)
-
-# I've included all the marker IDs here! 
-# They are in the ros2_aruco package
-
+from shared_things import *
 from moveit_msgs.srv import ApplyPlanningScene
 from moveit_msgs.msg import PlanningScene, CollisionObject
 from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
-
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
-
-from packing import Box, Bin 
 
 
 class TagIdentification(Node):
@@ -48,8 +29,9 @@ class TagIdentification(Node):
         ---
     '''
     
+    # NOTE: the object_dict stuff are all moved to shared_things.aruco_constants1
     # Object descriptions moved to ros2_aruco package
-    object_dict = MARKER_ID_DESCRIPTIONS
+    # object_dict = MARKER_ID_DESCRIPTIONS
 
     def __init__(self):
         super().__init__("ar_tag_identification_node")
@@ -94,14 +76,21 @@ class TagIdentification(Node):
         for i, id in enumerate(marker_ids):
             if id != self.base_marker:
                 # item = TagIdentification.object_dict.get(id)
-                item = get_object_by_id(id)
+                item = get_object_by_id(id) # used method defined in shared_things.aruco_constants instead!
 
                 # organise the item based on its id
                 try:
-                    tf = self.tf_buffer.lookup_transform(f'ar_marker_{id}', source_frame, rclpy.time.Time())
-                    item.pose = tf
-                    # self.get_logger().info("doing pose")
-                    self.add_collision_object(item)
+                    # Transforms the marker ID to baselink?
+                    tf = self.tf_buffer.lookup_transform(target_frame, f'ar_marker_{id}', rclpy.time.Time())
+                    pose = Pose()
+                    pose.position.x = tf.transform.translation.x
+                    pose.position.y = tf.transform.translation.y
+                    pose.position.z = tf.transform.translation.z
+                    pose.orientation = tf.transform.rotation
+
+                    # item.pose = tf
+                    self.get_logger().info(f"posing {item.name}")
+                    self.add_collision_object(item, pose)
                 
                 except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
@@ -128,7 +117,7 @@ class TagIdentification(Node):
                 self.get_logger().info(f"Item: {item}")
                 # print(self.found_boxes[item])
     
-    def add_collision_object(self, item):
+    def add_collision_object(self, item, pose):
         box = SolidPrimitive()
         box.type = SolidPrimitive.BOX
 
@@ -147,9 +136,9 @@ class TagIdentification(Node):
 
         coll_obj = CollisionObject()
         coll_obj.header.frame_id = 'base_link'
-        coll_obj.id = item.id
+        coll_obj.id = str(item.id)
         coll_obj.primitives = [box]
-        coll_obj.primitive_poses = [item.pose]
+        coll_obj.primitive_poses = [pose]
         coll_obj.operation = CollisionObject.ADD
 
         scene_msg = PlanningScene()

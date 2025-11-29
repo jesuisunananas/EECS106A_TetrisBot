@@ -46,19 +46,7 @@ from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from tf2_ros import TransformBroadcaster
 from pkg_resources import parse_version # to handle different CV2 versions :(
 
-from shared_things.aruco_constants import (
-    BOXES, 
-    BINS, 
-    BOX_MARKER_SIZE, 
-    BIN_MARKER_SIZE, 
-    DEFAULT_MARKER_SIZE, 
-    BOX_MARKER_IDS, 
-    BIN_MARKER_IDS,
-    MARKER_OBJECTS,
-    get_marker_size,
-    custom_estimatePoseSingleMarkers
-)
-# I've included some macros here ^
+from shared_things import *
 
 class ArucoNode(rclpy.node.Node):
     def __init__(self):
@@ -244,6 +232,7 @@ class ArucoNode(rclpy.node.Node):
             
             # Process all markers
             for i, marker_id in enumerate(marker_ids):
+                # self.get_logger().info(f"marker detected: {marker_id}")
                 pose = Pose()
                 pose.position.x = float(tvecs[i][0][0])
                 pose.position.y = float(tvecs[i][0][1])
@@ -282,8 +271,8 @@ class ArucoNode(rclpy.node.Node):
                 markers.poses.append(pose)
                 markers.marker_ids.append(marker_id[0])
 
-            self.get_logger().info(f"markers detected: {markers}")
-            self.get_logger().info(f"marker poses: {pose_array}")
+            # self.get_logger().info(f"markers detected: {markers}")
+            # self.get_logger().info(f"marker poses: {pose_array}")
 
             self.poses_pub.publish(pose_array)
             self.markers_pub.publish(markers)
