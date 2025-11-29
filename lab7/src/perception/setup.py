@@ -22,7 +22,6 @@ setup(
     entry_points={
         'console_scripts': [
             'process_pointcloud = perception.process_pointcloud:main',
-            'interactive_plane = perception.interactive_plane:main',
             'ar_tag_identify = perception.ar_tag_identify:main',
         ],
     },
