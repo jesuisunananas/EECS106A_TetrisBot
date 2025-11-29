@@ -1,9 +1,0 @@
-[  6%] Built target ros2_aruco_interfaces__cpp
-[ 12%] Built target ros2_aruco_interfaces__rosidl_generator_c
-[ 41%] Built target ros2_aruco_interfaces__rosidl_typesupport_cpp
-[ 41%] Built target ros2_aruco_interfaces__rosidl_typesupport_fastrtps_cpp
-[ 41%] Built target ros2_aruco_interfaces__rosidl_typesupport_introspection_cpp
-[ 54%] Built target ros2_aruco_interfaces__rosidl_typesupport_fastrtps_c
-[ 70%] Built target ament_cmake_python_copy_ros2_aruco_interfaces
-[ 70%] Built target ros2_aruco_interfaces__rosidl_typesupport_c
-[ 70%] Built target ros2_aruco_interfaces__rosidl_typesupport_introspection_c

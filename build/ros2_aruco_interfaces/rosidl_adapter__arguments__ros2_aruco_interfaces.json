@@ -1,0 +1,6 @@
+{
+  "package_name": "ros2_aruco_interfaces",
+  "non_idl_tuples": [
+    "/home/cc/ee106a/fa25/class/ee106a-acy/Desktop/EECS106A_TetrisBot/lab7/src/ros2_aruco/ros2_aruco_interfaces:msg/ArucoMarkers.msg"
+  ]
+}

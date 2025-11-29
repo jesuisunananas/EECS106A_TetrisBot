@@ -10,6 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch', ['launch/perception.launch.py'])
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -21,7 +22,7 @@ setup(
     entry_points={
         'console_scripts': [
             'process_pointcloud = perception.process_pointcloud:main',
-            'interactive_plane = perception.interactive_plane:main',
+            'ar_tag_identify = perception.ar_tag_identify:main',
         ],
     },
 )
