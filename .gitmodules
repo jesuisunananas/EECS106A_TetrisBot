@@ -1,3 +1,0 @@
-[submodule "moveit2"]
-	path = moveit2
-	url = git@github.com:moveit/moveit2.git
