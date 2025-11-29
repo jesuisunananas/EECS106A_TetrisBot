@@ -2,10 +2,11 @@ import numpy as np # pyright: ignore[reportMissingImports]
 import uuid
 
 class BigBox:
-    def __init__(self, length, width, height):
+    def __init__(self, length, width, height, id):
         self.length = length
         self.width = width
         self.height = height
+        self.id = id
 
     @property
     def length(self):
@@ -42,8 +43,8 @@ class BigBox:
         return self.length * self.width * self.height
 
 class Box(BigBox):
-    def __init__(self, length, width, height, fragility=1.0, name=None):
-        super().__init__(length, width, height)
+    def __init__(self, length, width, height, id, fragility=1.0, name=None):
+        super().__init__(length, width, height, id)
         if name is None:
             name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
         self.name = name
@@ -61,8 +62,8 @@ class Box(BigBox):
         self._fragility = f    
 
 class Bin(BigBox):
-    def __init__(self, length, width, height):
-        super().__init__(length, width, height) 
+    def __init__(self, length, width, height, id):
+        super().__init__(length, width, height, id) 
         self.height_map = np.zeros((length, width), dtype=int)
         self.priority_list = []
         self.boxes = {}

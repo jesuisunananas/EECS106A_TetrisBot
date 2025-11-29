@@ -1,22 +1,12 @@
-import numpy as np
+import numpy as np # pyright: ignore[reportMissingImports]
+import uuid
 
-class Box:
-    def __init__(self, name, length, width, height, id, fragility=1.0):
-        self.name = name
+class BigBox:
+    def __init__(self, length, width, height, id):
         self.length = length
         self.width = width
         self.height = height
-        self.volume = self.length * self.width * self.height
-        self.fragility = fragility
-        
-        # ID from Kevin:
-        # "It seems like dynamic data like poses should be 
-        # published and retrieved from topics, while static 
-        # data like size could be defined in a shared package."
         self.id = id
-    
-    def __hash__(self):
-      return hash((self.id, self.name))
 
     @property
     def length(self):
@@ -47,52 +37,33 @@ class Box:
         if h <= 0:
             raise ValueError("height cannot be zero or negative")
         self._height = h
-    
-    def compute_fragility():
-        pass
 
-class Bin:
-    def __init__(self, name, length, width, height, id):
+    @property
+    def volume(self):
+        return self.length * self.width * self.height
+
+class Box(BigBox):
+    def __init__(self, length, width, height, id, fragility=1.0, name=None):
+        super().__init__(length, width, height, id)
+        if name is None:
+            name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
         self.name = name
-        self.length = length
-        self.width = width
-        self.height = height
+        # fragility is a distribution between 0 to 1, 1 being not fragile
+        self.fragility = fragility
+
+    @property
+    def fragility(self):
+        return self._fragility
+    
+    @fragility.setter
+    def fragility(self, f):
+        if f > 1 or f < 0:
+            raise ValueError("fragility score must be between 0 and 1 inclusive")
+        self._fragility = f    
+
+class Bin(BigBox):
+    def __init__(self, length, width, height, id):
+        super().__init__(length, width, height, id) 
         self.height_map = np.zeros((length, width), dtype=int)
         self.priority_list = []
         self.boxes = {}
-        
-        # pose from Kevin
-        self.id = id
-    
-    def __hash__(self):
-      return hash((self.id, self.name))
-    
-    @property
-    def length(self):
-        return self._length
-
-    @length.setter
-    def length(self, l):
-        if l <= 0:
-            raise ValueError("length cannot be zero or negative")
-        self._length = l
-    
-    @property
-    def width(self):
-        return self._width
-
-    @width.setter
-    def width(self, w):
-        if w <= 0:
-            raise ValueError("width cannot be zero or negative")
-        self._width = w
-
-    @property
-    def height(self):
-        return self._height
-
-    @height.setter
-    def height(self, h):
-        if h <= 0:
-            raise ValueError("height cannot be zero or negative")
-        self._height = h
