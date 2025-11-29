@@ -103,13 +103,20 @@ def compute_pyramid(b: Bin):
     return object_volume / region_volume
 
 def compute_access_cost(b: Bin):
+    if not b.priority_list:
+        return 0.0
+    N = len(b.priority_list)
+    H = float(b.height)
     a_c = 0
     for i, box in enumerate(b.priority_list):
         curr_box = b.boxes[box]
-        p_i = len(b.priority_list) - i
-        z_i = b.height - (curr_box["box"].height + curr_box["z"])
-        a_c += z_i * p_i
-    return a_c
+        p_i = N - i
+        z_i = H - (curr_box["box"].height + curr_box["z"])
+        z_norm = max(0.0, min(1.0, z_i / H))
+        fragility = float(curr_box["box"].fragility)
+        frag_weight = 1.0 #+ 2.0 * (fragility - 1.0)
+        a_c += frag_weight * z_norm * p_i
+    return a_c / N
     
 def footprint_overlap(b1: Box, b2: Box, b: Bin):
     x_j = b.boxes[b1.name]["x"]
@@ -136,21 +143,62 @@ def weight_on_box(lower: Box, upper: Box, b: Bin):
     fraction_on_lower = area_overlap / area_upper
     return fraction_on_lower * p * upper.volume
 
-def compute_fragility_penalty(b: Bin, scaling_factor=0.2):
-    # we will have to dynamically change scaling factor
-    #load_on_box = {}
+
+def compute_fragility_penalty(b: Bin,
+                              base_scaling,
+                              heavy_factor,
+                              fragile_quantile,
+                              alpha) -> float:
+    """
+    Fragility penalty:
+      - For each box j, compute load_on_box from boxes stacked above.
+      - Define "very fragile" as having fragility <= quantile of all fragilities.
+      - For very fragile boxes, apply a much larger penalty if something sits on top.
+    """
+
+    if not b.boxes:
+        return 0.0
+
+    # --- 1. Collect fragilities and compute "very fragile" threshold ---
+    frag_list = np.array([entry["box"].fragility for entry in b.boxes.values()], dtype=float)
+    # e.g. bottom 25% are "very fragile"
+    very_fragile_thresh = np.quantile(frag_list, fragile_quantile)
+
     penalty = 0.0
-    # alpha determines how much weight box can tolerate before it is overloaded
-    alpha = 1.0
-    for _, j in b.boxes.items():
-        load_on_box = 0
-        capacity = alpha * j["box"].fragility * float(j["box"].volume)
-        for _, k in b.boxes.items():
-            if not vertical_stacking(j["box"], k["box"], b):
+
+    # --- 2. Loop over each "lower" box j ---
+    for _, j_entry in b.boxes.items():
+        j_box = j_entry["box"]
+        frag_j = float(j_box.fragility)
+
+        # compute how much weight is on j_box
+        load_on_box = 0.0
+        for _, k_entry in b.boxes.items():
+            k_box = k_entry["box"]
+            if not vertical_stacking(j_box, k_box, b):
                 continue
-            load_on_box += weight_on_box(j["box"], k["box"], b)
-        penalty += scaling_factor * float(max(0.0, (load_on_box - capacity)))
-    return penalty
+            load_on_box += weight_on_box(j_box, k_box, b)
+
+        # "capacity" based on fragility & volume
+        capacity = alpha * frag_j * float(j_box.volume)
+
+        overload = max(0.0, load_on_box - capacity)
+        if overload <= 0.0:
+            # no overload => no penalty for this box
+            continue
+
+        # --- 3. Heavier penalty if j is very fragile compared to others ---
+        if frag_j <= very_fragile_thresh:
+            # Very fragile relative to set: big penalty
+            scale = base_scaling * heavy_factor
+        else:
+            # Normal box
+            scale = base_scaling
+
+        penalty += scale * overload
+
+    return float(penalty)
+
         
 
 
