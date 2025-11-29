@@ -30,7 +30,7 @@ python packing/main.py --mode eval
 
 ## Running ros2_aruco:
 _Note: the install and build folders are git-ignored, so you'll have to do this every time you clone it on a new computer._
-_Runing colon build and source (in the root directory)_
+_Run colon build and source in the root directory_
 ### Step 1: start camera
 ```
 ros2 launch realsense2_camera rs_launch.py pointcloud.enable:=true rgb_camera.color_profile:=1920x1080x30
@@ -62,6 +62,7 @@ ros2 run planning tf
 ```
 ros2 launch perception perception.launch.py
 ```
+
 
 
 
