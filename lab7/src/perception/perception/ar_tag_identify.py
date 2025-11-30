@@ -72,11 +72,17 @@ class TagIdentification(Node):
         new_found_boxes = {}
         new_found_bins = {}
         new_unknown_items = {}
+
+        # List to collect all collision objects for this frame
+        collision_objects_batch = []
+
         # self.clear_planning_scene()
         for i, id in enumerate(marker_ids):
             if id != self.base_marker:
                 # item = TagIdentification.object_dict.get(id)
                 item = get_object_by_id(id) # used method defined in shared_things.aruco_constants instead!
+
+                if item is None: continue
 
                 # organise the item based on its id
                 try:
@@ -90,7 +96,11 @@ class TagIdentification(Node):
 
                     # item.pose = tf
                     self.get_logger().info(f"posing {item.name}")
-                    self.add_collision_object(item, pose)
+                    
+                    # Create the object and add to batch instead of sending immediately
+                    obj = self.create_collision_object(item, pose)
+                    if obj:
+                        collision_objects_batch.append(obj)
                 
                 except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
@@ -104,6 +114,10 @@ class TagIdentification(Node):
                 else:
                     self.get_logger().info(f"item {id} is neither a box nor a bin")
                     new_unknown_items[f'unknown_item_{i}'] = tf
+        
+        # Send all updates in one service call
+        if collision_objects_batch:
+            self.publish_collision_batch(collision_objects_batch)
 
         self.found_bins = new_found_bins
         self.found_boxes = new_found_boxes
@@ -117,7 +131,7 @@ class TagIdentification(Node):
                 self.get_logger().info(f"Item: {item}")
                 # print(self.found_boxes[item])
     
-    def add_collision_object(self, item, pose):
+    def create_collision_object(self, item, pose):
         box = SolidPrimitive()
         box.type = SolidPrimitive.BOX
 
@@ -125,7 +139,7 @@ class TagIdentification(Node):
             box.dimensions = [item.length, item.width, item.height]
         except:
             self.get_logger().warn(f"cannot add collison object! item as no dimension attributes!")
-            return
+            return None
         
         # box.dimensions = [3.0,3.0,3.0]
         # box_pose = Pose()
@@ -140,15 +154,17 @@ class TagIdentification(Node):
         coll_obj.primitives = [box]
         coll_obj.primitive_poses = [pose]
         coll_obj.operation = CollisionObject.ADD
+        return coll_obj
 
+    def publish_collision_batch(self, collision_objects):
         scene_msg = PlanningScene()
-        scene_msg.world.collision_objects.append(coll_obj)
+        scene_msg.world.collision_objects = collision_objects
         scene_msg.is_diff = True
 
         req = ApplyPlanningScene.Request()
         req.scene = scene_msg
 
-        self.get_logger().info('Calling service')
+        self.get_logger().info('Calling service (batch)')
         future = self.scene_cli.call_async(req)
         future.add_done_callback(self.collision_response_callback)
 

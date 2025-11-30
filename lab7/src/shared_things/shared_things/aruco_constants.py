@@ -33,12 +33,21 @@ MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
 
 MARKER_OBJECTS = {**BOXES, **BINS}
 
+# FOR COLLISION OBJECTS:
+COLLIDERS = {
+    50: Box(name='table', length=5.0, width=5.0, height=0.5, id=50),
+    2: Box(name='computers', length=0.5, width=5.0, height=3.0, id=),
+}
+TABLE_IDS = [50, 51, 52, 53]
+
+
 # Marker sizes in meters
 BOX_MARKER_SIZE = 0.15
 BIN_MARKER_SIZE = 0.20
 DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
                            # gonna do this so when id not in marker_size_map, 
                            # it doesnt break.
+                
 
 
 # Utility functions
