@@ -43,10 +43,13 @@ class BigBox:
         return self.length * self.width * self.height
 
 class Box(BigBox):
-    def __init__(self, length, width, height, id=0, fragility=1.0, name=None):
+    def __init__(self, length, width, height, id=-1, fragility=1.0, name=None):
         super().__init__(length, width, height, id)
         if name is None:
-            name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+            if id != -1:
+                name = str(id)
+            else:
+                name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
         self.name = name
         # fragility is a distribution between 0 to 1, 1 being not fragile
         self.fragility = fragility
@@ -62,8 +65,24 @@ class Box(BigBox):
         self._fragility = f    
 
 class Bin(BigBox):
-    def __init__(self, length, width, height, id=0):
+    def __init__(self, length, width, height, id=-1, name=None):
         super().__init__(length, width, height, id) 
         self.height_map = np.zeros((length, width), dtype=int)
         self.priority_list = []
         self.boxes = {}
+        
+        if name is None:
+            if id != -1:
+                name = str(id)
+            else:
+                name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+
+class Collider(BigBox):
+    def __init__(self, length, width, height, name=None):
+        super().__init__(length, width, height, id) 
+        self.height_map = np.zeros((length, width), dtype=int)
+        self.priority_list = []
+        self.boxes = {}
+        
+        if name is None:
+            name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
