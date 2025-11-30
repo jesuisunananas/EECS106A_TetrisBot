@@ -1,3 +1,3 @@
-from .box import Box, Bin
+from .box import Box, Bin, Collider
 
-__all__ = ['Box', 'Bin']
+__all__ = ['Box', 'Bin', 'Collider']
