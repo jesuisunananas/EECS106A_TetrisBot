@@ -35,8 +35,8 @@ MARKER_OBJECTS = {**BOXES, **BINS}
 
 # FOR COLLISION OBJECTS:
 COLLIDERS = {
-    50: Box(name='table', length=5.0, width=5.0, height=0.5, id=50),
-    2: Box(name='computers', length=0.5, width=5.0, height=3.0, id=),
+    50: Collider(name='table', length=5.0, width=5.0, height=0.5),
+    2: Box(name='computers', length=0.5, width=5.0, height=3.0),
 }
 TABLE_IDS = [50, 51, 52, 53]
 
