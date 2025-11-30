@@ -43,7 +43,7 @@ class BigBox:
         return self.length * self.width * self.height
 
 class Box(BigBox):
-    def __init__(self, length, width, height, id, fragility=1.0, name=None):
+    def __init__(self, length, width, height, id=0, fragility=1.0, name=None):
         super().__init__(length, width, height, id)
         if name is None:
             name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
@@ -62,7 +62,7 @@ class Box(BigBox):
         self._fragility = f    
 
 class Bin(BigBox):
-    def __init__(self, length, width, height, id):
+    def __init__(self, length, width, height, id=0):
         super().__init__(length, width, height, id) 
         self.height_map = np.zeros((length, width), dtype=int)
         self.priority_list = []

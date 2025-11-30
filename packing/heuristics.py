@@ -1,7 +1,7 @@
 import numpy as np # pyright: ignore[reportMissingImports]
 from box import Box, Bin
 
-bin = Bin(4,4,5)
+bin = Bin(4,4,5, id=7)
 
 '''
 Bin(2,4,x) height map is initially:
@@ -202,10 +202,10 @@ def compute_fragility_penalty(b: Bin,
         
 
 
-b = Box(1, 1, 5)
-b1 = Box(1,2,2)
-b2 = Box(2,3,1)
-b3 = Box(2,2,2)
+b = Box(1, 1, 5, id=1)
+b1 = Box(1,2,2, id=2)
+b2 = Box(2,3,1, id=3)
+b3 = Box(2,2,2, id=4)
 print("Initial:\n", bin.height_map)
 placement = place_box_with_rule(b, bin)
 print("Placement:", placement)

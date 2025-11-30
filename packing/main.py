@@ -39,13 +39,13 @@ def demo_heuristic():
     Just to sanity-check the heuristic packing logic
     before we even touch RL.
     """
-    b = Bin(4, 4, 5)
+    b = Bin(4, 4, 5, id=7)
 
     # Some fixed boxes to visualize
-    b0 = Box(1, 1, 5, fragility=0.2, name="b0")
-    b1 = Box(1, 2, 2, fragility=0.5, name="b1")
-    b2 = Box(2, 3, 1, fragility=0.8, name="b2")
-    b3 = Box(2, 2, 2, fragility=0.4, name="b3")
+    b0 = Box(1, 1, 5, id=1, fragility=0.2, name="b0")
+    b1 = Box(1, 2, 2, id=2, fragility=0.5, name="b1")
+    b2 = Box(2, 3, 1, id=3, fragility=0.8, name="b2")
+    b3 = Box(2, 2, 2, id=4, fragility=0.4, name="b3")
 
     print("Initial:")
     print(b.height_map)
