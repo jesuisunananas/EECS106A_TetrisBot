@@ -6,69 +6,57 @@ from shared_things import *
 import rclpy
 from tf2_ros import TransformException
 
-import numpy as np
-from geometry_msgs.msg import Pose
-from moveit_msgs.msg import CollisionObject
-from shape_msgs.msg import SolidPrimitive
-
-def place_table(table_poses):
-
+def average_table_pose(table, table_poses):
+    """
+    Calculates the average pose of a table based on a list of detected AR tag poses.
+    """
     
-    # --- Configuration ---
-    TABLE_DIMS = [2.0, 2.0, 0.05] # 2m x 2m x 5cm
-    
-    normals = np.array([])
-    positions = np.array([])
-    
-    for pose in table_poses:
-        rx = pose.orientation.x
-        ry = pose.orientation.y
-        rz = pose.orientation.z
-        x = pose.position.x
-        y = pose.position.y
-        z = pose.position.z
-        np.append(normals, np.array([rx, ry, rz]), axis=0)
-        np.append(positions, np.array([x, y, z]), axis=0)
-        
-    average_normal = np.mean(normals, axis=0)
-    average_pos = np.mean(positions, axis=0)
-    
-    if dist > STABILITY_DIST:
-        # Unstable / Moved: Reset timer and reference
-        state['ref_pos'] = avg_pos
-        state['start_time'] = current_time
+    if not table_poses:
         return None
+
+    # Use lists for collection (faster than np.append in a loop)
+    positions = []
+    quats = []
+
+    for pose in table_poses:
+        # Collect Position
+        positions.append([pose.position.x, pose.position.y, pose.position.z])
+        
+        # Collect Orientation (Quaternion x,y,z,w)
+        # Note: We must handle the sign ambiguity of quaternions (q == -q)
+        # For simple table cases where tags are mostly aligned, 
+        # standard averaging usually works if signs are consistent.
+        q = [pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w]
+        
+        # Ensure quaternion consistency (flip if dot product with first is negative)
+        if quats and np.dot(quats[0], q) < 0:
+            q = [-val for val in q]
+            
+        quats.append(q)
+        
+    # Calculate Averages
+    average_pos = np.mean(positions, axis=0)
+    average_quat = np.mean(quats, axis=0)
+
+    # CRITICAL: Normalize the quaternion!
+    # A quaternion must have length 1 to be valid. Averaging destroys this length.
+    norm = np.linalg.norm(average_quat)
+    if norm == 0:
+        average_quat = np.array([0, 0, 0, 1]) # Fallback to identity
+    else:
+        average_quat = average_quat / norm
     
-    # 6. Check Duration
-    elapsed = (current_time - state['start_time']).nanoseconds / 1e9
-    if elapsed < STABILITY_DUR:
-        return None # Stable, but not long enough yet
-
-    # --- SUCCESS: Create Collision Object ---
-    state['frozen'] = True 
-
     # Calculate Collision Pose
-    # Z is shifted down by half thickness so the top surface aligns with tags
     box_pose = Pose()
-    box_pose.position.x = avg_pos[0]
-    box_pose.position.y = avg_pos[1]
-    box_pose.position.z = avg_pos[2] - (TABLE_DIMS[2] / 2.0) 
-    
-    # Use the orientation of the first tag for alignment
-    # (Averaging quaternions is complex; this is usually sufficient for a flat table)
-    box_pose.orientation = table_poses[0].orientation
+    box_pose.position.x = average_pos[0]
+    box_pose.position.y = average_pos[1]
+    # Z is shifted down by half thickness so the top surface aligns with tags
+    box_pose.position.z = average_pos[2] - (table.height / 2.0) 
 
-    # Create Primitive
-    box = SolidPrimitive()
-    box.type = SolidPrimitive.BOX
-    box.dimensions = TABLE_DIMS
+    # Assign Valid Normalized Orientation
+    box_pose.orientation.x = average_quat[0]
+    box_pose.orientation.y = average_quat[1]
+    box_pose.orientation.z = average_quat[2]
+    box_pose.orientation.w = average_quat[3]
 
-    # Create Object
-    coll_obj = CollisionObject()
-    coll_obj.header.frame_id = target_frame
-    coll_obj.id = "work_table_surface"
-    coll_obj.primitives = [box]
-    coll_obj.primitive_poses = [box_pose]
-    coll_obj.operation = CollisionObject.ADD
-    
-    return coll_obj
+    return box_pose

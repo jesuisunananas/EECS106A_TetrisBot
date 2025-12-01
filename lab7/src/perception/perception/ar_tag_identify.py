@@ -10,6 +10,7 @@ from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
 
+from collision_objects import average_table_pose
 
 class TagIdentification(Node):
     '''

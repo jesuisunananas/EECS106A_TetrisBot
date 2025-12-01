@@ -35,8 +35,8 @@ MARKER_OBJECTS = {**BOXES, **BINS}
 
 # FOR COLLISION OBJECTS:
 COLLIDERS = {
-    50: Collider(name='table', length=5.0, width=5.0, height=0.5),
-    2: Box(name='computers', length=0.5, width=5.0, height=3.0),
+    50: Collider(name='table', length=5.0, width=5.0, height=0.5, id=50),
+    60: Collider(name='computers', length=0.5, width=5.0, height=3.0, id=60),
 }
 TABLE_IDS = [50, 51, 52, 53]
 
@@ -61,6 +61,10 @@ def is_box(marker_id):
 def is_bin(marker_id):
     """is this ID a bin?"""
     return marker_id in BINS
+
+def is_table_collider(marker_id):
+    """is this marker used to define the table?"""
+    return marker_id in COLLIDERS
 
 def get_marker_size(marker_id):
     if marker_id in BOXES:

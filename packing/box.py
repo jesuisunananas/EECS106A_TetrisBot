@@ -83,9 +83,18 @@ class Collider(BigBox):
         self.height_map = np.zeros((length, width), dtype=int)
         self.priority_list = []
         self.boxes = {}
+        self.placed = False
         
         if name is None:
             if id != -1:
                 name = str(id)
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+        
+    @property
+    def placed(self):
+        return self._placed
+    
+    @placed.setter
+    def placed(self, status):
+        self._placed = status
