@@ -49,7 +49,6 @@ DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but
                            # it doesnt break.
                 
 
-
 # Utility functions
 def get_object_by_id(marker_id):
     """get"""

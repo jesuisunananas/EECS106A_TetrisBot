@@ -78,11 +78,14 @@ class Bin(BigBox):
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
 
 class Collider(BigBox):
-    def __init__(self, length, width, height, name=None):
+    def __init__(self, length, width, height, id=-1, name=None):
         super().__init__(length, width, height, id) 
         self.height_map = np.zeros((length, width), dtype=int)
         self.priority_list = []
         self.boxes = {}
         
         if name is None:
-            name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+            if id != -1:
+                name = str(id)
+            else:
+                name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
