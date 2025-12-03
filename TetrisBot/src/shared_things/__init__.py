@@ -19,11 +19,11 @@ from shared_things.aruco_constants import (
 )
 
 from shared_things.packing import (
-    Box, Bin, Collider
+    Box, Bin, Bundle
 )
 
 __all__ = [
-    'Box', 'Bin', 'Collider',
+    'Box', 'Bin', 'Bundle',
     'BOXES',
     'BINS',
     'BOX_MARKER_IDS',
