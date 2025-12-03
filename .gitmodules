@@ -1,0 +1,3 @@
+[submodule "lab7/src/ros2_aruco/aruco-stl"]
+	path = lab7/src/ros2_aruco/aruco-stl
+	url = https://github.com/thomergil/aruco-stl.git
