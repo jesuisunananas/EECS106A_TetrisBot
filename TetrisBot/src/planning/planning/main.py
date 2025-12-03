@@ -179,7 +179,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append('toggle_grip')
         
         # 4) Retreat / Lift
-        target_lift_pose = self.ik_planner.compute_ik(self.joint_state, x_grasp, y_grasp, z_grasp + 0.1, rx, ry, rz)
+        target_lift_pose = self.ik_planner.compute_ik(self.joint_state, x_grasp, y_grasp, z_grasp + 0.2, rx, ry, rz)
         if not target_lift_pose:
             self.get_logger().error(f"IK failed for lift pose")
             return False
