@@ -95,10 +95,11 @@ class TagIdentification(Node):
                     
                     # Check if the ID corresponds to a table, and if the corresponding object is not yet placed
                     if is_table(id):
-                        if item.placed == False:
-                            self.get_logger().info(f"The item {id} forms a table")
-                            table_poses.append(pose)
-                            if table_item is None: table_item = item
+                        # if item.placed == False:
+                        self.get_logger().info(f"The item {id} forms a table")
+                        table_poses.append(pose)
+                        if table_item is None: table_item = item
+                            
                         continue
                     
                     self.get_logger().info(f"posing {item.name}")
@@ -116,7 +117,7 @@ class TagIdentification(Node):
         
         # Placing the table (only if it is not empty):
         if table_poses and table_item:
-            table_item.placed = True
+            table_item.placed = True # uncomment the one in the for loop if you want to lock the table collision object after placement
             self.get_logger().info(f"Placing Table")
             table_pose = average_table_pose(table_poses)
             table_obj = self.create_collision_object(table_item, table_pose)
