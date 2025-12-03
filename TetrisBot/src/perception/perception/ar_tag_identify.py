@@ -8,7 +8,8 @@ from moveit_msgs.srv import ApplyPlanningScene
 from moveit_msgs.msg import PlanningScene, CollisionObject
 from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
-from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
+from scipy.spatial.transform import Rotation as R
+import numpy as np
 
 from table import average_table_pose
 
@@ -85,9 +86,11 @@ class TagIdentification(Node):
                     # Transforms the marker ID to baselink?
                     tf = self.tf_buffer.lookup_transform(target_frame, f'ar_marker_{id}', rclpy.time.Time())
                     pose = Pose()
-                    pose.position.x = tf.transform.translation.x
-                    pose.position.y = tf.transform.translation.y
-                    pose.position.z = tf.transform.translation.z
+                    
+                    offset = self.offset_centre(item, tf) # add offset to the box to adjust for the AR marker placement
+                    pose.position.x = tf.transform.translation.x + offset[0]
+                    pose.position.y = tf.transform.translation.y + offset[1]
+                    pose.position.z = tf.transform.translation.z + offset[2]
                     pose.orientation = tf.transform.rotation
                     
                     # Check if the ID corresponds to a table, and if the corresponding object is not yet placed
@@ -177,6 +180,24 @@ class TagIdentification(Node):
     #         scene.remove_all_collision_objects()
     #         scene.current_state.update()
 
+    def offset_centre(self, item, tf):
+        quat = [
+            tf.transform.rotation.x,
+            tf.transform.rotation.y,
+            tf.transform.rotation.z,
+            tf.transform.rotation.w
+        ]
+        r = R.from_quat(quat)
+        
+        q = np.array(
+            [
+                0.0,
+                0.0,
+                -item.height / 2.0
+            ]
+        )
+        
+        return r.as_matrix() @ q
 
 def main(args=None):
     rclpy.init(args=args)
