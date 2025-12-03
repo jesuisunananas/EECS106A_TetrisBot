@@ -181,23 +181,16 @@ class TagIdentification(Node):
     #         scene.current_state.update()
 
     def offset_centre(self, item, tf):
-        quat = [
+        r = R.from_quat([
             tf.transform.rotation.x,
             tf.transform.rotation.y,
             tf.transform.rotation.z,
             tf.transform.rotation.w
-        ]
-        r = R.from_quat(quat)
+        ])
         
-        q = np.array(
-            [
-                0.0,
-                0.0,
-                -item.height / 2.0
-            ]
-        )
+        local_offset = np.array([0.0, 0.0, -item.height / 2.0])
         
-        return r.as_matrix() @ q
+        return r.apply(local_offset)
 
 def main(args=None):
     rclpy.init(args=args)
