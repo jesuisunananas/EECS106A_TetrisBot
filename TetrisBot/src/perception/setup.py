@@ -21,7 +21,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'process_pointcloud = perception.process_pointcloud:main',
             'ar_tag_identify = perception.ar_tag_identify:main',
         ],
     },
