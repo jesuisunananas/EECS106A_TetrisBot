@@ -13,16 +13,17 @@ from shared_things.aruco_constants import (
     get_object_by_id,
     is_box,
     is_bin,
+    is_table,
     get_marker_size,
     custom_estimatePoseSingleMarkers
 )
 
 from shared_things.packing import (
-    Box, Bin
+    Box, Bin, Collider
 )
 
 __all__ = [
-    'Box', 'Bin',
+    'Box', 'Bin', 'Collider',
     'BOXES',
     'BINS',
     'BOX_MARKER_IDS',
@@ -37,6 +38,7 @@ __all__ = [
     'get_object_by_id',
     'is_box',
     'is_bin',
+    'is_table',
     'get_marker_size',
     'custom_estimatePoseSingleMarkers'
 ]

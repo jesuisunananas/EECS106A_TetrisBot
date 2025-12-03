@@ -97,4 +97,5 @@ class Collider(BigBox):
     
     @placed.setter
     def placed(self, status):
+        print(f"collider {self.name} is placed!")
         self._placed = status

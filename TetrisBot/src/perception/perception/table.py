@@ -38,22 +38,19 @@ def average_table_pose(table, table_poses):
     average_pos = np.mean(positions, axis=0)
     average_quat = np.mean(quats, axis=0)
 
-    # CRITICAL: Normalize the quaternion!
-    # A quaternion must have length 1 to be valid. Averaging destroys this length.
+    # Normalise the quaternion
     norm = np.linalg.norm(average_quat)
     if norm == 0:
         average_quat = np.array([0, 0, 0, 1]) # Fallback to identity
     else:
         average_quat = average_quat / norm
     
-    # Calculate Collision Pose
     box_pose = Pose()
     box_pose.position.x = average_pos[0]
     box_pose.position.y = average_pos[1]
-    # Z is shifted down by half thickness so the top surface aligns with tags
     box_pose.position.z = average_pos[2] - (table.height / 2.0) 
+    # ^ Z is shifted down by half thickness so the top surface aligns with tags
 
-    # Assign Valid Normalized Orientation
     box_pose.orientation.x = average_quat[0]
     box_pose.orientation.y = average_quat[1]
     box_pose.orientation.z = average_quat[2]

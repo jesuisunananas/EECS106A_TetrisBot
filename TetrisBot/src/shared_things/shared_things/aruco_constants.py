@@ -3,7 +3,7 @@ Shared constants for ArUco marker detection and identification.
 Marker IDs are configured via launch files.
 """
 
-from shared_things.packing import Box, Bin
+from shared_things.packing import *
 import cv2
 import numpy as np
 
@@ -29,17 +29,15 @@ BIN_MARKER_IDS = BINS.keys()
 # other packages to get a human-friendly name for each marker id.
 BOX_ID_DESCRIPTIONS = {box.id: box.name for box in BOXES.values()} # id: name
 BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
-MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
-
-MARKER_OBJECTS = {**BOXES, **BINS}
 
 # FOR COLLISION OBJECTS:
-COLLIDERS = {
-    50: Collider(name='table', length=5.0, width=5.0, height=0.5, id=50),
-    60: Collider(name='computers', length=0.5, width=5.0, height=3.0, id=60),
-}
+table = Collider(name='table', length=5.0, width=5.0, height=0.5, id=50)
 TABLE_IDS = [50, 51, 52, 53]
+COLLIDERS = {id: table for id in TABLE_IDS}
 
+# Joint dictionaries: 
+MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
+MARKER_OBJECTS = {**BOXES, **BINS, **COLLIDERS}
 
 # Marker sizes in meters
 BOX_MARKER_SIZE = 0.15
@@ -47,7 +45,7 @@ BIN_MARKER_SIZE = 0.20
 DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
                            # gonna do this so when id not in marker_size_map, 
                            # it doesnt break.
-                
+
 
 # Utility functions
 def get_object_by_id(marker_id):
@@ -62,9 +60,9 @@ def is_bin(marker_id):
     """is this ID a bin?"""
     return marker_id in BINS
 
-def is_table_collider(marker_id):
+def is_table(marker_id):
     """is this marker used to define the table?"""
-    return marker_id in COLLIDERS
+    return marker_id in TABLE_IDS
 
 def get_marker_size(marker_id):
     if marker_id in BOXES:
@@ -73,6 +71,7 @@ def get_marker_size(marker_id):
         return BIN_MARKER_SIZE
     else:
         return DEFAULT_MARKER_SIZE
+    
 def custom_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
     '''
     Simplified version that matches the original function's output format

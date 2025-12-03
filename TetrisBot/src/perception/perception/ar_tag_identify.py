@@ -10,7 +10,7 @@ from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
 
-from collision_objects import average_table_pose
+from table import average_table_pose
 
 class TagIdentification(Node):
     '''
@@ -49,13 +49,6 @@ class TagIdentification(Node):
             10
         )
 
-        self.found_boxes = {}
-        self.found_bins = {}
-        self.unknown_item = {}
-
-        # For testing purposes, not needed for actual functionality
-        self.timer = self.create_timer(1, self.print_markers)
-
         # Moveit planning scene
         self.scene_cli = self.create_client(ApplyPlanningScene, '/apply_planning_scene')
         while not self.scene_cli.wait_for_service(timeout_sec=1.0):
@@ -70,20 +63,22 @@ class TagIdentification(Node):
         target_frame = "base_link"
 
         marker_ids = msg.marker_ids.tolist()
-        new_found_boxes = {}
-        new_found_bins = {}
-        new_unknown_items = {}
-
+        
         # List to collect all collision objects for this frame
         collision_objects_batch = []
+        table_poses = []
+        table_item = None
 
         # self.clear_planning_scene()
-        for i, id in enumerate(marker_ids):
+        for id in marker_ids:
             if id != self.base_marker:
+                    
                 # item = TagIdentification.object_dict.get(id)
                 item = get_object_by_id(id) # used method defined in shared_things.aruco_constants instead!
 
-                if item is None: continue
+                if item is None: 
+                    self.get_logger().info(f"item {id} is unknown to society, skip~")
+                    continue
 
                 # organise the item based on its id
                 try:
@@ -94,8 +89,15 @@ class TagIdentification(Node):
                     pose.position.y = tf.transform.translation.y
                     pose.position.z = tf.transform.translation.z
                     pose.orientation = tf.transform.rotation
-
-                    # item.pose = tf
+                    
+                    # Check if the ID corresponds to a table, and if the corresponding object is not yet placed
+                    if is_table(id):
+                        if item.placed == False:
+                            self.get_logger().info(f"The item {id} forms a table")
+                            table_poses.append(pose)
+                            if table_item is None: table_item = item
+                        continue
+                    
                     self.get_logger().info(f"posing {item.name}")
                     
                     # Create the object and add to batch instead of sending immediately
@@ -105,32 +107,23 @@ class TagIdentification(Node):
                 
                 except tf2_ros.TransformException as ex:
                         self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
-                
-                if is_box(id):
-                    self.get_logger().info(f"item {id} is a box")
-                    new_found_boxes[item.name] = item
-                elif is_bin(id):
-                    self.get_logger().info(f"item {id} is a bin")
-                    new_found_bins[item.name] = item
-                else:
-                    self.get_logger().info(f"item {id} is neither a box nor a bin")
-                    new_unknown_items[f'unknown_item_{i}'] = tf
+            
+                # For testing purposes, not needed for actual functionality
+                self.get_logger().info(f"Item: {item}")
         
-        # Send all updates in one service call
+        # Placing the table (only if it is not empty):
+        if table_poses and table_item:
+            table_item.placed = True
+            self.get_logger().info(f"Placing Table")
+            table_pose = average_table_pose(table_poses)
+            table_obj = self.create_collision_object(table_item, table_pose)
+            if table_obj:
+                collision_objects_batch.append(table_obj)
+        
+        # Send all updates in one service call. 
+        # Apparently this is better for efficiency? hope it doesn't break.
         if collision_objects_batch:
             self.publish_collision_batch(collision_objects_batch)
-
-        self.found_bins = new_found_bins
-        self.found_boxes = new_found_boxes
-        self.unknown_item = new_unknown_items
-    
-    # For testing purposes, not needed for actual functionality
-    def print_markers(self):
-        if self.found_boxes:
-            self.get_logger().info("------------------------------------------")
-            for item in self.found_boxes.keys():
-                self.get_logger().info(f"Item: {item}")
-                # print(self.found_boxes[item])
     
     def create_collision_object(self, item, pose):
         box = SolidPrimitive()

@@ -14,6 +14,7 @@ from .aruco_constants import (
     get_object_by_id,
     is_box,
     is_bin,
+    is_table,
     get_marker_size,
     custom_estimatePoseSingleMarkers
 )
@@ -34,6 +35,7 @@ __all__ = [
     'get_object_by_id',
     'is_box',
     'is_bin',
+    'is_table',
     'get_marker_size',
     'custom_estimatePoseSingleMarkers'
 ]
