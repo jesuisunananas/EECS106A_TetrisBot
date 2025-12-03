@@ -1,4 +1,0 @@
-[console_scripts]
-ar_tag_identify = perception.ar_tag_identify:main
-process_pointcloud = perception.process_pointcloud:main
-
