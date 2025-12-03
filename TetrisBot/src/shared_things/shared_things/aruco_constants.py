@@ -19,7 +19,7 @@ BOXES = {
 
 BINS = {
     # 6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
-    7: Bin(name='bin', length=10, width=10, height=1, id=100),
+    7: Bin(name='bin', length=0.2, width=0.2, height=1, id=100),
 }
 
 BOX_MARKER_IDS = BOXES.keys()
