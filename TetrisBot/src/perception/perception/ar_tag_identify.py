@@ -10,6 +10,7 @@ from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
 from scipy.spatial.transform import Rotation as R
 import numpy as np
+from ros2_aruco_interfaces.msg import ArucoMarkers
 
 from table import average_table_pose
 
@@ -49,6 +50,16 @@ class TagIdentification(Node):
             self.aruco_marker_callback,
             10
         )
+        
+        
+        #===============================================================================================
+        # IDK WHAT I"M DOINGGNGNGNGNGNG KIMBERLY PLZ HELP
+        self.box_poses_pub = self.create_publisher(PoseArray, "box_aruco_poses", 10)
+        self.box_markers_pub = self.create_publisher(ArucoMarkers, "box_aruco_markers", 10)
+        self.bin_poses_pub = self.create_publisher(PoseArray, "bin_aruco_poses", 10)
+        self.bin_markers_pub = self.create_publisher(ArucoMarkers, "bin_aruco_markers", 10)
+        #===============================================================================================
+
 
         # Moveit planning scene
         self.scene_cli = self.create_client(ApplyPlanningScene, '/apply_planning_scene')
