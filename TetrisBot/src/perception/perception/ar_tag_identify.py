@@ -10,7 +10,7 @@ from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose
 from scipy.spatial.transform import Rotation as R
 import numpy as np
-from ros2_aruco_interfaces.msg import ArucoMarkers
+from box_bin_msgs.msg import BoxBin
 
 from table import average_table_pose
 
@@ -54,10 +54,7 @@ class TagIdentification(Node):
         
         #===============================================================================================
         # IDK WHAT I"M DOINGGNGNGNGNGNG KIMBERLY PLZ HELP
-        self.box_poses_pub = self.create_publisher(PoseArray, "box_aruco_poses", 10)
-        self.box_markers_pub = self.create_publisher(ArucoMarkers, "box_aruco_markers", 10)
-        self.bin_poses_pub = self.create_publisher(PoseArray, "bin_aruco_poses", 10)
-        self.bin_markers_pub = self.create_publisher(ArucoMarkers, "bin_aruco_markers", 10)
+        self.box_bin_pub = self.create_publisher(BoxBin, "box_bin", 10)
         #===============================================================================================
 
 
@@ -80,7 +77,13 @@ class TagIdentification(Node):
         collision_objects_batch = []
         table_poses = []
         table_item = None
-
+        
+        # for box_bin publisher:
+        box_ids = []
+        bin_ids = []
+        box_poses = []
+        bin_poses = []
+        
         # self.clear_planning_scene()
         for id in marker_ids:
             if id != self.base_marker:
@@ -98,14 +101,25 @@ class TagIdentification(Node):
                     tf = self.tf_buffer.lookup_transform(target_frame, f'ar_marker_{id}', rclpy.time.Time())
                     pose = Pose()
                     
+                    # getting the poses in base_link frame
                     offset = self.offset_centre(item, tf) # add offset to the box to adjust for the AR marker placement
                     pose.position.x = tf.transform.translation.x + offset[0]
                     pose.position.y = tf.transform.translation.y + offset[1]
                     pose.position.z = tf.transform.translation.z + offset[2]
                     pose.orientation = tf.transform.rotation
                     
+                    if is_box(id):
+                        self.get_logger().info(f"The item {id} is a box")
+                        box_ids.append(id)
+                        box_poses.append(pose)
+                        
+                    elif is_bin(id):
+                        self.get_logger().info(f"The item {id} is a bin")
+                        bin_ids.append(id)
+                        bin_poses.append(pose)
+                        
                     # Check if the ID corresponds to a table, and if the corresponding object is not yet placed
-                    if is_table(id):
+                    elif is_table(id):
                         # if item.placed == False:
                         self.get_logger().info(f"The item {id} forms a table")
                         table_poses.append(pose)
@@ -125,7 +139,16 @@ class TagIdentification(Node):
             
                 # For testing purposes, not needed for actual functionality
                 self.get_logger().info(f"Item: {item}")
-        
+
+            # publish box_bin message in base link
+            box_bins = BoxBin()
+            box_bins.box_ids = box_ids
+            box_bins.box_poses = box_poses
+            box_bins.bin_ids = bin_ids
+            box_bins.bin_poses = bin_poses
+
+            self.box_bin_pub.publish(box_bins)
+            
         # Placing the table (only if it is not empty):
         if table_poses and table_item:
             table_item.placed = True # uncomment the one in the for loop if you want to lock the table collision object after placement
@@ -150,13 +173,6 @@ class TagIdentification(Node):
             self.get_logger().warn(f"cannot add collison object! item as no dimension attributes!")
             return None
         
-        # box.dimensions = [3.0,3.0,3.0]
-        # box_pose = Pose()
-        # box_pose.position.x = 1.0
-        # box_pose.position.y = 1.0
-        # box_pose.position.z = 1.0
-        # box_pose.orientation.w = 1.0
-
         coll_obj = CollisionObject()
         coll_obj.header.frame_id = 'base_link'
         coll_obj.id = str(item.id)
