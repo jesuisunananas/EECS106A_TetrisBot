@@ -4,24 +4,28 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from control_msgs.action import FollowJointTrajectory
-from geometry_msgs.msg import PointStamped, PoseArray # Added PoseArray
-from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry # Added ACM msgs
+from geometry_msgs.msg import PointStamped, PoseArray
+from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 from tf2_ros import Buffer, TransformListener
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 
+from ros2_aruco_interfaces.msg import ArucoMarkers
+from shared_things import *
+from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseArray, Pose, TransformStamped
+from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
+
+# Assuming this import exists in your workspace
 from planning.ik import IKPlanner
 
 class UR7e_CubeGrasp(Node):
     def __init__(self):
         super().__init__('cube_grasp')
 
-        # CHANGED: Subscription is now for PoseArray instead of PointStamped
-        # Make sure '/aruco_poses' matches the topic publishing your array of markers
         self.pose_array_sub = self.create_subscription(PoseArray, '/aruco_poses', self.cube_callback, 1) 
-        
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1)
 
         # Publisher for updating the Planning Scene (ACM)
@@ -40,14 +44,14 @@ class UR7e_CubeGrasp(Node):
 
         self.ik_planner = IKPlanner()
 
-        self.job_queue = [] # Entries should be of type either JointState or String('toggle_grip')
+        self.job_queue = [] 
 
     def joint_state_callback(self, msg: JointState):
         self.joint_state = msg
 
     def update_acm(self, allow=True):
         """
-        Option B: Updates the Allowed Collision Matrix to allow/disallow collisions 
+        Updates the Allowed Collision Matrix to allow/disallow collisions 
         between the gripper and everything else.
         """
         scene_msg = PlanningScene()
@@ -56,8 +60,6 @@ class UR7e_CubeGrasp(Node):
         
         acm = AllowedCollisionMatrix()
         
-        # Define gripper links (Adjust these names to match your specific URDF/Gripper)
-        # Common names for Robotiq 2F-85 or similar:
         gripper_links = ['robotiq_85_base_link', 'robotiq_85_left_inner_knuckle_link', 
                          'robotiq_85_left_finger_tip_link', 'robotiq_85_left_knuckle_link', 
                          'robotiq_85_right_inner_knuckle_link', 'robotiq_85_right_finger_tip_link', 
@@ -67,21 +69,9 @@ class UR7e_CubeGrasp(Node):
         
         for _ in gripper_links:
             entry = AllowedCollisionEntry()
-            entry.enabled = [not allow] * len(gripper_links) # This enables/disables self-collision
-            # To strictly allow collision with the WORLD/OBJECTS, we usually need the object names.
-            # Since we don't have object IDs here, we might need a broader wildcard or assume 
-            # the planner respects the 'default' entry if we could set it.
-            # However, a robust way without object IDs is tricky. 
-            # Ideally, we would set entry.enabled = [True] for ALL objects in the scene.
-            # For now, we will assume this toggle logic is sufficient or handled by specific planner settings.
-            # NOTE: For a simple hack, MoveIt often requires explicit object names.
-            # If this doesn't work, you might need to know the name of the 'cube' collision object.
+            entry.enabled = [not allow] * len(gripper_links) 
             acm.entry_values.append(entry)
 
-        # If we knew the collision object name (e.g. 'table_cube'), we would do:
-        # acm.entry_names = ['table_cube']
-        # entry.enabled = [True] # Allow collision
-        
         scene_msg.allowed_collision_matrix = acm
         self.scene_pub.publish(scene_msg)
         self.get_logger().info(f"ACM Updated: Gripper Collisions Allowed = {allow}")
@@ -94,66 +84,61 @@ class UR7e_CubeGrasp(Node):
             self.get_logger().info("No joint state yet, cannot proceed")
             return
 
-        # CHANGED: Check if the array is empty
         if not msg.poses:
             self.get_logger().info("PoseArray received but it is empty.")
             return
 
-        # CHANGED: Extract the first pose from the array
         target_pose = msg.poses[0]
         self.cube_pose = target_pose 
 
         # -----------------------------------------------------------
-        # INTERNAL SIDE GRASP STRATEGY (OPTION B)
-        # 1. Close Gripper
-        # 2. Allow Collision (Hack)
-        # 3. Orient Horizontally (Side Approach)
-        # 4. Enter Cube (20mm deep)
-        # 5. Open Gripper
+        # INTERNAL SIDE GRASP STRATEGY
         # -----------------------------------------------------------
 
         # 0) Ensure Gripper is Closed
         self.job_queue.append('toggle_grip')
 
-        # Define Cube Geometry
-        CUBE_HEIGHT = 0.08 # 8cm cube. Adjust as needed.
+        CUBE_HEIGHT = 0.08 # NOTE: magic number for debugging
 
-        # Extract cube position (Marker Position usually on TOP surface)
+        # Extract cube position
         x_initial = float(target_pose.position.x)
         y_initial = float(target_pose.position.y)
         z_initial = float(target_pose.position.z)
 
-        # ORIENTATION LOGIC
+        # --- UPDATED ORIENTATION LOGIC START ---
+        
+        # 1. Get the FULL orientation of the cube (Pitch, Roll, and Yaw)
         r_cube = R.from_quat([
             target_pose.orientation.x,
             target_pose.orientation.y,
             target_pose.orientation.z,
             target_pose.orientation.w
         ])
-        yaw = r_cube.as_euler('xyz')[2] 
-        r_yaw = R.from_euler('z', yaw)
 
-        # Side Grasp Orientation (Z points horizontal)
-        # Rotates standard Z-axis (down) to point along Local +X axis
-        r_side = R.from_euler('y', 90, degrees=True)
-        r_target = r_yaw * r_side 
+        # 2. Define the rotation required to go from "Marker Frame" to "Side Grasp Frame"
+        #    Assuming Marker Z is UP. We want Gripper Z (Approach) to be horizontal relative to marker.
+        #    Rotate 90 degrees around Y axis.
+        r_side_offset = R.from_euler('y', 90, degrees=True)
+
+        # 3. Combine them. By multiplying r_cube * r_side_offset, 
+        #    we apply the side grasp rotation locally to the cube's specific orientation.
+        #    This preserves the cube's tilt.
+        r_target = r_cube * r_side_offset
+        
         rx, ry, rz = r_target.as_rotvec()
 
-        # --- OPTION B: ALLOW COLLISION ---
-        # We must allow collision NOW so the IK planner doesn't reject the 'inside' point
-        self.update_acm(allow=True)
-
-        # POSITION LOGIC
-        # We need to grasp the CENTER of the side face.
-        # Since z_initial is the top, we move down by height/2.
-        z_center = z_initial - (CUBE_HEIGHT / 2.0)
+        vec_pre_grasp_local = [-0.10, 0.0, -CUBE_HEIGHT/2.0]
         
-        # 1) Pre-Grasp: 10cm away from the side
-        offset_pre = r_yaw.apply([-0.10, 0.0, 0.0])
+        # Transform this local vector into World frame using the CUBE'S full rotation
+        offset_pre = r_cube.apply(vec_pre_grasp_local)
+        
         x_pre_grasp = x_initial + offset_pre[0]
         y_pre_grasp = y_initial + offset_pre[1]
-        z_pre_grasp = z_center # Approach at center height
+        z_pre_grasp = z_initial + offset_pre[2] # Use z_initial + offset
         
+        # NOTE: hack: allow collision
+        self.update_acm(allow=True)
+
         target_pre_grasp_pose = self.ik_planner.compute_ik(self.joint_state, x_pre_grasp, y_pre_grasp, z_pre_grasp, rx, ry, rz)
         if target_pre_grasp_pose is None:
             self.get_logger().error(f"IK failed for pre grasp")
@@ -161,13 +146,22 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(target_pre_grasp_pose)
 
         # 2) Grasp Position: EXTEND INTO OBJECT BY 20mm
-        # Previous: center (0.0). Now: +0.02m along local X.
-        # Direction: From -X to +X.
-        offset_grasp = r_yaw.apply([0.02, 0.0, 0.0]) # 20mm positive offset
+        # We move from the pre-grasp closer to the center. 
+        # Let's define the grasp point relative to the marker center again.
+        # Ideally, we want to be "inside" the cube.
+        # Vector: +0.02m inside relative to side face? 
+        # If side face is at X = -0.04 (half width), and we want 20mm deep, we might want X = -0.02?
+        # Let's assume we simply drive 12cm forward from the pre-grasp point along the approach vector.
+        
+        # Alternatively, define strictly relative to Marker Center:
+        # If Marker is center, side face is at -0.04. We want to be at -0.04 + 0.02 = -0.02
+        vec_grasp_local = [-0.02, 0.0, -CUBE_HEIGHT/2.0]
+        
+        offset_grasp = r_cube.apply(vec_grasp_local)
         
         x_grasp = x_initial + offset_grasp[0]
         y_grasp = y_initial + offset_grasp[1]
-        z_grasp = z_center # Grasp at center height
+        z_grasp = z_initial + offset_grasp[2]
 
         target_grasp_pose = self.ik_planner.compute_ik(self.joint_state, x_grasp, y_grasp, z_grasp, rx, ry, rz)
         if not target_grasp_pose:
@@ -179,6 +173,8 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append('toggle_grip')
         
         # 4) Retreat / Lift
+        # We lift relative to the WORLD Z usually, or relative to Cube Z.
+        # Let's lift straight UP in World Z for safety.
         target_lift_pose = self.ik_planner.compute_ik(self.joint_state, x_grasp, y_grasp, z_grasp + 0.2, rx, ry, rz)
         if not target_lift_pose:
             self.get_logger().error(f"IK failed for lift pose")
@@ -186,9 +182,14 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(target_lift_pose)
 
         # 5) Move to release Position
-        place_x = x_initial + 0.4
-        place_y = y_initial
-        place_z = z_grasp + 0.1
+        
+        #TODO: uhhhhh
+        final_pose = self.calculate_final_pose()
+        #TODO: uhhhhh
+        
+        place_x = final_pose.pose.position.x
+        place_y = final_pose.pose.position.y
+        place_z = final_pose.pose.position.z + 0.03
         target_move_pose = self.ik_planner.compute_ik(self.joint_state, place_x, place_y, place_z, rx, ry, rz)
         if not target_move_pose:
             self.get_logger().error(f"IK failed for move pose")
@@ -199,7 +200,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append('toggle_grip')
 
         # 7) Restore Collision Checks
-        self.job_queue.append('disable_acm') # Add custom job to queue
+        self.job_queue.append('disable_acm') 
 
         self.execute_jobs()
 
@@ -226,11 +227,11 @@ class UR7e_CubeGrasp(Node):
             
         elif next_job == 'disable_acm':
             self.update_acm(allow=False)
-            self.execute_jobs() # Immediately process next
+            self.execute_jobs() 
             
         else:
             self.get_logger().error("Unknown job type.")
-            self.execute_jobs()  # Proceed to next job
+            self.execute_jobs() 
 
     def _toggle_gripper(self):
         if not self.gripper_cli.wait_for_service(timeout_sec=5.0):
@@ -240,13 +241,11 @@ class UR7e_CubeGrasp(Node):
 
         req = Trigger.Request()
         future = self.gripper_cli.call_async(req)
-        # wait for 2 seconds
         rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
 
         self.get_logger().info('Gripper toggled.')
-        self.execute_jobs()  # Proceed to next job
-
-            
+        self.execute_jobs()  
+          
     def _execute_joint_trajectory(self, joint_traj):
         self.get_logger().info('Waiting for controller action server...')
         self.exec_ac.wait_for_server()
@@ -274,10 +273,29 @@ class UR7e_CubeGrasp(Node):
         try:
             result = future.result().result
             self.get_logger().info('Execution complete.')
-            self.execute_jobs()  # Proceed to next job
+            self.execute_jobs() 
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
 
+    def calculate_final_pose(self, box_info: tuple, bin_tf):
+        id, name, fragility, z_base, z_top, x, y = box_info #TODO ask arjun to include an ID
+        
+        box = get_object_by_id(id)
+        pose = PoseStamped()
+        
+        pose.header.frame_id = bin_tf.child_frame_id
+        pose.header.time = rclpy.time.Time()
+        
+        pose.orientation.x = 0.0
+        pose.orientation.y = 0.0
+        pose.orientation.z = 0.0
+        pose.orientation.w = 1.0
+        
+        pose.position.x = x + (box.width / 2.0)
+        pose.position.y = y + (box.length / 2.0)
+        pose.position.z = z_base + (box.height / 2.0)
+        
+        return do_transform_pose(pose, bin_tf)
 
 def main(args=None):
     rclpy.init(args=args)
