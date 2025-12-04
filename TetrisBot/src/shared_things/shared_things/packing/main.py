@@ -371,7 +371,7 @@ def main(config: PackingConfig):
             box = entry["box"]
             z_base = entry["z"]
             z_top = z_base + box.height
-            box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
+            box_info.append((box.id, name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
 
         # sort fragile → tough (fragility ascending)
         box_info.sort(key=lambda t: t[1])
