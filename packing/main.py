@@ -1,6 +1,7 @@
 # main.py
 
 import torch
+import os
 from collections import deque
 
 from box import Box, Bin
@@ -16,6 +17,8 @@ import time
 from config import PackingConfig
 import argparse
 import numpy as np
+
+current_path = os.getcwd()
 
 
 def evaluate_random(env, n_episodes=20):
@@ -332,7 +335,7 @@ def main(config: PackingConfig):
     elif args.mode == "eval":
         print("\n=== Greedy rollout from trained policy ===")
         policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-        policy.load_state_dict(torch.load("policy.pt", map_location="cpu"))
+        policy.load_state_dict(torch.load(os.path.join(current_path, "packing/policy.pt"), map_location="cpu"))
         policy.eval()
         env = PackingEnv(n_objects, config)
         X = env.reset()
