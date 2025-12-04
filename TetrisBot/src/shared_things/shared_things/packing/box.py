@@ -67,7 +67,7 @@ class Box(BigBox):
 class Bin(BigBox):
     def __init__(self, length, width, height, id=-1, name=None):
         super().__init__(length, width, height, id) 
-        self.height_map = np.zeros((length, width), dtype=int)
+        self.height_map = np.zeros((length, width), dtype=float)
         self.priority_list = []
         self.boxes = {}
         
