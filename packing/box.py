@@ -67,7 +67,7 @@ class Box(BigBox):
 class Bin(BigBox):
     def __init__(self, length, width, height, id=-1, name=None):
         super().__init__(length, width, height, id) 
-        self.height_map = np.zeros((length, width), dtype=int)
+        self.height_map = np.zeros((length, width), dtype=float)
         self.priority_list = []
         self.boxes = {}
         
@@ -89,3 +89,27 @@ class Collider(BigBox):
                 name = str(id)
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+
+class Bundle(BigBox):
+    def __init__(self, length, width, height, id=[], name=None):
+        super().__init__(length, width, height, id) 
+        if not isinstance(id, list): raise TypeError("Bundle objects should have a list of id's")
+        self.height_map = np.zeros((length, width), dtype=int)
+        self.priority_list = []
+        self.boxes = {}
+        self.placed = False
+        
+        if name is None:
+            if not id:
+                name = str(id)
+            else:
+                name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+        
+    @property
+    def placed(self):
+        return self._placed
+    
+    @placed.setter
+    def placed(self, status):
+        print(f"Bundle {self.name} is placed!")
+        self._placed = status
