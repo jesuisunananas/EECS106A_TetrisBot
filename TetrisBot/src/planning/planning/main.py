@@ -15,7 +15,7 @@ import numpy as np
 from ros2_aruco_interfaces.msg import ArucoMarkers
 from shared_things import *
 from geometry_msgs.msg import Pose
-from geometry_msgs.msg import PoseArray, Pose, TransformStamped
+from geometry_msgs.msg import PoseArray, Pose, TransformStamped, PoseStamped
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
 
 # Assuming this import exists in your workspace
@@ -25,7 +25,8 @@ class UR7e_CubeGrasp(Node):
     def __init__(self):
         super().__init__('cube_grasp')
 
-        self.pose_array_sub = self.create_subscription(PoseArray, '/aruco_poses', self.cube_callback, 1) 
+        self.box_pose_array_sub = self.create_subscription(PoseArray, '/box_aruco_poses', self.cube_callback, 1) 
+        
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1)
 
         # Publisher for updating the Planning Scene (ACM)
