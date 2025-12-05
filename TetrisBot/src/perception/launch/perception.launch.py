@@ -74,16 +74,16 @@ def generate_launch_description():
     # )
     # ar_marker = LaunchConfiguration('ar_marker')
 
-    # # Planning TF node
-    # planning_tf_node = Node(
-    #     package='planning',
-    #     executable='tf',
-    #     name='tf_node',
-    #     output='screen',
-    #     parameters=[{
-    #         'ar_marker': ar_marker,
-    #     }]
-    # )
+    # Planning TF node
+    planning_tf_node = Node(
+        package='planning',
+        executable='tf',
+        name='tf_node',
+        output='screen',
+        parameters=[{
+            'ar_marker': 'ar_marker_' + ar_marker,
+        }]
+    )
 
     # MoveIt 
     ur_type = LaunchConfiguration("ur_type", default="ur7e")
@@ -122,8 +122,8 @@ def generate_launch_description():
         ar_marker_launch_arg,
         realsense_launch,
         aruco_launch,
-        # planning_tf_node,
         static_base_world,
+        planning_tf_node,
         moveit_launch,
         ar_tag_identification_node,
         shutdown_on_any_exit

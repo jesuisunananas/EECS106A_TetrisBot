@@ -94,6 +94,10 @@ class UR7e_CubeGrasp(Node):
         bin_pose = msg.bin_poses[0]
         
         for i, id in enumerate(box_ids):
+            
+            print(f"\n[Hello] Press any key to process Box ID {id}...", end='', flush=True)
+            input() 
+            
             box_pose = box_poses[i]
             box = get_object_by_id(id)
             
