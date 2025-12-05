@@ -39,7 +39,7 @@ def generate_launch_description():
     ar_marker_launch_arg = DeclareLaunchArgument(
         'ar_marker',
         # default_value='ar_marker_7'
-        default_value='8'
+        default_value='7'
     )
     ar_marker= LaunchConfiguration('ar_marker')
 
@@ -74,15 +74,28 @@ def generate_launch_description():
     # )
     # ar_marker = LaunchConfiguration('ar_marker')
 
-    # Planning TF node
-    planning_tf_node = Node(
-        package='planning',
-        executable='tf',
-        name='tf_node',
-        output='screen',
-        parameters=[{
-            'ar_marker': 'ar_marker_' + ar_marker,
-        }]
+    # # Planning TF node
+    # planning_tf_node = Node(
+    #     package='planning',
+    #     executable='tf',
+    #     name='tf_node',
+    #     output='screen',
+    #     parameters=[{
+    #         'ar_marker': ar_marker,
+    #     }]
+    # )
+    # Planning TF node launch
+    tf_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('planning'),
+                'launch',
+                'tf.launch.py'
+            )
+        ),
+        launch_arguments={
+            'ar_marker': ar_marker
+        }.items(),
     )
 
     # MoveIt 
@@ -105,6 +118,21 @@ def generate_launch_description():
         }.items(),
     )
 
+    ik_planner_node = Node(
+        package='planning',
+        executable='ik',
+        name='ik_planner',
+        output='screen',
+        parameters=[
+            {'base_frame': 'base_link'},
+            {'group_name': 'ur_manipulator'},
+            {'ik_link_name': 'tool0'},      # NOTE might have to change if EE link differs
+            {'ik_timeout_sec': 2.0},
+            {'planning_time_sec': 5.0},
+            {'joint_tolerance': 0.01},
+        ],
+    )
+
     # -------------------------
     # Global shutdown on any process exit
     # -------------------------
@@ -123,8 +151,10 @@ def generate_launch_description():
         realsense_launch,
         aruco_launch,
         static_base_world,
-        planning_tf_node,
+        # planning_tf_node,
+        tf_launch,
         moveit_launch,
         ar_tag_identification_node,
+        ik_planner_node,
         shutdown_on_any_exit
     ])

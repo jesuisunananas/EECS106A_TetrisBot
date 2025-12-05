@@ -54,7 +54,7 @@ class TagIdentification(Node):
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
-        source_frame = msg.header.frame_id
+        source_frame = msg.header.frame_id.lstrip('/')
         target_frame = "base_link"
 
         # List to collect all collision objects for this frame
@@ -81,14 +81,18 @@ class TagIdentification(Node):
                 try:
                     # create pose
                     source_pose = PoseStamped()
-                    source_pose.header = msg.header
+                    # source_pose.header = msg.header
+                    source_pose.header.frame_id = msg.header.frame_id
+                    source_pose.header.stamp = self.get_clock().now().to_msg()
                     source_pose.pose = input_pose
 
-                    # apply transform to this PoseStamped
+                    # # apply transform to this PoseStamped
                     transform_timeout = rclpy.duration.Duration(seconds=0.1)
-                    transformed_pose = self.tf_buffer.transform(source_pose, target_frame, timeout=transform_timeout)
+                    # transformed_pose = self.tf_buffer.transform(source_pose, target_frame, timeout=transform_timeout)
+                    tf = self.tf_buffer.lookup_transform(target_frame, source_frame, rclpy.time.Time(), timeout=transform_timeout)
+                    transformed_pose = tf2_geometry_msgs.do_transform_pose(source_pose.pose, tf)
                     
-                    pose = transformed_pose.pose
+                    pose = transformed_pose
 
                     offset = self.offset_centre(item, pose.orientation) 
                     pose.position.x += offset[0]

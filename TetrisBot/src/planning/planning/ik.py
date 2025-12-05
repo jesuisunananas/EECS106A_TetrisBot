@@ -2,9 +2,10 @@ import rclpy
 from rclpy.node import Node
 from moveit_msgs.srv import GetPositionIK, GetMotionPlan
 from moveit_msgs.msg import PositionIKRequest, Constraints, JointConstraint
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 from sensor_msgs.msg import JointState
 from builtin_interfaces.msg import Duration
+import sys
 
 
 # Example usage:
@@ -47,23 +48,24 @@ class IKPlanner(Node):
                    qx=0.0, qy=1.0, qz=0.0, qw=0.0): # Think about why the default quaternion is like this. Why is qy=1?
         pose = PoseStamped()
         pose.header.frame_id = 'base_link'
-        pose.header.stamp = self.get_clock().now().to_msg()
-        pose.pose.position.x = float(x)
-        pose.pose.position.y = float(y)
-        pose.pose.position.z = float(z)
-        pose.pose.orientation.x = float(qx)
-        pose.pose.orientation.y = float(qy)
-        pose.pose.orientation.z = float(qz)
-        pose.pose.orientation.w = float(qw)
+        pose.pose.position.x = x
+        pose.pose.position.y = y
+        pose.pose.position.z = z
+
+        pose.pose.orientation.x = qx
+        pose.pose.orientation.y = qy
+        pose.pose.orientation.z = qz
+        pose.pose.orientation.w = qw
+        # TODO: There are multiple parts/lines to fill here!
 
         ik_req = GetPositionIK.Request()
-        ik_req.ik_request.ik_link_name = 'tool0'     # NOTE TO KEVIN might have to change if your EE link differs
-        ik_req.ik_request.pose_stamped = pose
-        ik_req.ik_request.robot_state.joint_state = current_joint_state
+        # TODO: Lookup the format for ik request and build ik_req by filling in necessary parameters. What is your end-effector link name?
         ik_req.ik_request.avoid_collisions = True
         ik_req.ik_request.timeout = Duration(sec=2)
         ik_req.ik_request.group_name = 'ur_manipulator'
-        
+        ik_req.ik_request.pose_stamped = pose
+        ik_req.ik_request.robot_state.joint_state = current_joint_state
+        ik_req.ik_request.ik_link_name = 'wrist_3_link'
 
         future = self.ik_client.call_async(ik_req)
         rclpy.spin_until_future_complete(self, future)
@@ -126,7 +128,7 @@ def main(args=None):
     current_state = JointState()
     current_state.name = [
         'shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
-        'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint'
+        'wrist_1_joint', 'wrist_2_joint','wrist_3_joint'
     ]
 
     # 4.722274303436279
@@ -152,7 +154,6 @@ def main(args=None):
         sys.exit(1)
 
     if len(ik_result.name) != len(ik_result.position):
-        node.get_logger().error("IK joint names and positions length mismatch.")
         sys.exit(1)
 
     if len(ik_result.name) < 6:
