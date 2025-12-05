@@ -154,6 +154,8 @@ class UR7e_CubeGrasp(Node):
             source_pose.orientation.z, 
             source_pose.orientation.w
         ])
+        
+        
         r_dest = R.from_quat([
             target_pose.orientation.x, 
             target_pose.orientation.y,
@@ -165,15 +167,16 @@ class UR7e_CubeGrasp(Node):
         r_source_ee = r_source * r_side_offset
         r_dest_ee   = r_dest * r_side_offset
 
-        rx_src, ry_src, rz_src = r_source_ee.as_rotvec()
-        rx_dst, ry_dst, rz_dst = r_dest_ee.as_rotvec()
+        # rx_src, ry_src, rz_src = r_source_ee.as_rotvec() 
+        qx_src, qy_src, qz_src, qw_src = r_source_ee.as_quat() # 4. Convert to quaternion for IK (IMPORTANT!)
+        qx_dst, qy_dst, qz_dst, qw_dst = r_dest_ee.as_quat()
         
         
         # CALCULATE PRE-GRASP AND GRASP POSITIONS:
         # Position the end-effector with 5cm standoff from the box face along the x-axis
-        pre_grasp_local = [-(box.width / 2.0 + 0.05), 0.0, box.height]
+        pre_grasp_local = [-(box.width / 2.0 + 0.05), 0.0, - box.height / 2.0]
         # Push the end affector 2cm into the box face along the x-axis
-        grasp_local = [-(box.width / 2.0 - 0.02), 0.0, box.height]
+        grasp_local = [-(box.width / 2.0 - 0.02), 0.0, - box.height / 2.0]
 
         # -----------------------------------------------------------
         # step 1: position and grasp
@@ -190,7 +193,7 @@ class UR7e_CubeGrasp(Node):
         y_pre = source_pose.position.y + pre_grasp_base_link[1]
         z_pre = source_pose.position.z + pre_grasp_base_link[2]
 
-        pose_pre = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, rx_src, ry_src, rz_src)
+        pose_pre = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
         if not pose_pre: return False
         self.job_queue.append(pose_pre)
 
@@ -200,7 +203,7 @@ class UR7e_CubeGrasp(Node):
         y_g = source_pose.position.y + grasp_base_link[1]
         z_g = source_pose.position.z + grasp_base_link[2]
 
-        pose_grasp = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g, rx_src, ry_src, rz_src)
+        pose_grasp = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g, qx_src, qy_src, qz_src, qw_src)
         if not pose_grasp: return False
         self.job_queue.append(pose_grasp)
 
@@ -213,7 +216,7 @@ class UR7e_CubeGrasp(Node):
         # self.job_queue.append(('attach_box', box_id))
 
         # Lift
-        pose_lift = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g + 0.2, rx_src, ry_src, rz_src)
+        pose_lift = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g + 0.2, qx_dst, qy_dst, qz_dst, qw_dst)
         if not pose_lift: return False
         self.job_queue.append(pose_lift)
 
@@ -227,7 +230,7 @@ class UR7e_CubeGrasp(Node):
         z_place = target_pose.position.z + 0.1 + grasp_offset[2] # add 3cm to the z so the end effector is 
                                                                     # slightly above the placement surface
 
-        pose_place = self.ik_planner.compute_ik(self.joint_state, x_place, y_place, z_place, rx_dst, ry_dst, rz_dst)
+        pose_place = self.ik_planner.compute_ik(self.joint_state, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
         if not pose_place: return False
         self.job_queue.append(pose_place)
 
@@ -248,7 +251,7 @@ class UR7e_CubeGrasp(Node):
         y_retreat = target_pose.position.y + offset_pre_dst[1]
         z_retreat = (target_pose.position.z + 0.1) + offset_pre_dst[2]
 
-        pose_retreat = self.ik_planner.compute_ik(self.joint_state, x_retreat, y_retreat, z_retreat, rx_dst, ry_dst, rz_dst)
+        pose_retreat = self.ik_planner.compute_ik(self.joint_state, x_retreat, y_retreat, z_retreat, qx_dst, qy_dst, qz_dst, qw_dst)
         if not pose_retreat: 
             self.get_logger().error("IK failed for retreat")
             return False
@@ -263,7 +266,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(('allow_collision', box_id, False))
 
         HOME_X, HOME_Y, HOME_Z = 0.3, 0.0, 0.5 
-        pose_home = self.ik_planner.compute_ik(self.joint_state, HOME_X, HOME_Y, HOME_Z, rx_dst, ry_dst, rz_dst)
+        pose_home = self.ik_planner.compute_ik(self.joint_state, HOME_X, HOME_Y, HOME_Z, qx_dst, qy_dst, qz_dst, qw_dst)
         
         if pose_home:
             self.job_queue.append(pose_home)
