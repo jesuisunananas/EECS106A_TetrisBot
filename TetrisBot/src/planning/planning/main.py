@@ -79,6 +79,17 @@ class UR7e_CubeGrasp(Node):
         self.scene_pub.publish(scene_msg)
         self.get_logger().info(f"ACM Updated: Gripper Collisions Allowed = {allow}")
 
+    ## TODO: This needs to be updated with the correct world and child frame
+    def _pose_to_transform_stamped(self, pose: Pose):
+        tf = TransformStamped()
+        tf.header.frame_id = "world"  # or whatever your fixed frame is
+        tf.child_frame_id = "bin_frame"
+        tf.transform.translation.x = pose.position.x
+        tf.transform.translation.y = pose.position.y
+        tf.transform.translation.z = pose.position.z
+        tf.transform.rotation = pose.orientation
+        return tf
+
     def cube_callback(self, msg: BoxBin):
         if self.cube_pose is not None:
             return
@@ -95,7 +106,14 @@ class UR7e_CubeGrasp(Node):
         box_poses = msg.box_poses
         bin_id = msg.bin_ids[0]
         bin_pose = msg.bin_poses[0]
-        
+
+        boxes_for_rl = [get_object_by_id(bid) for bid in box_ids if is_box(bid)]
+        bin_obj = get_object_by_id(bin_id)
+        bin_dims = (bin_obj.length, bin_obj.width, bin_obj.height)
+        config = PackingConfig(bin_dims=bin_dims, n_objects=len(boxes_for_rl))
+        box_info_list = packing_with_priors(config=config, box_list=boxes_for_rl, vis=False) #toggle True for pybullet sim
+        placement_by_id = {info[0]: info for info in box_info_list}
+
         for i, id in enumerate(box_ids):
             
             print(f"\n[Hello] Press any key to process Box ID {id}...", end='', flush=True)
@@ -105,17 +123,17 @@ class UR7e_CubeGrasp(Node):
             box = get_object_by_id(id)
             
             self.cube_pose = box_pose # NOTE: not sure what this does... maybe to persist the current working cube pose?
+            box_info = placement_by_id[id]
+
+            # bin_tf is the transform from bin frame to robot base/world
+            # however you're currently getting bin_tf, plug it in here.
+            # If you only have a Pose for the bin, convert to TransformStamped.
+            ## TODO: This has to be updated in accordance to pose to transform stamped
+            bin_tf = self._pose_to_transform_stamped(bin_pose)
 
             # 2. Determine Target Pose
-            # final_pose_stamped = self.calculate_final_pose()
-            # target_pose = final_pose_stamped.pose
-            
-            # NOTE: dummy target pose for now, should be replaced by actual pose from RL algorithm
-            target_pose = Pose()
-            target_pose.position.x = bin_pose.position.x
-            target_pose.position.y = bin_pose.position.y
-            target_pose.position.z = bin_pose.position.z + box.height
-            target_pose.orientation = bin_pose.orientation
+            final_pose_stamped = self.calculate_final_pose(box_info, bin_tf)
+            target_pose = final_pose_stamped.pose
 
             # 3. Plan and Execute
             # Pass the source_box_id to the planner
