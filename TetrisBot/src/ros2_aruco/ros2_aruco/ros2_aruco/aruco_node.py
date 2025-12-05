@@ -211,32 +211,59 @@ class ArucoNode(rclpy.node.Node):
         if marker_ids is not None:
             # Organize markers with their corresponding sizes and corners
             marker_data = []  # List of (index, marker_id, marker_size, corners)
+            bigger_marker_data = []
+            small_corners = []
+            big_corners = []
+
+            small_ids = []
+            big_ids = []
             
             for i, marker_id in enumerate(marker_ids):
                 marker_size = get_marker_size(marker_id[0]) # <- new function imported from aruco_constants.py!!
-                marker_data.append((i, marker_id, marker_size, corners[i]))
+                if marker_size == 0.05:
+                    marker_data.append((i, marker_id, marker_size, corners[i]))
+                    small_corners.append(corners[i])
+                    small_ids.append(marker_id)
+                else:
+                    bigger_marker_data.append((i, marker_id, marker_size, corners[i]))
+                    big_corners.append(corners[i])
+                    big_ids.append(marker_id)
             
             # Estimate poses for all markers at once
             if parse_version(cv2.__version__) >= parse_version("4.7.0"):
                 rvecs, tvecs, _ = custom_estimatePoseSingleMarkers(
-                    corners, self.marker_size, self.intrinsic_mat, self.distortion
+                    small_corners, BOX_MARKER_SIZE, self.intrinsic_mat, self.distortion
+                )
+                big_rvecs, big_tvecs, _ = custom_estimatePoseSingleMarkers(
+                    big_corners, DEFAULT_MARKER_SIZE, self.intrinsic_mat, self.distortion
                 )
             elif cv2.__version__ > "4.0.0":
                 rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
-                    corners, self.marker_size, self.intrinsic_mat, self.distortion
+                    small_corners, BOX_MARKER_SIZE, self.intrinsic_mat, self.distortion
+                )
+                big_rvecs, big_tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+                    big_corners, DEFAULT_MARKER_SIZE, self.intrinsic_mat, self.distortion
                 )
             else:
                 rvecs, tvecs = cv2.aruco.estimatePoseSingleMarkers(
-                    corners, marker_ids, self.intrinsic_mat, self.distortion
+                    small_corners, marker_ids, self.intrinsic_mat, self.distortion
                 )
+                big_rvecs, big_tvecs = cv2.aruco.estimatePoseSingleMarkers(
+                    big_corners, DEFAULT_MARKER_SIZE, self.intrinsic_mat, self.distortion
+                )
+            rvecs = np.append(rvecs, big_rvecs, axis=0)
+            tvecs = np.append(tvecs, big_tvecs, axis=0)
+
+            small_ids.extend(big_ids)
+            marker_ids = small_ids
             
             # Process all markers
             for i, marker_id in enumerate(marker_ids):
                 # self.get_logger().info(f"marker detected: {marker_id}")
                 pose = Pose()
-                pose.position.x = float(tvecs[i][0][0])
-                pose.position.y = float(tvecs[i][0][1])
-                pose.position.z = float(tvecs[i][0][2])
+                pose.position.x = tvecs[i][0][0]
+                pose.position.y = tvecs[i][0][1]
+                pose.position.z = tvecs[i][0][2]
 
                 rot_matrix = np.eye(4)
                 rot_matrix[0:3, 0:3] = cv2.Rodrigues(np.array(rvecs[i][0]))[0]

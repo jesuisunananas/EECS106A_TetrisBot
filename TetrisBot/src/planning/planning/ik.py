@@ -57,7 +57,7 @@ class IKPlanner(Node):
         pose.pose.orientation.w = float(qw)
 
         ik_req = GetPositionIK.Request()
-        ik_req.ik_request.ik_link_name = 'tool0'     # NOTE TO KEVIN might have to change if your EE link differs
+        # ik_req.ik_request.ik_link_name = 'tool0'     # NOTE TO KEVIN might have to change if your EE link differs
         ik_req.ik_request.pose_stamped = pose
         ik_req.ik_request.robot_state.joint_state = current_joint_state
         ik_req.ik_request.avoid_collisions = True

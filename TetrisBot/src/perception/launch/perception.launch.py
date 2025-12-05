@@ -105,6 +105,21 @@ def generate_launch_description():
         }.items(),
     )
 
+    ik_planner_node = Node(
+        package='planning',
+        executable='ik',
+        name='ik_planner',
+        output='screen',
+        parameters=[
+            {'base_frame': 'base_link'},
+            {'group_name': 'ur_manipulator'},
+            {'ik_link_name': 'tool0'},      # NOTE might have to change if EE link differs
+            {'ik_timeout_sec': 2.0},
+            {'planning_time_sec': 5.0},
+            {'joint_tolerance': 0.01},
+        ],
+    )
+
     # -------------------------
     # Global shutdown on any process exit
     # -------------------------
@@ -126,5 +141,6 @@ def generate_launch_description():
         # planning_tf_node,
         moveit_launch,
         ar_tag_identification_node,
+        ik_planner_node,
         shutdown_on_any_exit
     ])

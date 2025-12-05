@@ -27,6 +27,7 @@ class UR7e_CubeGrasp(Node):
         super().__init__('cube_grasp')
 
         self.box_pose_array_sub = self.create_subscription(BoxBin, '/box_bin', self.cube_callback, 1) 
+        self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1) 
 
         # Publisher for updating the Planning Scene (ACM)
         self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
@@ -111,7 +112,7 @@ class UR7e_CubeGrasp(Node):
             target_pose = Pose()
             target_pose.position.x = bin_pose.position.x
             target_pose.position.y = bin_pose.position.y
-            target_pose.position.z = bin_pose.position.z + box.height
+            target_pose.position.z = bin_pose.position.z + 0.1
             target_pose.orientation = bin_pose.orientation
 
             # 3. Plan and Execute
@@ -170,9 +171,9 @@ class UR7e_CubeGrasp(Node):
         
         # CALCULATE PRE-GRASP AND GRASP POSITIONS:
         # Position the end-effector with 5cm standoff from the box face along the x-axis
-        pre_grasp_local = [-(box.width / 2.0 + 0.05), 0.0, -box.height/2.0]
+        pre_grasp_local = [-(box.width / 2.0 + 0.05), 0.0, box.height]
         # Push the end affector 2cm into the box face along the x-axis
-        grasp_local = [-(box.width / 2.0 - 0.02), 0.0, -box.height/2.0]
+        grasp_local = [-(box.width / 2.0 - 0.02), 0.0, box.height]
 
         # -----------------------------------------------------------
         # step 1: position and grasp
@@ -181,7 +182,7 @@ class UR7e_CubeGrasp(Node):
         # Instead of disabling everything, we pass a tuple with the object ID.
         # This tells the executor to only allow collision between Gripper and THIS box.
         # NOTE: AI slop; yet to be verified:
-        self.job_queue.append(('allow_collision', box_id, True))
+        self.job_queue.append(('allow_collision', box_id, False))
 
         # Calculate Source Pre-Grasp
         pre_grasp_base_link = r_source.apply(pre_grasp_local)
@@ -209,7 +210,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append('toggle_grip')
         
         # attach collision box to end effector
-        self.job_queue.append(('attach_box', box_id))
+        # self.job_queue.append(('attach_box', box_id))
 
         # Lift
         pose_lift = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g + 0.2, rx_src, ry_src, rz_src)
@@ -223,7 +224,7 @@ class UR7e_CubeGrasp(Node):
         grasp_offset = r_dest.apply(grasp_local)
         x_place = target_pose.position.x + grasp_offset[0]
         y_place = target_pose.position.y + grasp_offset[1]
-        z_place = target_pose.position.z + 0.03 + grasp_offset[2] # add 3cm to the z so the end effector is 
+        z_place = target_pose.position.z + 0.1 + grasp_offset[2] # add 3cm to the z so the end effector is 
                                                                     # slightly above the placement surface
 
         pose_place = self.ik_planner.compute_ik(self.joint_state, x_place, y_place, z_place, rx_dst, ry_dst, rz_dst)
@@ -237,7 +238,7 @@ class UR7e_CubeGrasp(Node):
         
         # DETACH OBJECT:
         # Drop it in the planning scene before we retreat.
-        self.job_queue.append(('detach_box', box_id))
+        # self.job_queue.append(('detach_box', box_id))
 
         # -----------------------------------------------------------
         # step 5: back out of box
@@ -245,7 +246,7 @@ class UR7e_CubeGrasp(Node):
         offset_pre_dst = r_dest.apply(pre_grasp_local)
         x_retreat = target_pose.position.x + offset_pre_dst[0]
         y_retreat = target_pose.position.y + offset_pre_dst[1]
-        z_retreat = (target_pose.position.z + 0.03) + offset_pre_dst[2]
+        z_retreat = (target_pose.position.z + 0.1) + offset_pre_dst[2]
 
         pose_retreat = self.ik_planner.compute_ik(self.joint_state, x_retreat, y_retreat, z_retreat, rx_dst, ry_dst, rz_dst)
         if not pose_retreat: 
@@ -331,34 +332,34 @@ class UR7e_CubeGrasp(Node):
             self.get_logger().error("Unknown job type.")
             self.execute_jobs()
 
-    def execute_jobs(self):
-        if not self.job_queue:
-            self.get_logger().info("All jobs completed.")
-            rclpy.shutdown()
-            return
+    # def execute_jobs(self):
+    #     if not self.job_queue:
+    #         self.get_logger().info("All jobs completed.")
+    #         rclpy.shutdown()
+    #         return
 
-        self.get_logger().info(f"Executing job queue, {len(self.job_queue)} jobs remaining.")
-        next_job = self.job_queue.pop(0)
+    #     self.get_logger().info(f"Executing job queue, {len(self.job_queue)} jobs remaining.")
+    #     next_job = self.job_queue.pop(0)
 
-        if isinstance(next_job, JointState):
-            traj = self.ik_planner.plan_to_joints(next_job)
-            if traj is None:
-                self.get_logger().error("Failed to plan to position")
-                return
-            self.get_logger().info("Planned to position")
-            self._execute_joint_trajectory(traj.joint_trajectory)
+    #     if isinstance(next_job, JointState):
+    #         traj = self.ik_planner.plan_to_joints(next_job)
+    #         if traj is None:
+    #             self.get_logger().error("Failed to plan to position")
+    #             return
+    #         self.get_logger().info("Planned to position")
+    #         self._execute_joint_trajectory(traj.joint_trajectory)
             
-        elif next_job == 'toggle_grip':
-            self.get_logger().info("Toggling gripper")
-            self._toggle_gripper()
+    #     elif next_job == 'toggle_grip':
+    #         self.get_logger().info("Toggling gripper")
+    #         self._toggle_gripper()
             
-        elif next_job == 'disable_acm':
-            self.update_acm(allow=False)
-            self.execute_jobs() 
+    #     elif next_job == 'disable_acm':
+    #         self.update_acm(allow=False)
+    #         self.execute_jobs() 
             
-        else:
-            self.get_logger().error("Unknown job type.")
-            self.execute_jobs() 
+    #     else:
+    #         self.get_logger().error("Unknown job type.")
+    #         self.execute_jobs() 
 
     def _toggle_gripper(self):
         if not self.gripper_cli.wait_for_service(timeout_sec=5.0):
