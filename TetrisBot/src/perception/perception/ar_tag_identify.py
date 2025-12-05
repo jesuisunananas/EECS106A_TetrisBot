@@ -1,13 +1,14 @@
 import rclpy
 from rclpy.node import Node
 import tf2_ros
+import tf2_geometry_msgs 
 from ros2_aruco_interfaces.msg import ArucoMarkers
 # import consolidated marker descriptions as a single source of truth
 from shared_things import *
 from moveit_msgs.srv import ApplyPlanningScene
 from moveit_msgs.msg import PlanningScene, CollisionObject
 from shape_msgs.msg import SolidPrimitive
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, PoseStamped
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 from box_bin_msgs.msg import BoxBin
@@ -24,18 +25,8 @@ class TagIdentification(Node):
     - if colcon build yells at you, maybe delete existing build folder
     - aruco_node publishes all markers and marker poses to topic "ar_markers" with 
         message type ArucoMarkers
-        ---
-        std_msgs/Header header
-
-        int64[] marker_ids
-        geometry_msgs/Pose[] poses
-        ---
     '''
     
-    # NOTE: the object_dict stuff are all moved to shared_things.aruco_constants1
-    # Object descriptions moved to ros2_aruco package
-    # object_dict = MARKER_ID_DESCRIPTIONS
-
     def __init__(self):
         super().__init__("ar_tag_identification_node")
 
@@ -51,12 +42,7 @@ class TagIdentification(Node):
             10
         )
         
-        
-        #===============================================================================================
-        # IDK WHAT I"M DOINGGNGNGNGNGNG KIMBERLY PLZ HELP
         self.box_bin_pub = self.create_publisher(BoxBin, "box_bin", 10)
-        #===============================================================================================
-
 
         # Moveit planning scene
         self.scene_cli = self.create_client(ApplyPlanningScene, '/apply_planning_scene')
@@ -67,12 +53,10 @@ class TagIdentification(Node):
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
-        # Iterates through marker ids, identifies ids and stores poses in dictionary
-        source_frame = "camera_depth_optical_frame" 
+        # The frame the camera is reporting in (usually optical_frame)
+        source_frame = msg.header.frame_id
         target_frame = "base_link"
 
-        marker_ids = msg.marker_ids.tolist()
-        
         # List to collect all collision objects for this frame
         collision_objects_batch = []
         table_poses = []
@@ -84,83 +68,77 @@ class TagIdentification(Node):
         box_poses = []
         bin_poses = []
         
-        # self.clear_planning_scene()
-        for id in marker_ids:
+        # Zip the IDs and Poses to simplify code ig
+        for id, input_pose in zip(msg.marker_ids, msg.poses):
             if id != self.base_marker:
                     
-                # item = TagIdentification.object_dict.get(id)
-                item = get_object_by_id(id) # used method defined in shared_things.aruco_constants instead!
+                item = get_object_by_id(id) 
 
                 if item is None: 
-                    self.get_logger().info(f"item {id} is unknown to society, skip~")
+                    self.get_logger().info(f"marker {id} is unknown to society, skip~")
                     continue
 
-                # organise the item based on its id
                 try:
-                    # Transforms the marker ID to baselink?
-                    tf = self.tf_buffer.lookup_transform(target_frame, f'ar_marker_{id}', rclpy.time.Time())
-                    pose = Pose()
+                    # create pose
+                    source_pose = PoseStamped()
+                    source_pose.header = msg.header
+                    source_pose.pose = input_pose
+
+                    # apply transform to this PoseStamped
+                    transform_timeout = rclpy.duration.Duration(seconds=0.1)
+                    transformed_pose = self.tf_buffer.transform(source_pose, target_frame, timeout=transform_timeout)
                     
-                    # getting the poses in base_link frame
-                    offset = self.offset_centre(item, tf) # add offset to the box to adjust for the AR marker placement
-                    pose.position.x = tf.transform.translation.x + offset[0]
-                    pose.position.y = tf.transform.translation.y + offset[1]
-                    pose.position.z = tf.transform.translation.z + offset[2]
-                    pose.orientation = tf.transform.rotation
+                    pose = transformed_pose.pose
+
+                    offset = self.offset_centre(item, pose.orientation) 
+                    pose.position.x += offset[0]
+                    pose.position.y += offset[1]
+                    pose.position.z += offset[2]
                     
                     if is_box(id):
-                        self.get_logger().info(f"The item {id} is a box")
+                        # self.get_logger().info(f"The item {id} is a box")
                         box_ids.append(id)
                         box_poses.append(pose)
                         
                     elif is_bin(id):
-                        self.get_logger().info(f"The item {id} is a bin")
+                        # self.get_logger().info(f"The item {id} is a bin")
                         bin_ids.append(id)
                         bin_poses.append(pose)
                         
-                    # Check if the ID corresponds to a table, and if the corresponding object is not yet placed
                     elif is_table(id):
-                        # if item.placed == False:
-                        self.get_logger().info(f"The item {id} forms a table")
+                        # self.get_logger().info(f"The item {id} forms a table")
                         table_poses.append(pose)
                         if table_item is None: table_item = item
-                            
                         continue
                     
                     self.get_logger().info(f"posing {item.name}")
                     
-                    # Create the object and add to batch instead of sending immediately
+                    # Create the object and add to batch
                     obj = self.create_collision_object(item, pose)
                     if obj:
                         collision_objects_batch.append(obj)
                 
-                except tf2_ros.TransformException as ex:
-                        self.get_logger().warn(f"TF lookup failed ({source_frame} -> {target_frame}): {ex}")
+                except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as ex:
+                    self.get_logger().warn(f"TF transform failed ({source_frame} -> {target_frame}): {ex}")
             
-                # For testing purposes, not needed for actual functionality
-                self.get_logger().info(f"Item: {item}")
-
-            # publish box_bin message in base link
-            box_bins = BoxBin()
-            box_bins.box_ids = box_ids
-            box_bins.box_poses = box_poses
-            box_bins.bin_ids = bin_ids
-            box_bins.bin_poses = bin_poses
-
-            self.box_bin_pub.publish(box_bins)
+        # publish categorised bins and boxes
+        box_bins = BoxBin()
+        box_bins.box_ids = box_ids
+        box_bins.box_poses = box_poses
+        box_bins.bin_ids = bin_ids
+        box_bins.bin_poses = bin_poses
+        self.box_bin_pub.publish(box_bins)
             
         # Placing the table (only if it is not empty):
         if table_poses and table_item:
-            table_item.placed = True # uncomment the one in the for loop if you want to lock the table collision object after placement
-            self.get_logger().info(f"Placing Table")
+            # table_item.placed = True 
+            # self.get_logger().info(f"Placing Table")
             table_pose = average_table_pose(table_item, table_poses)
-            # table = get_object_by_id()
             table_obj = self.create_collision_object(table_item, table_pose)
             if table_obj:
                 collision_objects_batch.append(table_obj)
         
         # Send all updates in one service call. 
-        # Apparently this is better for efficiency? hope it doesn't break.
         if collision_objects_batch:
             self.publish_collision_batch(collision_objects_batch)
     
@@ -190,35 +168,33 @@ class TagIdentification(Node):
         req = ApplyPlanningScene.Request()
         req.scene = scene_msg
 
-        self.get_logger().info('Calling service (batch)')
+        # self.get_logger().info('Calling service (batch)')
         future = self.scene_cli.call_async(req)
         future.add_done_callback(self.collision_response_callback)
 
     def collision_response_callback(self, future):
         try:
             response = future.result()
-            if response.success:
-                self.get_logger().info('Success')
-            else:
-                self.get_logger().info('Fail add')
+            if not response.success:
+                self.get_logger().warn('Failed to add collision objects')
         except Exception as e:
-            self.get_logger().info(f'Fail: {e}')
+            self.get_logger().warn(f'Fail to add collision objects: {e}')
 
-    # def clear_planning_scene(self):
-    #     with self.planning_scene_monitor.read_write() as scene:
-    #         scene.remove_all_collision_objects()
-    #         scene.current_state.update()
-
-    def offset_centre(self, item, tf):
+    def offset_centre(self, item, orientation_q):
+        """
+        Calculates the offset in the world frame based on the object's orientation.
+        """
         r = R.from_quat([
-            tf.transform.rotation.x,
-            tf.transform.rotation.y,
-            tf.transform.rotation.z,
-            tf.transform.rotation.w
+            orientation_q.x,
+            orientation_q.y,
+            orientation_q.z,
+            orientation_q.w
         ])
         
+        # Offset the box centre from the marker:
         local_offset = np.array([0.0, 0.0, -item.height / 2.0])
         
+        # Rotate that offset vector to align with the object's current orientation in world
         return r.apply(local_offset)
 
 def main(args=None):
