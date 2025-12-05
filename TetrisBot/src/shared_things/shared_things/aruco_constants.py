@@ -9,8 +9,8 @@ import numpy as np
 
 # Marker IDs (defaults, can be overridden via launch file)
 BOXES = {
-    0: Box(name='cube', length=0.08, width=0.08, height=0.08, id=0),
-    1: Box(name='rectangle', length=0.06, width=0.06, height=0.1, id=1),
+    1: Box(name='cube', length=0.08, width=0.08, height=0.08, id=1),
+    0: Box(name='rectangle', length=0.06, width=0.06, height=0.1, id=0),
     # 3: Box(name='ooo orange', length=1.0, width=1.0, height=1.0, id=3),
     # 4: Box(name='cheezzz', length=1.0, width=1.0, height=1.0, id=4),
     # 5: Box(name='bobo', length=1.0, width=1.0, height=1.0, id=5),
@@ -32,7 +32,7 @@ BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
 
 # FOR COLLISION OBJECTS:
 TABLE_IDS = [50, 51, 52, 53]
-table = Bundle(name='table', length=5.0, width=5.0, height=0.5, id=TABLE_IDS)
+table = Bundle(name='table', length=5.0, width=5.0, height=0.2, id=TABLE_IDS)
 BUNDLES = {id: table for id in TABLE_IDS}
 
 # Joint dictionaries: 
@@ -41,7 +41,7 @@ MARKER_OBJECTS = {**BOXES, **BINS, **BUNDLES}
 
 # Marker sizes in meters
 BOX_MARKER_SIZE = 0.05
-BIN_MARKER_SIZE = 0.20
+BIN_MARKER_SIZE = 0.05
 DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
                            # gonna do this so when id not in marker_size_map, 
                            # it doesnt break.
@@ -68,6 +68,8 @@ def get_marker_size(marker_id):
     if marker_id in BOXES:
         return BOX_MARKER_SIZE
     elif marker_id in BINS:
+        return BIN_MARKER_SIZE
+    elif marker_id in TABLE_IDS:
         return BIN_MARKER_SIZE
     else:
         return DEFAULT_MARKER_SIZE

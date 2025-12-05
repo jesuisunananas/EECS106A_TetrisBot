@@ -82,18 +82,19 @@ class TagIdentification(Node):
                     # create pose
                     source_pose = PoseStamped()
                     source_pose.header = msg.header
+                    source_pose.header.stamp = self.get_clock().now().to_msg()
                     source_pose.pose = input_pose
 
                     # apply transform to this PoseStamped
-                    transform_timeout = rclpy.duration.Duration(seconds=0.1)
+                    transform_timeout = rclpy.duration.Duration(seconds=10.0)
                     transformed_pose = self.tf_buffer.transform(source_pose, target_frame, timeout=transform_timeout)
                     
                     pose = transformed_pose.pose
 
-                    offset = self.offset_centre(item, pose.orientation) 
-                    pose.position.x += offset[0]
-                    pose.position.y += offset[1]
-                    pose.position.z += offset[2]
+                    # offset = self.offset_centre(item, pose.orientation) 
+                    # pose.position.x += offset[0]
+                    # pose.position.y += offset[1]
+                    # pose.position.z += offset[2]
                     
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
