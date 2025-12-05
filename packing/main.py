@@ -258,7 +258,7 @@ def visualize_bin_pybullet(b: Bin, cell_size=CELL_SIZE, gui=True):
                     #hovered_body_id = hit_body_id
         time.sleep(1.0/240.0)
 
-def packing_with_priors(config=PackingConfig, box_list=None, vis=True):
+def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     feature_dim = config.feature_dim
     hidden_dim = config.hidden_dim
     n_objects = config.n_objects
@@ -302,7 +302,7 @@ def packing_with_priors(config=PackingConfig, box_list=None, vis=True):
         box = entry["box"]
         z_base = entry["z"]
         z_top = z_base + box.height
-        box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"], box.id))
+        box_info.append((box.id, name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
 
     # sort fragile → tough (fragility ascending)
     box_info.sort(key=lambda t: t[1])
