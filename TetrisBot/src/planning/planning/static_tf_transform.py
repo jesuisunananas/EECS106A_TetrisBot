@@ -14,7 +14,7 @@ class ConstantTransformPublisher(Node):
         self.br = StaticTransformBroadcaster(self)
 
         #AR Marker parameter
-        self.declare_parameter('ar_marker', "7")
+        self.declare_parameter('ar_marker', "8")
         self.ar_marker = self.get_parameter('ar_marker').value
 
         # Homogeneous transform G_ar->base

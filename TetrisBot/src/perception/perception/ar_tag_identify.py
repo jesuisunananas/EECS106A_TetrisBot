@@ -52,6 +52,11 @@ class TagIdentification(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
+        self.box_ids = []
+        self.box_poses = []
+        self.bin_ids = []
+        self.bin_poses = []
+
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
         source_frame = msg.header.frame_id.lstrip('/')
@@ -131,7 +136,9 @@ class TagIdentification(Node):
         box_bins.box_poses = box_poses
         box_bins.bin_ids = bin_ids
         box_bins.bin_poses = bin_poses
-        self.box_bin_pub.publish(box_bins)
+
+        if len(box_ids) != len(self.box_ids):
+            self.box_bin_pub.publish(box_bins)
             
         # Placing the table (only if it is not empty):
         if table_poses and table_item:

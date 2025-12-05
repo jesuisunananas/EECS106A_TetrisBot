@@ -60,7 +60,7 @@ class IKPlanner(Node):
 
         ik_req = GetPositionIK.Request()
         # TODO: Lookup the format for ik request and build ik_req by filling in necessary parameters. What is your end-effector link name?
-        ik_req.ik_request.avoid_collisions = True
+        ik_req.ik_request.avoid_collisions = False
         ik_req.ik_request.timeout = Duration(sec=2)
         ik_req.ik_request.group_name = 'ur_manipulator'
         ik_req.ik_request.pose_stamped = pose
