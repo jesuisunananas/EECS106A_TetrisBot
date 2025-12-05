@@ -18,7 +18,7 @@ from shared_things.aruco_constants import (
     custom_estimatePoseSingleMarkers
 )
 
-from shared_things.packing import (
+from packing import (
     Box, Bin, Bundle
 )
 
