@@ -7,3 +7,4 @@ __pycache__/
 /install
 /log
 .pytest_cache
+.vscode
