@@ -1,7 +1,6 @@
 # main.py
 
 import torch
-import os
 from collections import deque
 
 from box import Box, Bin
@@ -17,8 +16,6 @@ import time
 from config import PackingConfig
 import argparse
 import numpy as np
-
-current_path = os.getcwd()
 
 
 def evaluate_random(env, n_episodes=20):
@@ -261,6 +258,66 @@ def visualize_bin_pybullet(b: Bin, cell_size=CELL_SIZE, gui=True):
                     #hovered_body_id = hit_body_id
         time.sleep(1.0/240.0)
 
+def packing_with_priors(config=PackingConfig, box_list=None, vis=True):
+    feature_dim = config.feature_dim
+    hidden_dim = config.hidden_dim
+    n_objects = config.n_objects
+    policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
+    policy.load_state_dict(torch.load("policy.pt", map_location="cpu"))
+    policy.eval()
+    env = PackingEnv(n_objects, config)
+    X = env.reset(box_list=box_list)
+    indices, _, _ = policy(X, training=False)
+    ordering = indices[0].tolist()
+    print("Ordering:", ordering)
+
+    b = Bin(*env.bin_dims)
+    for idx in ordering:
+        box = env.boxes[int(idx)]
+        placed = heuristics.place_box_with_rule(box, b)
+
+        print(f"Placed box {idx}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
+        print(b.height_map)
+
+    print("Final height_map:")
+    print(b.height_map)
+
+    C = heuristics.compute_compactness(b)
+    P = heuristics.compute_pyramid(b)
+    A = heuristics.compute_access_cost(b)
+    F = heuristics.compute_fragility_penalty(
+        b, 
+        config.base_scaling, 
+        config.heavy_factor, 
+        config.fragile_quantile, 
+        config.alpha_capacity
+    )
+
+    print(f"\nFinal metrics: C={C:.3f}, P={P:.3f}, A={A:.3f}, F={F:.3f}")
+
+    print("\nPer-box placement (sorted by fragility):")
+    # build list of (name, fragility, base_z, top_z, x, y)
+    box_info = []
+    for name, entry in b.boxes.items():
+        box = entry["box"]
+        z_base = entry["z"]
+        z_top = z_base + box.height
+        box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"], box.id))
+
+    # sort fragile → tough (fragility ascending)
+    box_info.sort(key=lambda t: t[1])
+
+    for name, frag, z_base, z_top, x, y in box_info:
+        print(
+            f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
+            f"pos=({x}, {y})", f"id={id}"
+        )
+
+    if vis:
+        visualize_bin_pybullet(b, cell_size=0.05, gui=True)
+
+    return box_info
+
 
 def main(config: PackingConfig):
     demo_heuristic()
@@ -335,10 +392,10 @@ def main(config: PackingConfig):
     elif args.mode == "eval":
         print("\n=== Greedy rollout from trained policy ===")
         policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-        policy.load_state_dict(torch.load(os.path.join(current_path, "packing/policy.pt"), map_location="cpu"))
+        policy.load_state_dict(torch.load("policy.pt", map_location="cpu"))
         policy.eval()
         env = PackingEnv(n_objects, config)
-        X = env.reset()
+        X = env.reset(False)
         indices, _, _ = policy(X, training=False)
         ordering = indices[0].tolist()
         print("Ordering:", ordering)
@@ -374,15 +431,15 @@ def main(config: PackingConfig):
             box = entry["box"]
             z_base = entry["z"]
             z_top = z_base + box.height
-            box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"], box.id))
+            box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
 
         # sort fragile → tough (fragility ascending)
         box_info.sort(key=lambda t: t[1])
 
-        for name, frag, z_base, z_top, x, y, id in box_info:
+        for name, frag, z_base, z_top, x, y in box_info:
             print(
                 f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
-                f"pos=({x}, {y})", f"id={id}"
+                f"pos=({x}, {y})"
             )
         
         visualize_bin_pybullet(b, cell_size=0.05, gui=True)
@@ -390,4 +447,4 @@ def main(config: PackingConfig):
 
 
 if __name__ == "__main__":
-    main(config=PackingConfig)
+    main(config=PackingConfig())
