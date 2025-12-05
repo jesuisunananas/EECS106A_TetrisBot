@@ -12,7 +12,7 @@ from scipy.spatial.transform import Rotation as R
 import numpy as np
 from box_bin_msgs.msg import BoxBin
 
-from table import average_table_pose
+from perception.table import average_table_pose
 
 class TagIdentification(Node):
     '''
@@ -153,7 +153,8 @@ class TagIdentification(Node):
         if table_poses and table_item:
             table_item.placed = True # uncomment the one in the for loop if you want to lock the table collision object after placement
             self.get_logger().info(f"Placing Table")
-            table_pose = average_table_pose(table_poses)
+            table_pose = average_table_pose(table_item, table_poses)
+            # table = get_object_by_id()
             table_obj = self.create_collision_object(table_item, table_pose)
             if table_obj:
                 collision_objects_batch.append(table_obj)

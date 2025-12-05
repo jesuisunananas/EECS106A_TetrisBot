@@ -39,9 +39,9 @@ def generate_launch_description():
     ar_marker_launch_arg = DeclareLaunchArgument(
         'ar_marker',
         # default_value='ar_marker_7'
-        default_value='7'
+        default_value='8'
     )
-    ar_marker = LaunchConfiguration('ar_marker')
+    ar_marker= LaunchConfiguration('ar_marker')
 
     ar_tag_identification_node = Node(
         package='perception',
@@ -67,6 +67,23 @@ def generate_launch_description():
         arguments=['0','0','0','0','0','0','1','base_link','world'],
         output='screen',
     )
+
+    # ar_marker_launch_arg = DeclareLaunchArgument(
+    #     'ar_marker',
+    #     default_value='ar_marker_8'
+    # )
+    # ar_marker = LaunchConfiguration('ar_marker')
+
+    # # Planning TF node
+    # planning_tf_node = Node(
+    #     package='planning',
+    #     executable='tf',
+    #     name='tf_node',
+    #     output='screen',
+    #     parameters=[{
+    #         'ar_marker': ar_marker,
+    #     }]
+    # )
 
     # MoveIt 
     ur_type = LaunchConfiguration("ur_type", default="ur7e")
@@ -105,6 +122,7 @@ def generate_launch_description():
         ar_marker_launch_arg,
         realsense_launch,
         aruco_launch,
+        # planning_tf_node,
         static_base_world,
         moveit_launch,
         ar_tag_identification_node,
