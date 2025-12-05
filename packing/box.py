@@ -76,7 +76,19 @@ class Bin(BigBox):
                 name = str(id)
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
-        self.name = name
+
+class Collider(BigBox):
+    def __init__(self, length, width, height, id=-1, name=None):
+        super().__init__(length, width, height, id) 
+        self.height_map = np.zeros((length, width), dtype=int)
+        self.priority_list = []
+        self.boxes = {}
+        
+        if name is None:
+            if id != -1:
+                name = str(id)
+            else:
+                name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
 
 class Bundle(BigBox):
     def __init__(self, length, width, height, id=[], name=None):
@@ -92,7 +104,6 @@ class Bundle(BigBox):
                 name = str(id)
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
-        self.name = name
         
     @property
     def placed(self):
@@ -100,5 +111,5 @@ class Bundle(BigBox):
     
     @placed.setter
     def placed(self, status):
-        # print(f"Bundle {self.name} is placed!")
+        print(f"Bundle {self.name} is placed!")
         self._placed = status
