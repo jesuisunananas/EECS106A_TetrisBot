@@ -32,15 +32,18 @@ class PackingEnv:
         self.bin_dims = config.bin_dims
         self.scaler = RewardScaler()
 
-    def reset(self):
+    def reset(self, box_list):
         # sample random boxes
-        self.boxes = []
-        for _ in range(self.n_objects):
-            L = np.random.randint(1,3)
-            W = np.random.randint(1,3)
-            H = np.random.randint(1,4)
-            frag = np.random.rand()
-            self.boxes.append(Box(L, W, H, fragility=frag))
+        if box_list:
+            self.boxes = box_list
+        else:
+            self.boxes = []
+            for _ in range(self.n_objects):
+                L = np.random.randint(1,3)
+                W = np.random.randint(1,3)
+                H = np.random.randint(1,4)
+                frag = np.random.rand()
+                self.boxes.append(Box(L, W, H, fragility=frag))
 
         # Build feature matrix (batch_size=1)
         X = []

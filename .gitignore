@@ -1,8 +1,10 @@
 *.pyc
 __pycache__/
-/lab7/build
-/lab7/install
-/lab7/log
+/TetrisBot/build
+/TetrisBot/install
+/TetrisBot/log
+/build
+/install
 /log
 .pytest_cache
 /.vscode
