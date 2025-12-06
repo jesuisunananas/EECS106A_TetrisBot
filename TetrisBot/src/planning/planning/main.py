@@ -81,10 +81,10 @@ class UR7e_CubeGrasp(Node):
         self.get_logger().info(f"ACM Updated: Gripper Collisions Allowed = {allow}")
 
     ## TODO: This needs to be updated with the correct world and child frame
-    def _pose_to_transform_stamped(self, pose: Pose):
+    def _pose_to_transform_stamped(self, pose: Pose, child_frame, world_frame = "base_link"):
         tf = TransformStamped()
-        tf.header.frame_id = "world"  # or whatever your fixed frame is
-        tf.child_frame_id = "bin_frame"
+        tf.header.frame_id = world_frame  # or whatever your fixed frame is
+        tf.child_frame_id = child_frame
         tf.transform.translation.x = pose.position.x
         tf.transform.translation.y = pose.position.y
         tf.transform.translation.z = pose.position.z
@@ -322,7 +322,7 @@ class UR7e_CubeGrasp(Node):
             _, box_id, allow = next_job
             self.get_logger().info(f"Setting ACM: {box_id} allowed={allow}")
             # Update your update_acm method to accept 'object_id'
-            self.update_acm(allow=allow, object_id=box_id)
+            self.update_acm(allow=allow)
             self.execute_jobs()
 
         # HANDLE ATTACH
