@@ -61,7 +61,8 @@ class UR7e_CubeGrasp(Node):
         self.joint_state = msg
     
     def objects_callback(self, msg: BoxBin):
-        self.current_objects = msg
+        if msg.box_ids:
+            self.current_objects = msg
 
     def _placing_service(self, request, response):
         while self.joint_state is None:
@@ -76,11 +77,20 @@ class UR7e_CubeGrasp(Node):
         bin_id = msg.bin_ids[0]
         bin_pose = msg.bin_poses[0]
 
+        print(box_ids)
+
         # TODO this is just for initial test, change for more boxes
         box = get_object_by_id(box_ids[0])
         initial_pose = box_poses[0]
         final_pose = bin_pose
-        initial_pose.position.z += box.height / 2.0
+        self.get_logger().info(f'box pose {initial_pose.position.z}')
+        self.get_logger().info(f'final callback pose {final_pose.position.z}')
+
+        initial_pose.position.y += -0.035
+        initial_pose.position.z += 0.185
+        final_pose.position.y += -0.035
+        final_pose.position.z += 0.185
+        
         success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
         if success:
@@ -252,6 +262,8 @@ class UR7e_CubeGrasp(Node):
             return False
         self.job_queue.append(pose_pre)
 
+        self.get_logger().info(f'pre callback pose {z_pre}')
+
         # 2) Grasp position
         pose_grasp = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre - 0.1)
         if not pose_grasp: 
@@ -267,29 +279,30 @@ class UR7e_CubeGrasp(Node):
             return False
         self.job_queue.append(pose_post_grasp)
 
-        # # 5) Move above final pose
-        # x_final = target_pose.position.x
-        # y_final = target_pose.position.y
-        # z_final = target_pose.position.z + 0.3
-        # pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
-        # if not pose_above_final: 
-        #     return False
-        # self.job_queue.append(pose_above_final)
+        # 5) Move above final pose
+        x_final = target_pose.position.x
+        y_final = target_pose.position.y
+        z_final = target_pose.position.z + 0.2
+        pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_pre)
+        if not pose_above_final: 
+            return False
+        self.job_queue.append(pose_above_final)
 
-        # # 6) Lower to final pose
-        # pose_at_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final - 0.1)
-        # if not pose_at_final: 
-        #     return False
-        # self.job_queue.append(pose_at_final)
+        # 6) Lower to final pose
+        pose_at_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_pre - 0.1)
+        if not pose_at_final: 
+            return False
+        self.job_queue.append(pose_at_final)
 
         # 7) Close gripper to release
         self.job_queue.append('toggle_grip')
+        self.get_logger().info(f'final pose:{z_final}')
 
-        # # 8) Move back to above final pose
-        # pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
-        # if not pose_above_final: 
-        #     return False
-        # self.job_queue.append(pose_above_final)
+        # 8) Move back to above final pose
+        pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
+        if not pose_above_final: 
+            return False
+        self.job_queue.append(pose_above_final)
 
         return True
 

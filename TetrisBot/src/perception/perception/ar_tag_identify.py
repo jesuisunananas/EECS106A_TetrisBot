@@ -111,6 +111,7 @@ class TagIdentification(Node):
                     elif is_table(id):
                         # self.get_logger().info(f"The item {id} forms a table")
                         table_poses.append(pose)
+                        self.get_logger().info(f'Table z: {[pose.position.z]}')
                         if table_item is None: table_item = item
                         continue
 
