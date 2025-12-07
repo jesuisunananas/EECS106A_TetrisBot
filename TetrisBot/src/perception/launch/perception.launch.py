@@ -84,19 +84,19 @@ def generate_launch_description():
     #         'ar_marker': ar_marker,
     #     }]
     # )
-    # # Planning TF node launch
-    # tf_launch = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(
-    #             get_package_share_directory('planning'),
-    #             'launch',
-    #             'tf.launch.py'
-    #         )
-    #     ),
-    #     launch_arguments={
-    #         'ar_marker': ar_marker
-    #     }.items(),
-    # )
+    # Planning TF node launch
+    tf_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(
+                get_package_share_directory('planning'),
+                'launch',
+                'tf.launch.py'
+            )
+        ),
+        launch_arguments={
+            'ar_marker': ar_marker
+        }.items(),
+    )
 
     # MoveIt 
     ur_type = LaunchConfiguration("ur_type", default="ur7e")
@@ -152,7 +152,7 @@ def generate_launch_description():
         aruco_launch,
         static_base_world,
         # planning_tf_node,
-        # tf_launch,
+        tf_launch,
         moveit_launch,
         ar_tag_identification_node,
         ik_planner_node,

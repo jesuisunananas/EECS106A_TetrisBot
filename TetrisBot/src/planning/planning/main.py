@@ -265,44 +265,44 @@ class UR7e_CubeGrasp(Node):
         self.get_logger().info(f'pre callback pose {z_pre}')
 
         # 2) Grasp position
-        pose_grasp = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre - 0.1)
-        if not pose_grasp: 
+        pose_grasp_state = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre - 0.1)
+        if not pose_grasp_state: 
             return False
-        self.job_queue.append(pose_grasp)
+        self.job_queue.append(pose_grasp_state)
 
         # 3) Open gripper
         self.job_queue.append('toggle_grip')
 
         # 4) Move up
-        pose_post_grasp = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre)
-        if not pose_post_grasp: 
+        pose_post_grasp_state = self.ik_planner.compute_ik(pose_grasp_state, x_pre, y_pre, z_pre)
+        if not pose_post_grasp_state: 
             return False
-        self.job_queue.append(pose_post_grasp)
+        self.job_queue.append(pose_post_grasp_state)
 
         # 5) Move above final pose
         x_final = target_pose.position.x
         y_final = target_pose.position.y
         z_final = target_pose.position.z + 0.2
-        pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_pre)
-        if not pose_above_final: 
+        pose_above_final_state = self.ik_planner.compute_ik(pose_post_grasp_state, x_final, y_final, z_pre)
+        if not pose_above_final_state: 
             return False
-        self.job_queue.append(pose_above_final)
+        self.job_queue.append(pose_above_final_state)
 
         # 6) Lower to final pose
-        pose_at_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_pre - 0.1)
-        if not pose_at_final: 
+        pose_at_final_state = self.ik_planner.compute_ik(pose_above_final_state, x_final, y_final, z_pre - 0.1)
+        if not pose_at_final_state: 
             return False
-        self.job_queue.append(pose_at_final)
+        self.job_queue.append(pose_at_final_state)
 
         # 7) Close gripper to release
         self.job_queue.append('toggle_grip')
         self.get_logger().info(f'final pose:{z_final}')
 
         # 8) Move back to above final pose
-        pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
-        if not pose_above_final: 
+        pose_above_final_state = self.ik_planner.compute_ik(pose_at_final_state, x_final, y_final, z_pre - 0.2)
+        if not pose_above_final_state: 
             return False
-        self.job_queue.append(pose_above_final)
+        self.job_queue.append(pose_above_final_state)
 
         return True
 

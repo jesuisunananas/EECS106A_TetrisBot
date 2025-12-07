@@ -14,7 +14,7 @@ class ConstantTransformPublisher(Node):
         self.br = StaticTransformBroadcaster(self)
 
         #AR Marker parameter
-        self.declare_parameter('ar_marker', "9")
+        self.declare_parameter('ar_marker', 9)
         self.ar_marker = self.get_parameter('ar_marker').value
 
         # Homogeneous transform G_ar->base
@@ -35,7 +35,7 @@ class ConstantTransformPublisher(Node):
         t = G[:3, 3]
         x, y, z, w = R.from_matrix(R_mat).as_quat()
 
-        self.transform.header.frame_id = "ar_marker_" + self.ar_marker
+        self.transform.header.frame_id = f"ar_marker_{self.ar_marker}"
         self.transform.child_frame_id = "base_link"
         self.transform.transform.translation.x = float(t[0])
         self.transform.transform.translation.y = float(t[1])
