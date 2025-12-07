@@ -16,8 +16,8 @@ from ros2_aruco_interfaces.msg import ArucoMarkers
 from shared_things import *
 from geometry_msgs.msg import PoseArray, Pose, TransformStamped, PoseStamped
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
-from packing.main import packing_with_priors
-from packing.config import PackingConfig
+# from packing.main import packing_with_priors
+# from packing.config import PackingConfig
 from shape_msgs.msg import SolidPrimitive
 from moveit_msgs.srv import ApplyPlanningScene
 from moveit_msgs.msg import PlanningScene, CollisionObject
@@ -46,7 +46,7 @@ class UR7e_CubeGrasp(Node):
         self.gripper_cli = self.create_client(Trigger, '/toggle_gripper')
 
         # Create a server for calling placing service
-        self._client = self.create_service(Empty, self._placing_service)
+        self._client = self.create_service(Empty, '/run_packing', self._placing_service)
 
         # self.cube_pose = None
         self.current_plan = None
@@ -60,8 +60,8 @@ class UR7e_CubeGrasp(Node):
     def joint_state_callback(self, msg: JointState):
         self.joint_state = msg
     
-    def object_callback(self, msg: BoxBin):
-        self.current_objects = BoxBin
+    def objects_callback(self, msg: BoxBin):
+        self.current_objects = msg
 
     def _placing_service(self, request, response):
         while self.joint_state is None:
@@ -80,6 +80,7 @@ class UR7e_CubeGrasp(Node):
         box = get_object_by_id(box_ids[0])
         initial_pose = box_poses[0]
         final_pose = bin_pose
+        initial_pose.position.z += box.height / 2.0
         success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
         if success:
@@ -266,29 +267,29 @@ class UR7e_CubeGrasp(Node):
             return False
         self.job_queue.append(pose_post_grasp)
 
-        # 5) Move above final pose
-        x_final = target_pose.position.x
-        y_final = target_pose.position.y
-        z_final = target_pose.position.z + 0.2
-        pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
-        if not pose_above_final: 
-            return False
-        self.job_queue.append(pose_above_final)
+        # # 5) Move above final pose
+        # x_final = target_pose.position.x
+        # y_final = target_pose.position.y
+        # z_final = target_pose.position.z + 0.3
+        # pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
+        # if not pose_above_final: 
+        #     return False
+        # self.job_queue.append(pose_above_final)
 
-        # 6) Lower to final pose
-        pose_at_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final - 0.1)
-        if not pose_at_final: 
-            return False
-        self.job_queue.append(pose_at_final)
+        # # 6) Lower to final pose
+        # pose_at_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final - 0.1)
+        # if not pose_at_final: 
+        #     return False
+        # self.job_queue.append(pose_at_final)
 
         # 7) Close gripper to release
         self.job_queue.append('toggle_grip')
 
-        # 8) Move back to above final pose
-        pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
-        if not pose_above_final: 
-            return False
-        self.job_queue.append(pose_above_final)
+        # # 8) Move back to above final pose
+        # pose_above_final = self.ik_planner.compute_ik(self.joint_state, x_final, y_final, z_final)
+        # if not pose_above_final: 
+        #     return False
+        # self.job_queue.append(pose_above_final)
 
         return True
 

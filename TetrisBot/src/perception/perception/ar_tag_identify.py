@@ -31,7 +31,7 @@ class TagIdentification(Node):
         super().__init__("ar_tag_identification_node")
 
         # Base Marker parameter (set via launch file)
-        self.declare_parameter('base_marker', 7)
+        self.declare_parameter('base_marker', 10)
         self.base_marker = self.get_parameter('base_marker').value
 
         # "aruco_markers" subscriber
@@ -94,11 +94,10 @@ class TagIdentification(Node):
                     
                     pose = transformed_pose
 
-                    offset = self.offset_centre(item, pose.orientation) 
-                    pose.position.x += offset[0]
-                    pose.position.y += offset[1]
-                    pose.position.z += offset[2]
                     
+                    
+                    # obj = None
+            
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
                         box_ids.append(id)
@@ -114,11 +113,16 @@ class TagIdentification(Node):
                         table_poses.append(pose)
                         if table_item is None: table_item = item
                         continue
+
+                    offset = self.offset_centre(item, pose.orientation) 
+                    pose.position.x += offset[0]
+                    pose.position.y += offset[1]
+                    pose.position.z += offset[2]
                     
                     self.get_logger().info(f"posing {item.name}")
+                    obj = self.create_collision_object(item, pose)
                     
                     # Create the object and add to batch
-                    obj = self.create_collision_object(item, pose)
                     if obj:
                         collision_objects_batch.append(obj)
                 
