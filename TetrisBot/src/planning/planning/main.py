@@ -36,7 +36,7 @@ class UR7e_CubeGrasp(Node):
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1) 
 
         # Publisher for updating the Planning Scene (ACM)
-        self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
+        # self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
 
         self.exec_ac = ActionClient(
             self, FollowJointTrajectory,
@@ -289,7 +289,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(pose_above_final_state)
 
         # 6) Lower to final pose
-        pose_at_final_state = self.ik_planner.compute_ik(pose_above_final_state, x_final, y_final, z_pre - 0.1)
+        pose_at_final_state = self.ik_planner.compute_ik(pose_above_final_state, x_final, y_final, z_final)
         if not pose_at_final_state: 
             return False
         self.job_queue.append(pose_at_final_state)
@@ -299,7 +299,7 @@ class UR7e_CubeGrasp(Node):
         self.get_logger().info(f'final pose:{z_final}')
 
         # 8) Move back to above final pose
-        pose_above_final_state = self.ik_planner.compute_ik(pose_at_final_state, x_final, y_final, z_pre - 0.2)
+        pose_above_final_state = self.ik_planner.compute_ik(pose_at_final_state, x_final, y_final, z_pre)
         if not pose_above_final_state: 
             return False
         self.job_queue.append(pose_above_final_state)
