@@ -250,59 +250,58 @@ class UR7e_CubeGrasp(Node):
     #             self.job_queue = []
 
     def test_plan_pick_and_place(self, box, source_pose, target_pose):
+        
+        # clear out job queue:
+        self.job_queue = []
+        
         # 0) close the gripper
         self.job_queue.append('toggle_grip')
         
-        # 1) Pregrasp
+        # 1) Pregrasp at 20cm above the cube surface
         x_pre = source_pose.position.x
         y_pre = source_pose.position.y
         z_pre = source_pose.position.z + 0.2
-        pose_pre = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre)
-        if not pose_pre: 
-            return False
-        self.job_queue.append(pose_pre)
+        ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre)
+        if not ik_result: return False
+        self.job_queue.append(ik_result)
 
-        self.get_logger().info(f'pre callback pose {z_pre}')
+        self.get_logger().info(f'hovering 20cm above the cube surface at z={z_pre}')
+        self.get_logger().info(f'move down by 10cm to z={z_pre - 0.1}')
 
         # 2) Grasp position
-        pose_grasp_state = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre - 0.1)
-        if not pose_grasp_state: 
-            return False
-        self.job_queue.append(pose_grasp_state)
+        ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre - 0.1)
+        if not ik_result: return False
+        self.job_queue.append(ik_result)
 
         # 3) Open gripper
         self.job_queue.append('toggle_grip')
 
         # 4) Move up
-        pose_post_grasp_state = self.ik_planner.compute_ik(pose_grasp_state, x_pre, y_pre, z_pre)
-        if not pose_post_grasp_state: 
-            return False
-        self.job_queue.append(pose_post_grasp_state)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_pre, y_pre, z_pre)
+        if not ik_result: return False
+        self.job_queue.append(ik_result)
 
-        # 5) Move above final pose
+        # 5) Move to the x and y position of final pose
         x_final = target_pose.position.x
         y_final = target_pose.position.y
         z_final = target_pose.position.z + 0.2
-        pose_above_final_state = self.ik_planner.compute_ik(pose_post_grasp_state, x_final, y_final, z_pre)
-        if not pose_above_final_state: 
-            return False
-        self.job_queue.append(pose_above_final_state)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_pre)
+        if not ik_result: return False
+        self.job_queue.append(ik_result)
 
-        # 6) Lower to final pose
-        pose_at_final_state = self.ik_planner.compute_ik(pose_above_final_state, x_final, y_final, z_final)
-        if not pose_at_final_state: 
-            return False
-        self.job_queue.append(pose_at_final_state)
+        # 6) Lower to final pose z
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final)
+        if not ik_result: return False
+        self.job_queue.append(ik_result)
 
         # 7) Close gripper to release
         self.job_queue.append('toggle_grip')
-        self.get_logger().info(f'final pose:{z_final}')
+        self.get_logger().info(f'final pose at z={z_final}')
 
         # 8) Move back to above final pose
-        pose_above_final_state = self.ik_planner.compute_ik(pose_at_final_state, x_final, y_final, z_pre)
-        if not pose_above_final_state: 
-            return False
-        self.job_queue.append(pose_above_final_state)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_pre)
+        if not ik_result: return False
+        self.job_queue.append(ik_result)
 
         return True
 
@@ -587,25 +586,25 @@ class UR7e_CubeGrasp(Node):
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
 
-    # def calculate_final_pose(self, box_info: tuple, bin_tf):
-    #     id, name, fragility, z_base, z_top, x, y = box_info #TODO ask arjun to include an ID
+    def calculate_final_pose(self, box_info: tuple, bin_tf):
+        id, name, fragility, z_base, z_top, x, y = box_info #TODO ask arjun to include an ID
         
-    #     box = get_object_by_id(id)
-    #     pose = PoseStamped()
+        box = get_object_by_id(id)
+        pose = PoseStamped()
         
-    #     pose.header.frame_id = bin_tf.child_frame_id
-    #     pose.header.time = rclpy.time.Time()
+        pose.header.frame_id = bin_tf.child_frame_id
+        pose.header.time = rclpy.time.Time()
         
-    #     pose.orientation.x = 0.0
-    #     pose.orientation.y = 0.0
-    #     pose.orientation.z = 0.0
-    #     pose.orientation.w = 1.0
+        pose.orientation.x = 0.0
+        pose.orientation.y = 0.0
+        pose.orientation.z = 0.0
+        pose.orientation.w = 1.0
         
-    #     pose.position.x = x + (box.width / 2.0)
-    #     pose.position.y = y + (box.length / 2.0)
-    #     pose.position.z = z_base + (box.height / 2.0)
+        pose.position.x = x + (box.width / 2.0)
+        pose.position.y = y - (box.length / 2.0)
+        pose.position.z = z_base + (box.height / 2.0)
         
-    #     return do_transform_pose(pose, bin_tf)
+        return do_transform_pose(pose, bin_tf)
 
 def main(args=None):
     rclpy.init(args=args)
