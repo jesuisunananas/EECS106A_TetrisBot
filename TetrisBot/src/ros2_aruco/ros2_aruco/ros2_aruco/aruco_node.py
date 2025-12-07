@@ -224,7 +224,7 @@ class ArucoNode(rclpy.node.Node):
                     marker_data.append((i, marker_id, marker_size, corners[i]))
                     small_corners.append(corners[i])
                     small_ids.append(marker_id)
-                else:
+                elif marker_size == 0.15:
                     bigger_marker_data.append((i, marker_id, marker_size, corners[i]))
                     big_corners.append(corners[i])
                     big_ids.append(marker_id)
