@@ -74,15 +74,15 @@ class UR7e_CubeGrasp(Node):
         msg = self.current_objects
         box_ids = msg.box_ids
         box_poses = msg.box_poses
-        bin_id = msg.bin_ids[0]
-        bin_pose = msg.bin_poses[0]
+        # bin_id = msg.bin_ids[0]
+        # bin_pose = msg.bin_poses[0]
 
         print(box_ids)
 
         # TODO this is just for initial test, change for more boxes
         box = get_object_by_id(box_ids[0])
         initial_pose = box_poses[0]
-        final_pose = bin_pose
+        final_pose = box_poses[1]
         self.get_logger().info(f'box pose {initial_pose.position.z}')
         self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
@@ -269,7 +269,7 @@ class UR7e_CubeGrasp(Node):
         self.get_logger().info(f'move down by 10cm to z={z_pre - 0.1}')
 
         # 2) Grasp position
-        ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre - 0.1)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_pre, y_pre, z_pre - 0.1)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
@@ -285,12 +285,12 @@ class UR7e_CubeGrasp(Node):
         x_final = target_pose.position.x
         y_final = target_pose.position.y
         z_final = target_pose.position.z + 0.2
-        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_pre)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
         # 6) Lower to final pose z
-        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.1)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
@@ -299,7 +299,7 @@ class UR7e_CubeGrasp(Node):
         self.get_logger().info(f'final pose at z={z_final}')
 
         # 8) Move back to above final pose
-        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_pre)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 

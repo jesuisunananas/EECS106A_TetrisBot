@@ -19,12 +19,12 @@ BOXES = {
 
 BINS = {
     # 6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
-    100: Bin(name='bin', length=10, width=10, height=1, id=100),
+    50: Bin(name='bin', length=10, width=10, height=1, id=50),
 }
 
 COLLISION_MESHES = {
-    1: "./3d_models/cube.stl",
-    0: "./3d_models/rectangle.stl"
+    # 1: 'src/perception/perception/cube.stl',
+    # 0: 'src/perception/perception/rectangle.stl'
 }
 
 BOX_MARKER_IDS = BOXES.keys()
@@ -36,7 +36,7 @@ BOX_ID_DESCRIPTIONS = {box.id: box.name for box in BOXES.values()} # id: name
 BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
 
 # FOR COLLISION OBJECTS:
-TABLE_IDS = [50, 51, 52, 53]
+TABLE_IDS = [100, 51, 52, 53]
 table = Bundle(name='table', length=5.0, width=5.0, height=0.02, id=TABLE_IDS)
 BUNDLES = {id: table for id in TABLE_IDS}
 
