@@ -18,7 +18,11 @@ ar_marker_launch_arg = DeclareLaunchArgument(
         default_value='7' <--
     )
 ```
-Then run previous but without ar_marker argument
+Then run:
+```
+ros2 launch perception perception.launch.py ar_marker:=<insert arm base arucotag id>
+```
+
 ### Step 2: connect the tree to camera
 ```
 ros2 run planning tf --ros-args -p ar_marker:=<insert arm base arucotag id>
