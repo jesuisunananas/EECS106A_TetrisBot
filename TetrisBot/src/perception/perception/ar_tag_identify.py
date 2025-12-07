@@ -42,7 +42,7 @@ class TagIdentification(Node):
             10
         )
         
-        self.box_bin_pub = self.create_publisher(BoxBin, "box_bin", 10)
+        self.box_bin_pub = self.create_publisher(BoxBin, "/box_bin", 10)
 
         # Moveit planning scene
         self.scene_cli = self.create_client(ApplyPlanningScene, '/apply_planning_scene')
@@ -56,6 +56,8 @@ class TagIdentification(Node):
         self.box_poses = []
         self.bin_ids = []
         self.bin_poses = []
+
+        rclpy.spin_once(self, timeout_sec=2)
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
@@ -137,8 +139,8 @@ class TagIdentification(Node):
         box_bins.bin_ids = bin_ids
         box_bins.bin_poses = bin_poses
 
-        if len(box_ids) != len(self.box_ids):
-            self.box_bin_pub.publish(box_bins)
+        # if len(box_ids) != len(self.box_ids):
+        self.box_bin_pub.publish(box_bins)
             
         # Placing the table (only if it is not empty):
         if table_poses and table_item:
