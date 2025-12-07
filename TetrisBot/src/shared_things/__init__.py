@@ -15,7 +15,8 @@ from shared_things.aruco_constants import (
     is_bin,
     is_table,
     get_marker_size,
-    custom_estimatePoseSingleMarkers
+    custom_estimatePoseSingleMarkers,
+    get_mesh_path
 )
 
 from shared_things.packing import (
@@ -42,10 +43,13 @@ __all__ = [
     'BOX_MARKER_SIZE',
     'BIN_MARKER_SIZE',
     'DEFAULT_MARKER_SIZE',
+    'TABLE_IDS',
+    'COLLISION_MESHES',
     'get_object_by_id',
     'is_box',
     'is_bin',
     'is_table',
     'get_marker_size',
-    'custom_estimatePoseSingleMarkers'
+    'custom_estimatePoseSingleMarkers',
+    'get_mesh_path'
 ]

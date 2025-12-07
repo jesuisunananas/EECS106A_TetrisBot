@@ -14,6 +14,7 @@ import numpy as np
 from box_bin_msgs.msg import BoxBin
 
 from perception.table import average_table_pose
+from perception.mesh import get_collision_mesh
 
 class TagIdentification(Node):
     '''
@@ -113,11 +114,6 @@ class TagIdentification(Node):
 
                     offset = self.offset_centre(item, pose.orientation) 
                     
-                    # collision_obj_pose = Pose()
-                    # collision_obj_pose.position.x = pose.position.x + offset[0]
-                    # collision_obj_pose.position.y = pose.position.y + offset[1]
-                    # collision_obj_pose.position.z = pose.position.z + offset[2]
-                    # collision_obj_pose.orientation = pose.orientation
                     pose.position.x += offset[0]
                     pose.position.y += offset[1]
                     pose.position.z += offset[2]
@@ -154,20 +150,31 @@ class TagIdentification(Node):
             self.publish_collision_batch(collision_objects_batch)
     
     def create_collision_object(self, item, pose):
-        box = SolidPrimitive()
-        box.type = SolidPrimitive.BOX
-
-        try:
-            box.dimensions = [item.length, item.width, item.height]
-        except:
-            self.get_logger().warn(f"cannot add collison object! item as no dimension attributes!")
-            return None
         
         coll_obj = CollisionObject()
+        
+        mesh_filepath = get_mesh_path(item.id)
+        if not mesh_filepath:
+            try:
+                box = SolidPrimitive()
+                box.type = SolidPrimitive.BOX
+                box.dimensions = [item.length, item.width, item.height]
+                coll_obj.primitives = [box]
+                coll_obj.primitive_poses = [pose]
+            except:
+                self.get_logger().warn(f"cannot add collison object! item as no dimension attributes nor mesh path!")
+                return None
+        else:
+            mesh = get_collision_mesh(mesh_filepath)
+            if not mesh:
+                self.get_logger().warn(f"cannot add collison mesh!")
+                return None
+            coll_obj.meshes = [mesh]
+            coll_obj.mesh_poses = [pose]
+        
         coll_obj.header.frame_id = 'base_link'
         coll_obj.id = str(item.id)
-        coll_obj.primitives = [box]
-        coll_obj.primitive_poses = [pose]
+        
         coll_obj.operation = CollisionObject.ADD
         return coll_obj
 

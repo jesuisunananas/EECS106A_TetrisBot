@@ -22,6 +22,11 @@ BINS = {
     100: Bin(name='bin', length=10, width=10, height=1, id=100),
 }
 
+COLLISION_MESHES = {
+    1: "./3d_models/cube.stl",
+    0: "./3d_models/rectangle.stl"
+}
+
 BOX_MARKER_IDS = BOXES.keys()
 BIN_MARKER_IDS = BINS.keys()
 
@@ -73,6 +78,10 @@ def get_marker_size(marker_id):
         return BIN_MARKER_SIZE
     else:
         return DEFAULT_MARKER_SIZE
+
+def get_mesh_path(marker_id):
+    """returns the file path to the collision mesh for marker ID"""
+    return COLLISION_MESHES.get(marker_id, None)
     
 def custom_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
     '''
