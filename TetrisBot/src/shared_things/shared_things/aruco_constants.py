@@ -9,8 +9,8 @@ import numpy as np
 
 # Marker IDs (defaults, can be overridden via launch file)
 BOXES = {
-    1: Box(name='cube', length=0.08, width=0.08, height=0.08, id=1),
-    0: Box(name='rectangle', length=0.06, width=0.06, height=0.1, id=0),
+    1: Box(length=0.08, width=0.08, height=0.08, id=1),
+    0: Box(length=0.06, width=0.06, height=0.1, id=0),
     # 3: Box(name='ooo orange', length=1.0, width=1.0, height=1.0, id=3),
     # 4: Box(name='cheezzz', length=1.0, width=1.0, height=1.0, id=4),
     # 5: Box(name='bobo', length=1.0, width=1.0, height=1.0, id=5),
@@ -19,7 +19,7 @@ BOXES = {
 
 BINS = {
     # 6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
-    100: Bin(name='bin', length=10, width=10, height=1, id=100),
+    100: Bin(length=10, width=10, height=1, id=100),
 }
 
 BOX_MARKER_IDS = BOXES.keys()
@@ -27,16 +27,16 @@ BIN_MARKER_IDS = BINS.keys()
 
 # Consolidated readable descriptions for all markers. Import this from
 # other packages to get a human-friendly name for each marker id.
-BOX_ID_DESCRIPTIONS = {box.id: box.name for box in BOXES.values()} # id: name
-BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
+# BOX_ID_DESCRIPTIONS = {box.id: box.name for box in BOXES.values()} # id: name
+# BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
 
 # FOR COLLISION OBJECTS:
 TABLE_IDS = [50, 51, 52, 53]
-table = Bundle(name='table', length=5.0, width=5.0, height=0.2, id=TABLE_IDS)
+table = Bundle(length=5, width=5, height=1, id=TABLE_IDS)
 BUNDLES = {id: table for id in TABLE_IDS}
 
 # Joint dictionaries: 
-MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
+# MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
 MARKER_OBJECTS = {**BOXES, **BINS, **BUNDLES}
 
 # Marker sizes in meters
