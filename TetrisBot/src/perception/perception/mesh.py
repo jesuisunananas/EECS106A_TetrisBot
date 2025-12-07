@@ -9,7 +9,7 @@ def get_collision_mesh(logger, file_path):
     try:
         mesh_data = trimesh.load(file_obj=trimesh.util.wrap_as_stream(file_path), file_type='stl')
 
-        mesh = trimesh.util.concatenate(tuple(trime))
+        mesh_data = trimesh.util.concatenate(tuple(trimesh.Trimesh(vertices=g.vertices, faces=g.faces) for g in mesh_data.geometry.values()))
     except Exception as e:
         logger.info(f"Failed to load mesh from {file_path}: {e}")
         return None
