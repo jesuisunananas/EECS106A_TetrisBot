@@ -2,14 +2,16 @@ import trimesh
 from shape_msgs.msg import Mesh, MeshTriangle
 from geometry_msgs.msg import Point
 
-def get_collision_mesh(file_path):
+def get_collision_mesh(logger, file_path):
     """
     Loads a 3D mesh file and converts it to a ROS shape_msgs/Mesh.
     """
     try:
-        mesh_data = trimesh.load(file_path, file_type='stl')
+        mesh_data = trimesh.load(file_obj=trimesh.util.wrap_as_stream(file_path), file_type='stl')
+
+        mesh = trimesh.util.concatenate(tuple(trime))
     except Exception as e:
-        print(f"Failed to load mesh from {file_path}: {e}")
+        logger.info(f"Failed to load mesh from {file_path}: {e}")
         return None
 
     # Create the ROS Mesh message

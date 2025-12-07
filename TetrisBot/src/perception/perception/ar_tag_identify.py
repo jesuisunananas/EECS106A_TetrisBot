@@ -153,7 +153,9 @@ class TagIdentification(Node):
         
         coll_obj = CollisionObject()
         
-        mesh_filepath = get_mesh_path(item.id)
+        mesh_filepath = None
+        if isinstance(item.id, int):
+            mesh_filepath = get_mesh_path(item.id)
         if not mesh_filepath:
             try:
                 box = SolidPrimitive()
@@ -165,7 +167,7 @@ class TagIdentification(Node):
                 self.get_logger().warn(f"cannot add collison object! item as no dimension attributes nor mesh path!")
                 return None
         else:
-            mesh = get_collision_mesh(mesh_filepath)
+            mesh = get_collision_mesh(self.get_logger(), mesh_filepath)
             if not mesh:
                 self.get_logger().warn(f"cannot add collison mesh!")
                 return None
