@@ -32,6 +32,8 @@ class UR7e_CubeGrasp(Node):
         self.box_pose_array_sub = self.create_subscription(BoxBin, '/box_bin', self.cube_callback, 1) 
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1) 
 
+        self.msg = None
+
         self.exec_ac = ActionClient(
             self, FollowJointTrajectory,
             '/scaled_joint_trajectory_controller/follow_joint_trajectory'
@@ -51,9 +53,6 @@ class UR7e_CubeGrasp(Node):
         self.joint_state = msg
 
     def cube_callback(self, msg: BoxBin):
-        # if self.cube_pose is not None:
-        #     return
-
         if self.joint_state is None:
             self.get_logger().info("No joint state yet, cannot proceed.")
             return
@@ -93,37 +92,13 @@ class UR7e_CubeGrasp(Node):
 
         # 3. Plan and Execute
         # Pass the source_box_id to the planner
-        success = self.plan_pick_and_place(box, box_pose, target_pose)
-        
-        if success:
-            self.execute_jobs()
-        else:
-            self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
-            self.job_queue = []
 
-    def plan_pick_and_place(self, box, source_pose, target_pose):
-        """
-        Plans the sequence with Selective ACM: 
-        1. Allow Collision (Gripper <-> Box ONLY)
-        2. Pre-grasp -> Grasp -> Internal Grip
-        3. Attach Object (Update Planning Scene)
-        4. Lift 
-        5. Move to Target 
-        6. Release -> Detach Object -> Retreat 
-        7. Re-enable Collision (Gripper <-> Box)
-        8. Return Home
-        """
-        
-        # -----------------------------------------------------------
-        # CONFIGURATION & MATH
-        # -----------------------------------------------------------
-        
         # 0) close the gripper
         self.job_queue.append('toggle_grip')
         
-        cube_x = source_pose.position.x
-        cube_y = source_pose.position.y
-        cube_z = source_pose.position.z
+        cube_x = box_pose.position.x
+        cube_y = box_pose.position.y
+        cube_z = box_pose.position.z
 
         bin_x = target_pose.position.x
         bin_y = target_pose.position.y
@@ -165,6 +140,16 @@ class UR7e_CubeGrasp(Node):
             self.get_logger().warn("Could not plan to Home, finishing at retreat pos.")
 
         return True
+        
+        if success:
+            self.execute_jobs()
+
+            print(f"\n[Hello] Press any key to process Box ID {id}...", end='', flush=True)
+            input()
+        else:
+            self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
+            self.job_queue = []
+        
 
     def execute_jobs(self):
         if not self.job_queue:
@@ -187,29 +172,6 @@ class UR7e_CubeGrasp(Node):
             self.get_logger().info("Toggling gripper")
             self._toggle_gripper()
 
-
-        # HANDLE ATTACH
-        elif isinstance(next_job, tuple) and next_job[0] == 'attach_box':
-            _, box_id = next_job
-            self.get_logger().info(f"Attaching object: {box_id}")
-            # Ensure you have a method to attach the box in your class
-            if hasattr(self, 'attach_box'):
-                self.attach_box(box_id)
-            else:
-                self.get_logger().warn("attach_box method missing!")
-            self.execute_jobs()
-
-        # HANDLE DETACH
-        elif isinstance(next_job, tuple) and next_job[0] == 'detach_box':
-            _, box_id = next_job
-            self.get_logger().info(f"Detaching object: {box_id}")
-            # Ensure you have a method to detach the box in your class
-            if hasattr(self, 'detach_box'):
-                self.detach_box(box_id)
-            else:
-                self.get_logger().warn("detach_box method missing!")
-            self.execute_jobs()
-            
         else:
             self.get_logger().error("Unknown job type.")
             self.execute_jobs()
