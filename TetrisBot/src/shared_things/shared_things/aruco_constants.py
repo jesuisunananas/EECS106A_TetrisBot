@@ -32,7 +32,9 @@ BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
 
 # FOR COLLISION OBJECTS:
 TABLE_IDS = [50, 51, 52, 53]
-table = Bundle(name='table', length=5.0, width=5.0, height=0.2, id=TABLE_IDS)
+# table = Bundle(name='table', length=5.07, width= 5.08, height=0.02, id=TABLE_IDS)
+
+table = Bundle(name='table', length= 5.0, width= 5.0, height=0.02, id=TABLE_IDS)
 BUNDLES = {id: table for id in TABLE_IDS}
 
 # Joint dictionaries: 
