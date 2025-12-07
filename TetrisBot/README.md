@@ -19,6 +19,7 @@ ros2 run planning main
 ```
 
 ### Step 3: call service to run packing
+Every time you want to get the arm to move, make a service call in a seperate terminal:
 ```
 ros2 service call /run_packing std_srvs/srv/Empty
 ```
