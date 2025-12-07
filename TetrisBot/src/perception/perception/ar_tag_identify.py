@@ -116,9 +116,12 @@ class TagIdentification(Node):
                         continue
 
                     offset = self.offset_centre(item, pose.orientation) 
-                    pose.position.x += offset[0]
-                    pose.position.y += offset[1]
-                    pose.position.z += offset[2]
+                    
+                    collision_obj_pose = Pose()
+                    collision_obj_pose.position.x = pose.position.x + offset[0]
+                    collision_obj_pose.position.y = pose.position.y + offset[1]
+                    collision_obj_pose.position.z = pose.position.z + offset[2]
+                    collision_obj_pose.orientation = pose.orientation
                     
                     self.get_logger().info(f"posing {item.name}")
                     obj = self.create_collision_object(item, pose)
