@@ -19,7 +19,14 @@ from .aruco_constants import (
     custom_estimatePoseSingleMarkers
 )
 
+from .planning_constants import (
+    GRIPPER_OFFSET_Y,
+    GRIPPER_OFFSET_Z
+)
+
 __all__ = [
+    'GRIPPER_OFFSET_Y',
+    'GRIPPER_OFFSET_Z',
     'BOXES',
     'BINS',
     'BOX_MARKER_IDS',

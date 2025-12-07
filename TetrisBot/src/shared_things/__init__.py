@@ -22,8 +22,15 @@ from shared_things.packing import (
     Box, Bin, Bundle
 )
 
+from shared_things.planning_constants import (
+    GRIPPER_OFFSET_Y,
+    GRIPPER_OFFSET_Z
+)
+
 __all__ = [
     'Box', 'Bin', 'Bundle',
+    'GRIPPER_OFFSET_Y',
+    'GRIPPER_OFFSET_Z',
     'BOXES',
     'BINS',
     'BOX_MARKER_IDS',

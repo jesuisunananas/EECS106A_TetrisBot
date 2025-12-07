@@ -86,10 +86,10 @@ class UR7e_CubeGrasp(Node):
         self.get_logger().info(f'box pose {initial_pose.position.z}')
         self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
-        initial_pose.position.y += -0.035
-        initial_pose.position.z += 0.185
-        final_pose.position.y += -0.035
-        final_pose.position.z += 0.185
+        initial_pose.position.y += GRIPPER_OFFSET_Y
+        initial_pose.position.z += GRIPPER_OFFSET_Z
+        final_pose.position.y += GRIPPER_OFFSET_Y
+        final_pose.position.z += GRIPPER_OFFSET_Z
         
         success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
