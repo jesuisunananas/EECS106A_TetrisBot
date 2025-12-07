@@ -76,6 +76,7 @@ class Bin(BigBox):
                 name = str(id)
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+        self.name = name
 
 class Collider(BigBox):
     def __init__(self, length, width, height, id=-1, name=None):
@@ -89,6 +90,7 @@ class Collider(BigBox):
                 name = str(id)
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+        self.name = name
 
 class Bundle(BigBox):
     def __init__(self, length, width, height, id=[], name=None):
@@ -104,6 +106,7 @@ class Bundle(BigBox):
                 name = str(id)
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
+        self.name = name
         
     @property
     def placed(self):

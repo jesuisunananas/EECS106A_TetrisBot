@@ -3,7 +3,7 @@ Shared constants for ArUco marker detection and identification.
 Marker IDs are configured via launch files.
 """
 
-from shared_things.packing import *
+from packing import *
 import cv2
 import numpy as np
 
