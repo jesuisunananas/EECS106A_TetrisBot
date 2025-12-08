@@ -220,11 +220,11 @@ class ArucoNode(rclpy.node.Node):
             
             for i, marker_id in enumerate(marker_ids):
                 marker_size = get_marker_size(marker_id[0]) # <- new function imported from aruco_constants.py!!
-                if marker_size == 0.05:
+                if marker_size == BIN_MARKER_SIZE:
                     marker_data.append((i, marker_id, marker_size, corners[i]))
                     small_corners.append(corners[i])
                     small_ids.append(marker_id)
-                elif marker_size == 0.15:
+                elif marker_size == DEFAULT_MARKER_SIZE:
                     bigger_marker_data.append((i, marker_id, marker_size, corners[i]))
                     big_corners.append(corners[i])
                     big_ids.append(marker_id)

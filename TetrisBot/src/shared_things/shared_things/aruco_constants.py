@@ -11,7 +11,7 @@ import numpy as np
 BOXES = {
     0: Box(name='cube', length=0.08, width=0.08, height=0.08, id=0),
     1: Box(name='rectangle', length=0.06, width=0.06, height=0.1, id=1),
-    3: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=3),
+    2: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=3),
     # 3: Box(name='ooo orange', length=1.0, width=1.0, height=1.0, id=3),
     # 4: Box(name='cheezzz', length=1.0, width=1.0, height=1.0, id=4),
     # 5: Box(name='bobo', length=1.0, width=1.0, height=1.0, id=5),
@@ -46,8 +46,8 @@ MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
 MARKER_OBJECTS = {**BOXES, **BINS, **BUNDLES}
 
 # Marker sizes in meters
-BOX_MARKER_SIZE = 0.045
-BIN_MARKER_SIZE = 0.045
+BOX_MARKER_SIZE = 0.048
+BIN_MARKER_SIZE = 0.048
 DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
                            # gonna do this so when id not in marker_size_map, 
                            # it doesnt break.

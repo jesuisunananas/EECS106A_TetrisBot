@@ -1,4 +1,5 @@
 # ROS Libraries
+# from TetrisBot.src.shared_things.shared_things.packing.main import packing_with_priors
 from std_srvs.srv import Trigger, Empty
 import rclpy
 from rclpy.node import Node
@@ -18,10 +19,6 @@ from geometry_msgs.msg import PoseArray, Pose, TransformStamped, PoseStamped
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
 # from packing.main import packing_with_priors
 # from packing.config import PackingConfig
-from shape_msgs.msg import SolidPrimitive
-from moveit_msgs.srv import ApplyPlanningScene
-from moveit_msgs.msg import PlanningScene, CollisionObject
-
 
 from box_bin_msgs.msg import BoxBin
 
@@ -49,7 +46,7 @@ class UR7e_CubeGrasp(Node):
         self._client = self.create_service(Empty, '/run_packing', self._placing_service)
 
         # self.cube_pose = None
-        self.current_plan = None
+        # self.current_plan = None
         self.joint_state = None
         self.current_objects = None
         self.is_busy = False
@@ -59,7 +56,8 @@ class UR7e_CubeGrasp(Node):
         self.job_queue = [] 
 
     def joint_state_callback(self, msg: JointState):
-        self.joint_state = msg
+        if not self.is_busy:
+            self.joint_state = msg
     
     def objects_callback(self, msg: BoxBin):
         if msg.box_ids:
@@ -81,42 +79,86 @@ class UR7e_CubeGrasp(Node):
         print(box_ids)
 
         # ---------------------------------------------------------
-        # TODO this is just for initial test, change for more boxes
-        box = get_object_by_id(box_ids[0])
-        initial_pose = box_poses[0]
-        # final_box = get_object_by_id(box_ids[1])
-        final_pose = bin_pose
-        self.get_logger().info(f'box pose {initial_pose.position.z}')
-        self.get_logger().info(f'final callback pose {final_pose.position.z}')
+        # NOTE: Demo 1: this is just for initial test, change for more boxes
+        # box = get_object_by_id(box_ids[0])
+        # initial_pose = box_poses[0]
+        # # final_box = get_object_by_id(box_ids[1])
+        # final_pose = bin_pose
+        # self.get_logger().info(f'box pose {initial_pose.position.z}')
+        # self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
-        # initial_pose.position.y += GRIPPER_OFFSET_Y
-        # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
-        # final_pose.position.y += GRIPPER_OFFSET_Y
-        # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
-        # final_pose.position.z += GRIPPER_OFFSET_Z 
+        # # initial_pose.position.y += GRIPPER_OFFSET_Y
+        # # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
+        # # final_pose.position.y += GRIPPER_OFFSET_Y
+        # # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
+        # # final_pose.position.z += GRIPPER_OFFSET_Z 
         
-        # success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
-        success = self.plan_pick_and_place(box, initial_pose, final_pose)
+        # # success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
+        # success = self.plan_pick_and_place(box, initial_pose, final_pose)
 
-        if success:
-            self.get_logger().info(f"Planning successful for box {id}, running queue.")
-            self.execute_jobs()
-        else:
-            self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
-            self.job_queue = []
+        # if success:
+        #     self.get_logger().info(f"Planning successful for box {id}, running queue.")
+        #     self.execute_jobs()
+        # else:
+        #     self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
+        #     self.job_queue = []
         # ---------------------------------------------------------
         
-        # final_poses, final_ids = ... #TODO: figure out how to get final poses info
-        # for i, _ in enumerate(final_poses):
-        #     try: 
-        #         box_id = box_ids.index(final_ids[i])
-        #     except ValueError:
-        #         self.get_logger().error(f"Unable to find info for box {final_ids[i]}, clearing queue.")
-        #         self.job_queue = []
+        # ---------------------------------------------------------
+        # NOTE: Demo 2: Stack multiple cubes, pausing each time for user input
+        # placed_height = 0.0
+        self.is_busy = True
+        for id in box_ids:
+            box = get_object_by_id(id)
+            # input(f"Press Enter to move box {box.name}, id: {id}:")
+            self.get_logger().info(f"Planning box {box.name}, {id}...")
+            initial_pose = box_poses[box_ids.index(id)]
+            final_pose = bin_pose 
+            # NOTE: ^^^The location of the bin AR_marker actually 
+            # corresponds to the top left corner of the bin pose
+            
+            # placed_height += box.width
+            
+            self.get_logger().info(f'box pose {initial_pose.position.z}')
+            self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
+            success = self.plan_pick_and_place(box, initial_pose, final_pose)
+
+            if success:
+                self.get_logger().info(f"Planning successful for box {id}! Running queue.")
+                # self.is_busy = True
+                # self.execute_jobs()
+                # while self.is_busy:
+                    # To make sure execute_jobs finishes completely before moving to the next box,
+                    # I added the is_busy flag and wait.
+                    # self.get_logger().info(f'Waiting for box {id} to finish moving...')
+                # to stack the cubes, offset the bin pose by the height each time. 
+                # HACK: Since the Pose message type mutates, hopefully this works?
+                
+                bin_pose.position.z += box.width
+            else:
+                self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
+                self.job_queue = []
+                self.is_busy = False
+                return response
+
+        if self.job_queue:
+            self.execute_jobs()
+        # ---------------------------------------------------------
+        # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
+        # box_list = [get_object_by_id(id) for id in box_ids]
+        # box_info = packing_with_priors(box_list=box_list)
+        
+        # for info in box_info:
+        #     box_id = box_ids.index(info[0])
         #     box = get_object_by_id(box_id)
         #     initial_pose = box_poses[box_id]
-        #     final_pose = final_poses[i]
+        #     initial_pose.position.y += GRIPPER_OFFSET_Y
+        #     initial_pose.position.z += GRIPPER_OFFSET_Z + (box.width / 2)
+            
+        #     final_pose = self.calculate_final_pose(info, bin_tf)
+
+            
         #     success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
         #     if success:
@@ -148,7 +190,7 @@ class UR7e_CubeGrasp(Node):
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
-        self.get_logger().info(f'hovering 20cm above the cube surface at z={z_pre}')
+        self.get_loexecutegger().info(f'hovering 20cm above the cube surface at z={z_pre}')
         self.get_logger().info(f'move down by 20cm to z={z_pre - 0.2}')
 
         # 2) Grasp position
@@ -321,7 +363,8 @@ class UR7e_CubeGrasp(Node):
         
         # Move to place location
         # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
-        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.2 + (box.width) + 0.02)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.2 + (box.width) + 0.005) 
+                                                                            # NOTE: decreased place offset from 0.02 -> 0.01
         if not ik_result: 
             self.get_logger().error("IK failed for place")
             return False
@@ -370,6 +413,10 @@ class UR7e_CubeGrasp(Node):
         #     return False
         # self.job_queue.append(ik_result)
 
+        # step 5: reset gripper
+        self.job_queue.append('toggle_grip')
+
+        self.joint_state = ik_result
         return True
 
     def execute_jobs(self):
@@ -450,9 +497,9 @@ class UR7e_CubeGrasp(Node):
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
 
-    def calculate_final_pose(self, box_info: tuple, bin_tf):
+    def calculate_final_pose(self, box_info: tuple, bin_tf) -> Pose:
         # For changing from bin-frame coor to base-link frame
-        id, name, fragility, z_base, z_top, x, y = box_info #TODO ask arjun to include an ID
+        id, name, fragility, z_base, z_top, x, y = box_info
         
         box = get_object_by_id(id)
         pose = PoseStamped()
