@@ -9,8 +9,9 @@ import numpy as np
 
 # Marker IDs (defaults, can be overridden via launch file)
 BOXES = {
-    1: Box(name='cube', length=0.08, width=0.08, height=0.08, id=1),
-    0: Box(name='rectangle', length=0.06, width=0.06, height=0.1, id=0),
+    0: Box(name='cube', length=0.08, width=0.08, height=0.08, id=0),
+    1: Box(name='rectangle', length=0.06, width=0.06, height=0.1, id=1),
+    3: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=3),
     # 3: Box(name='ooo orange', length=1.0, width=1.0, height=1.0, id=3),
     # 4: Box(name='cheezzz', length=1.0, width=1.0, height=1.0, id=4),
     # 5: Box(name='bobo', length=1.0, width=1.0, height=1.0, id=5),
@@ -23,8 +24,8 @@ BINS = {
 }
 
 COLLISION_MESHES = {
-    1: 'src/perception/perception/3d_models/cube.stl',
-    0: 'src/perception/perception/3d_models/rectangle.stl'
+    0: 'src/perception/perception/3d_models/cube.stl',
+    1: 'src/perception/perception/3d_models/rectangle.stl'
 }
 
 BOX_MARKER_IDS = BOXES.keys()
