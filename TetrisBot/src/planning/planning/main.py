@@ -95,7 +95,8 @@ class UR7e_CubeGrasp(Node):
         # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
         # final_pose.position.z += GRIPPER_OFFSET_Z 
         
-        success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
+        # success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
+        success = self.plan_pick_and_place(box, initial_pose, final_pose)
 
         if success:
             self.get_logger().info(f"Planning successful for box {id}, running queue.")
@@ -223,10 +224,12 @@ class UR7e_CubeGrasp(Node):
         r_source_z_axis = r_source.apply(r_side_offset) # get in base-link frame
         r_dest_z_axis = r_dest.apply(r_side_offset)
 
-        y_axis_base = [0, 1, 0] #should be pointing out towards from base_link
-        r_source_ee, _, _ = R.align_vectors(r_source_z_axis, y_axis_base) # get rotation from ee pointing out towards 
+        y_axis_base = np.array([[0, 1, 0]]) #should be pointing out towards from base_link
+        # self.get_logger().info(f'source z shape: {r_source_z_axis.shape}')
+        self.get_logger().info(f'y-axis: {y_axis_base.shape}')
+        r_source_ee, _ = R.align_vectors(np.atleast_2d(r_source_z_axis), y_axis_base) # get rotation from ee pointing out towards 
                                                                         # to z-axis of box frame
-        r_dest_ee, _, _ = R.align_vectors(r_dest_z_axis, y_axis_base)
+        r_dest_ee, _ = R.align_vectors(np.atleast_2d(r_dest_z_axis), y_axis_base)
 
         r_ee = R.from_quat([0, 1, 0, 0])
 
@@ -238,6 +241,9 @@ class UR7e_CubeGrasp(Node):
 
         qx_src, qy_src, qz_src, qw_src = r_source_ee.as_quat() # Convert to quaternion for IK (IMPORTANT!)
         qx_dst, qy_dst, qz_dst, qw_dst = r_dest_ee.as_quat()
+
+
+        # self.get_logger().info(f'')
         
         
         # CALCULATE PRE-GRASP AND GRASP POSITIONS:
@@ -262,7 +268,7 @@ class UR7e_CubeGrasp(Node):
         # pre_grasp_base_link = r_source.apply(pre_grasp_local)
         x_pre = source_pose.position.x #+ pre_grasp_base_link[0]
         y_pre = source_pose.position.y #+ pre_grasp_base_link[1]
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width / 2) + 0.2 #+ pre_grasp_base_link[2]
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 #+ pre_grasp_base_link[2]
 
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
@@ -271,10 +277,10 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(ik_result)
 
         # Calculate Source Grasp (Entering the object)
-        grasp_base_link = r_source.apply(grasp_local)
-        x_g = source_pose.position.x + grasp_base_link[0]
-        y_g = source_pose.position.y + grasp_base_link[1]
-        z_g = source_pose.position.z + grasp_base_link[2]
+        # grasp_base_link = r_source.apply(grasp_local)
+        x_g = source_pose.position.x #+ grasp_base_link[0]
+        y_g = source_pose.position.y #+ grasp_base_link[1]
+        z_g = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.1 #+ grasp_base_link[2]
 
         ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
@@ -289,7 +295,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append('toggle_grip')
 
         # Lift
-        ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g + 0.2, qx_src, qy_src, qz_src, qw_src)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g + 0.1, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
             self.get_logger().error("IK failed for lift")
             return False
@@ -299,21 +305,21 @@ class UR7e_CubeGrasp(Node):
         # step 3: move to place location
 
         # based on the target pose position, add an offset to accommodate for the end effector being slightly inside the cube
-        grasp_offset = r_dest.apply(grasp_local)
-        x_place = target_pose.position.x + grasp_offset[0]
-        y_place = target_pose.position.y + grasp_offset[1]
-        z_place = target_pose.position.z + 0.03 + grasp_offset[2] # 3cm to the z so the end effector is 
+        # grasp_offset = r_dest.apply(grasp_local)
+        x_place = target_pose.position.x #+ grasp_offset[0]
+        y_place = target_pose.position.y #+ grasp_offset[1]
+        z_place = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2 #+ 0.03 + grasp_offset[2] # 3cm to the z so the end effector is 
                                                                     # slightly above the placement surface
 
         # Position above place location before lowering to place location
-        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place + 0.15, qx_dst, qy_dst, qz_dst, qw_dst)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
         if not ik_result: 
             self.get_logger().error("IK failed for above place")
             return False
         self.job_queue.append(ik_result)
         
         # Move to place location
-        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
         if not ik_result: 
             self.get_logger().error("IK failed for place")
             return False
@@ -327,13 +333,14 @@ class UR7e_CubeGrasp(Node):
         # -----------------------------------------------------------
         # step 5: back out of box
 
-        offset_pre_dst = r_dest.apply(pre_grasp_local)
-        x_retreat = target_pose.position.x + offset_pre_dst[0]
-        y_retreat = target_pose.position.y + offset_pre_dst[1]
-        z_retreat = target_pose.position.z + offset_pre_dst[2]
+        # offset_pre_dst = r_dest.apply(pre_grasp_local)
+        # x_retreat = target_pose.position.x + offset_pre_dst[0]
+        # y_retreat = target_pose.position.y + offset_pre_dst[1]
+        # z_retreat = target_pose.position.z + offset_pre_dst[2]
 
         # Move up to above place location
-        ik_result = self.ik_planner.compute_ik(ik_result, x_retreat, y_retreat, z_retreat + 0.15, qx_dst, qy_dst, qz_dst, qw_dst)
+        # ik_result = self.ik_planner.compute_ik(ik_result, x_retreat, y_retreat, z_retreat + 0.15, qx_dst, qy_dst, qz_dst, qw_dst)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
         if not ik_result: 
             self.get_logger().error("IK failed for retreat")
             return False
