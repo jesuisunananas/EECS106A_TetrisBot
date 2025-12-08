@@ -52,6 +52,7 @@ class UR7e_CubeGrasp(Node):
         self.current_plan = None
         self.joint_state = None
         self.current_objects = None
+        self.is_busy = False
 
         self.ik_planner = IKPlanner()
 
@@ -79,6 +80,7 @@ class UR7e_CubeGrasp(Node):
 
         print(box_ids)
 
+        # ---------------------------------------------------------
         # TODO this is just for initial test, change for more boxes
         box = get_object_by_id(box_ids[0])
         initial_pose = box_poses[0]
@@ -100,155 +102,33 @@ class UR7e_CubeGrasp(Node):
         else:
             self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
             self.job_queue = []
-
-        # final_poses = ...
+        # ---------------------------------------------------------
+        
+        # final_poses, final_ids = ... #TODO: figure out how to get final poses info
         # for i, _ in enumerate(final_poses):
-        #     box = get_object_by_id(box_ids[i])
-        #     initial_pose = ...
+        #     try: 
+        #         box_id = box_ids.index(final_ids[i])
+        #     except ValueError:
+        #         self.get_logger().error(f"Unable to find info for box {final_ids[i]}, clearing queue.")
+        #         self.job_queue = []
+
+        #     box = get_object_by_id(box_id)
+        #     initial_pose = box_poses[box_id]
         #     final_pose = final_poses[i]
         #     success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
         #     if success:
         #         self.get_logger().info(f"Planning successful for box {id}, running queue.")
+        #         self.is_busy = True
         #         self.execute_jobs()
         #     else:
         #         self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
         #         self.job_queue = []
+
+        #     while self.is_busy:
+        #         self.get_logger().info(f'Waiting for box {id} to finish')
         
         return response
-
-    def update_collision_object(self, box, final_pose, operation=CollisionObject.REMOVE):
-        # NOTE: if this removes everything else in planning scene, whoops
-        # box_primative = SolidPrimitive()
-        # box_primative.type = SolidPrimitive.BOX
-
-        # try:
-        #     box_primative.dimensions = [box.length, box.width, box.height]
-        # except:
-        #     self.get_logger().warn(f"cannot add collison object! item as no dimension attributes!")
-        #     return None
-        
-        coll_obj = CollisionObject()
-        coll_obj.header.frame_id = 'base_link'
-        coll_obj.id = str(box.id)
-        # coll_obj.primitives = [box_primative]
-        coll_obj.primitive_poses = [final_pose]
-        coll_obj.operation = operation
-
-        scene_msg = PlanningScene()
-        scene_msg.world.collision_objects = coll_obj
-        scene_msg.is_diff = True
-
-        req = ApplyPlanningScene.Request()
-        req.scene = scene_msg
-
-        # self.get_logger().info('Calling service (batch)')
-        future = self.scene_cli.call_async(req)
-        future.add_done_callback(self.collision_response_callback)
-    
-    def collision_response_callback(self, future):
-        try:
-            response = future.result()
-            if not response.success:
-                self.get_logger().warn('Failed to remove collision object')
-        except Exception as e:
-            self.get_logger().warn(f'Fail to remove collision object: {e}')
-    
-    # def update_acm(self, box, allow=True):
-    #     """
-    #     Updates the Allowed Collision Matrix to allow/disallow collisions 
-    #     between the gripper and everything else.
-    #     """
-    #     scene_msg = PlanningScene()
-    #     scene_msg.is_diff = True
-    #     scene_msg.robot_state.is_diff = True
-        
-    #     acm = AllowedCollisionMatrix()
-        
-    #     # gripper_links = ['robotiq_85_base_link', 'robotiq_85_left_inner_knuckle_link', 
-    #     #                  'robotiq_85_left_finger_tip_link', 'robotiq_85_left_knuckle_link', 
-    #     #                  'robotiq_85_right_inner_knuckle_link', 'robotiq_85_right_finger_tip_link', 
-    #     #                  'robotiq_85_right_knuckle_link', 'wrist_3_link']
-        
-    #     # acm.entry_names = gripper_links
-        
-    #     # for _ in gripper_links:
-    #     #     entry = AllowedCollisionEntry()
-    #     #     entry.enabled = [not allow] * len(gripper_links) 
-    #     #     acm.entry_values.append(entry)
-
-    #     entry = AllowedCollisionEntry()
-    #     entry.enabled
-
-    #     scene_msg.allowed_collision_matrix = acm
-    #     self.scene_pub.publish(scene_msg)
-    #     self.get_logger().info(f"ACM Updated: Gripper Collisions Allowed = {allow}")
-
-    # ## TODO: This needs to be updated with the correct world and child frame
-    # def _pose_to_transform_stamped(self, pose: Pose, child_frame, world_frame = "base_link"):
-    #     tf = TransformStamped()
-    #     tf.header.frame_id = world_frame  # or whatever your fixed frame is
-    #     tf.child_frame_id = child_frame
-    #     tf.transform.translation.x = pose.position.x
-    #     tf.transform.translation.y = pose.position.y
-    #     tf.transform.translation.z = pose.position.z
-    #     tf.transform.rotation = pose.orientation
-    #     return tf
-
-    # def cube_callback(self, msg: BoxBin):
-    #     if self.cube_pose is not None:
-    #         return
-
-    #     if self.joint_state is None:
-    #         self.get_logger().info("No joint state yet, cannot proceed.")
-    #         return
-
-    #     if not msg.box_poses:
-    #         self.get_logger().info("message received but no box poses yet.")
-    #         return
-
-    #     box_ids = msg.box_ids
-    #     box_poses = msg.box_poses
-    #     bin_id = msg.bin_ids[0]
-    #     bin_pose = msg.bin_poses[0]
-
-    #     boxes_for_rl = [get_object_by_id(bid) for bid in box_ids if is_box(bid)]
-    #     bin_obj = get_object_by_id(bin_id)
-    #     bin_dims = (bin_obj.length, bin_obj.width, bin_obj.height)
-    #     config = PackingConfig(bin_dims=bin_dims, n_objects=len(boxes_for_rl))
-    #     box_info_list = packing_with_priors(config=config, box_list=boxes_for_rl, vis=False) #toggle True for pybullet sim
-    #     placement_by_id = {info[0]: info for info in box_info_list}
-
-    #     for i, id in enumerate(box_ids):
-            
-    #         print(f"\n[Hello] Press any key to process Box ID {id}...", end='', flush=True)
-    #         input() 
-            
-    #         box_pose = box_poses[i]
-    #         box = get_object_by_id(id)
-            
-    #         self.cube_pose = box_pose # NOTE: not sure what this does... maybe to persist the current working cube pose?
-    #         box_info = placement_by_id[id]
-
-    #         # bin_tf is the transform from bin frame to robot base/world
-    #         # however you're currently getting bin_tf, plug it in here.
-    #         # If you only have a Pose for the bin, convert to TransformStamped.
-    #         ## TODO: This has to be updated in accordance to pose to transform stamped
-    #         bin_tf = self._pose_to_transform_stamped(bin_pose)
-
-    #         # 2. Determine Target Pose
-    #         final_pose_stamped = self.calculate_final_pose(box_info, bin_tf)
-    #         target_pose = final_pose_stamped.pose
-
-    #         # 3. Plan and Execute
-    #         # Pass the source_box_id to the planner
-    #         success = self.plan_pick_and_place(box, box_pose, target_pose)
-            
-    #         if success:
-    #             self.execute_jobs()
-    #         else:
-    #             self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
-    #             self.job_queue = []
 
     def test_plan_pick_and_place(self, box, source_pose, target_pose):
         
@@ -310,25 +190,17 @@ class UR7e_CubeGrasp(Node):
     def plan_pick_and_place(self, box, source_pose, target_pose):
         """
         Plans the sequence with Selective ACM: 
-        1. Allow Collision (Gripper <-> Box ONLY)
+        1. Allow Collision (Gripper <-> Box ONLY) <--NO
         2. Pre-grasp -> Grasp -> Internal Grip
-        3. Attach Object (Update Planning Scene)
+        3. Attach Object (Update Planning Scene) <--NO
         4. Lift 
         5. Move to Target 
         6. Release -> Detach Object -> Retreat 
-        7. Re-enable Collision (Gripper <-> Box)
+        7. Re-enable Collision (Gripper <-> Box) <--NO
         8. Return Home
         """
-        
-        # -----------------------------------------------------------
-        # CONFIGURATION & MATH
-        # -----------------------------------------------------------
-        
-        # 0) close the gripper
-        self.job_queue.append('toggle_grip')
-        
         box_id = box.id
-        
+
         # --- Orientation Logic ---
         r_source = R.from_quat([
             source_pose.orientation.x, 
@@ -344,48 +216,50 @@ class UR7e_CubeGrasp(Node):
             target_pose.orientation.z, 
             target_pose.orientation.w
         ])
-        # r_side_offset = R.from_euler('y', 90, degrees=True)
-        r_side_offset = [1, 0, 0] # in x-axis of box-frame
 
-        # r_source_ee = r_source * r_side_offset
-        # r_dest_ee   = r_dest * r_side_offset
-        r_source_ee = r_source.apply(r_side_offset) # get in base-link frame
-        r_dest_ee   = r_dest.apply(r_side_offset)
+        r_side_offset = [0, 0, 1] # z-axis of box-frame
 
-        # rx_src, ry_src, rz_src = r_source_ee.as_rotvec() 
-        qx_src, qy_src, qz_src, qw_src = r_source_ee.as_quat() # 4. Convert to quaternion for IK (IMPORTANT!)
+        r_source_z_axis = r_source.apply(r_side_offset) # get in base-link frame
+        r_source_z_axis = r_dest.apply(r_side_offset)
+
+        y_axis_base = [0, 1, 0] #should be pointing out towards from base_link
+        r_source_ee, _, _ = R.align_vectors(r_source_z_axis, y_axis_base) # get rotation from ee pointing out towards 
+                                                                        # to z-axis of box frame
+        r_dest_ee, _, _ = R.align_vectors(r_source_z_axis, y_axis_base)
+
+        qx_src, qy_src, qz_src, qw_src = r_source_ee.as_quat() # Convert to quaternion for IK (IMPORTANT!)
         qx_dst, qy_dst, qz_dst, qw_dst = r_dest_ee.as_quat()
         
         
         # CALCULATE PRE-GRASP AND GRASP POSITIONS:
         # Position the end-effector with 5cm standoff from the box face along the x-axis
-        # pre_grasp_local = [-(box.width / 2.0 + 0.05), 0.0, - box.height / 2.0]
-        pre_grasp_local = [(box.width / 2.0 + 0.05), 0.0, - box.height / 2.0]
+        # TODO: figure out if this would center in box (x & y wise)
+        pre_grasp_local = [(box.width / 2.0), 0.0, (0.05 - box.height / 2.0)]
         # Push the end affector 2cm into the box face along the x-axis
-        # grasp_local = [-(box.width / 2.0 - 0.02), 0.0, - box.height / 2.0]
-        grasp_local = [(box.width / 2.0 - 0.02), 0.0, - box.height / 2.0]
+        grasp_local = [(box.width / 2.0), 0.0, (- box.height / 2.0  - 0.02)]
 
+
+        # -----------------------------------------------------------
+        # CONFIGURATION & MATH
+        # -----------------------------------------------------------
+        
+        # 0) close the gripper
+        self.job_queue.append('toggle_grip')
 
         # -----------------------------------------------------------
         # step 1: position and grasp
         
-        # SELECTIVE ACM: 
-        # Instead of disabling everything, we pass a tuple with the object ID.
-        # This tells the executor to only allow collision between Gripper and THIS box.
-        # NOTE: AI slop; yet to be verified:
-        # self.job_queue.append(('allow_collision', box_id, False))
-
         # Calculate Source Pre-Grasp
         pre_grasp_base_link = r_source.apply(pre_grasp_local)
         x_pre = source_pose.position.x + pre_grasp_base_link[0]
         y_pre = source_pose.position.y + pre_grasp_base_link[1]
         z_pre = source_pose.position.z + pre_grasp_base_link[2]
 
-        pose_pre = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
-        if not pose_pre: 
+        ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
+        if not ik_result: 
             self.get_logger().error("IK failed for pre grasp")
             return False
-        self.job_queue.append(pose_pre)
+        self.job_queue.append(ik_result)
 
         # Calculate Source Grasp (Entering the object)
         grasp_base_link = r_source.apply(grasp_local)
@@ -393,27 +267,24 @@ class UR7e_CubeGrasp(Node):
         y_g = source_pose.position.y + grasp_base_link[1]
         z_g = source_pose.position.z + grasp_base_link[2]
 
-        pose_grasp = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g, qx_src, qy_src, qz_src, qw_src)
-        if not pose_grasp: 
+        ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g, qx_src, qy_src, qz_src, qw_src)
+        if not ik_result: 
             self.get_logger().error("IK failed for post grasp")
             return False
-        self.job_queue.append(pose_grasp)
+        self.job_queue.append(ik_result)
 
         # -----------------------------------------------------------
-        # step 2: grab, attach, lift
+        # step 2: grab, lift
 
+        # Grab
         self.job_queue.append('toggle_grip')
-        
-        # attach collision box to end effector
-        # self.job_queue.append(('attach_box', box_id))
 
         # Lift
-        # pose_lift = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g + 0.2, qx_dst, qy_dst, qz_dst, qw_dst)
-        pose_lift = self.ik_planner.compute_ik(self.joint_state, x_g, y_g, z_g + 0.2, qx_src, qy_src, qz_src, qw_src)
-        if not pose_lift: 
+        ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g + 0.2, qx_src, qy_src, qz_src, qw_src)
+        if not ik_result: 
             self.get_logger().error("IK failed for lift")
             return False
-        self.job_queue.append(pose_lift)
+        self.job_queue.append(ik_result)
 
         # -----------------------------------------------------------
         # step 3: move to place location
@@ -422,23 +293,27 @@ class UR7e_CubeGrasp(Node):
         grasp_offset = r_dest.apply(grasp_local)
         x_place = target_pose.position.x + grasp_offset[0]
         y_place = target_pose.position.y + grasp_offset[1]
-        z_place = target_pose.position.z + 0.1 + grasp_offset[2] # change to 3cm to the z so the end effector is 
+        z_place = target_pose.position.z + 0.03 + grasp_offset[2] # 3cm to the z so the end effector is 
                                                                     # slightly above the placement surface
 
-        pose_place = self.ik_planner.compute_ik(self.joint_state, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
-        if not pose_place: 
+        # Position above place location before lowering to place location
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place + 0.15, qx_dst, qy_dst, qz_dst, qw_dst)
+        if not ik_result: 
+            self.get_logger().error("IK failed for above place")
+            return False
+        self.job_queue.append(ik_result)
+        
+        # Move to place location
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
+        if not ik_result: 
             self.get_logger().error("IK failed for place")
             return False
-        self.job_queue.append(pose_place)
+        self.job_queue.append(ik_result)
 
         # -----------------------------------------------------------
-        # step 4: release and detach
+        # step 4: release
 
         self.job_queue.append('toggle_grip')
-        
-        # DETACH OBJECT:
-        # Drop it in the planning scene before we retreat.
-        # self.job_queue.append(('detach_box', box_id))
 
         # -----------------------------------------------------------
         # step 5: back out of box
@@ -446,22 +321,18 @@ class UR7e_CubeGrasp(Node):
         offset_pre_dst = r_dest.apply(pre_grasp_local)
         x_retreat = target_pose.position.x + offset_pre_dst[0]
         y_retreat = target_pose.position.y + offset_pre_dst[1]
-        z_retreat = (target_pose.position.z + 0.1) + offset_pre_dst[2]
+        z_retreat = target_pose.position.z + offset_pre_dst[2]
 
-        pose_retreat = self.ik_planner.compute_ik(self.joint_state, x_retreat, y_retreat, z_retreat, qx_dst, qy_dst, qz_dst, qw_dst)
-        if not pose_retreat: 
+        # Move up to above place location
+        ik_result = self.ik_planner.compute_ik(ik_result, x_retreat, y_retreat, z_retreat + 0.15, qx_dst, qy_dst, qz_dst, qw_dst)
+        if not ik_result: 
             self.get_logger().error("IK failed for retreat")
             return False
-        self.job_queue.append(pose_retreat)
+        self.job_queue.append(ik_result)
 
         # -----------------------------------------------------------
         # step 6: re-enable collision checking and home
         
-        # RE-ENABLE ACM:
-        # Now that we have pulled out, we re-enable collision checks for this box
-        # so we don't accidentally hit it later.
-        # self.job_queue.append(('allow_collision', box_id, False))
-
         # HOME_X, HOME_Y, HOME_Z = 0.3, 0.0, 0.5 
         # pose_home = self.ik_planner.compute_ik(self.joint_state, HOME_X, HOME_Y, HOME_Z, qx_dst, qy_dst, qz_dst, qw_dst)
         
@@ -471,7 +342,14 @@ class UR7e_CubeGrasp(Node):
         #     self.get_logger().warn("Could not plan to Home, finishing at retreat pos.")
 
         # Moves to home position (tuck)
-        self.job_queue.append('tuck')
+        # self.job_queue.append('tuck')
+
+        #NOTE: maybe don't need to go back to home position? as long as arms out of way i guess
+        # ik_result = self.ik_planner.compute_ik(ik_result, x_retreat, y_retreat, z_retreat, qx_dst, qy_dst, qz_dst, qw_dst)
+        # if not ik_result: 
+        #     self.get_logger().error("IK failed for retreat")
+        #     return False
+        # self.job_queue.append(ik_result)
 
         return True
 
@@ -479,6 +357,7 @@ class UR7e_CubeGrasp(Node):
         if not self.job_queue:
             self.get_logger().info("All jobs completed.")
             # rclpy.shutdown()
+            self.is_busy = False
             return
 
         self.get_logger().info(f"Executing job queue, {len(self.job_queue)} jobs remaining.")
@@ -495,41 +374,6 @@ class UR7e_CubeGrasp(Node):
         elif next_job == 'toggle_grip':
             self.get_logger().info("Toggling gripper")
             self._toggle_gripper()
-
-        # # HANDLE SELECTIVE COLLISION
-        # elif isinstance(next_job, tuple) and next_job[0] == 'allow_collision':
-        #     _, box_id, allow = next_job
-        #     self.get_logger().info(f"Setting ACM: {box_id} allowed={allow}")
-        #     # Update your update_acm method to accept 'object_id'
-        #     self.update_acm(allow=allow)
-        #     self.execute_jobs()
-
-        # # HANDLE ATTACH
-        # elif isinstance(next_job, tuple) and next_job[0] == 'attach_box':
-        #     _, box_id = next_job
-        #     self.get_logger().info(f"Attaching object: {box_id}")
-        #     # Ensure you have a method to attach the box in your class
-        #     if hasattr(self, 'attach_box'):
-        #         self.attach_box(box_id)
-        #     else:
-        #         self.get_logger().warn("attach_box method missing!")
-        #     self.execute_jobs()
-
-        # # HANDLE DETACH
-        # elif isinstance(next_job, tuple) and next_job[0] == 'detach_box':
-        #     _, box_id = next_job
-        #     self.get_logger().info(f"Detaching object: {box_id}")
-        #     # Ensure you have a method to detach the box in your class
-        #     if hasattr(self, 'detach_box'):
-        #         self.detach_box(box_id)
-        #     else:
-        #         self.get_logger().warn("detach_box method missing!")
-        #     self.execute_jobs()
-            
-        # elif next_job == 'disable_acm':
-        #     # Fallback for legacy calls
-        #     self.update_acm(allow=False)
-        #     self.execute_jobs() 
 
         # elif next_job == 'tuck':
         #     self.get_logger().info('Calling tuck function')
@@ -552,9 +396,9 @@ class UR7e_CubeGrasp(Node):
         self.get_logger().info('Gripper toggled.')
         self.execute_jobs()  
     
-    def _tuck(self):
-        # NOTE: figure out how to do go to home/tuck
-        self.execute_jobs()
+    # def _tuck(self):
+    #     # NOTE: figure out how to do go to home/tuck
+    #     self.execute_jobs()
           
     def _execute_joint_trajectory(self, joint_traj):
         self.get_logger().info('Waiting for controller action server...')
@@ -588,6 +432,7 @@ class UR7e_CubeGrasp(Node):
             self.get_logger().error(f'Execution failed: {e}')
 
     def calculate_final_pose(self, box_info: tuple, bin_tf):
+        # For changing from bin-frame coor to base-link frame
         id, name, fragility, z_base, z_top, x, y = box_info #TODO ask arjun to include an ID
         
         box = get_object_by_id(id)
