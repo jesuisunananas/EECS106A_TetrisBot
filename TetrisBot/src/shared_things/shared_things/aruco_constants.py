@@ -46,8 +46,8 @@ MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
 MARKER_OBJECTS = {**BOXES, **BINS, **BUNDLES}
 
 # Marker sizes in meters
-BOX_MARKER_SIZE = 0.05
-BIN_MARKER_SIZE = 0.05
+BOX_MARKER_SIZE = 0.045
+BIN_MARKER_SIZE = 0.045
 DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
                            # gonna do this so when id not in marker_size_map, 
                            # it doesnt break.
