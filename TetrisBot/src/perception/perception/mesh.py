@@ -8,8 +8,8 @@ def get_collision_mesh(logger, file_path):
     """
     Loads a 3D mesh file and converts it to a ROS shape_msgs/Mesh.
     """
-    logger.info(f'Directory: {os.listdir()}')
-    logger.info(f'CWD: {os.getcwd()}')
+    # logger.info(f'Directory: {os.listdir()}')
+    # logger.info(f'CWD: {os.getcwd()}')
     mesh_data = None
     try:
         with open(file_path, 'rb') as f:

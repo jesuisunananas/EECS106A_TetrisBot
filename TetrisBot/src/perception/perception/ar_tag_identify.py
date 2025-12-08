@@ -105,6 +105,10 @@ class TagIdentification(Node):
                         pose.position.x += offset[0]
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]
+
+                        # Create the object and add to batch
+                        obj = self.create_collision_object(item, pose)
+                        collision_objects_batch.append(obj)
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
@@ -118,12 +122,7 @@ class TagIdentification(Node):
                         if table_item is None: table_item = item
                         continue
                     
-                    self.get_logger().info(f"posing {item.name}, at position ({pose.position.x}, {pose.position.y}, {pose.position.z})")
-                    obj = self.create_collision_object(item, pose)
-                    
-                    # Create the object and add to batch
-                    if obj:
-                        collision_objects_batch.append(obj)
+                    self.get_logger().info(f"posing {item.name}, at position ({pose.position.x}, {pose.position.y}, {pose.position.z})")   
                 
                 except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as ex:
                     self.get_logger().warn(f"TF transform failed ({source_frame} -> {target_frame}): {ex}")

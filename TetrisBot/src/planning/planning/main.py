@@ -76,7 +76,7 @@ class UR7e_CubeGrasp(Node):
         box_ids = msg.box_ids
         box_poses = msg.box_poses
         # bin_id = msg.bin_ids[0]
-        # bin_pose = msg.bin_poses[0]
+        bin_pose = msg.bin_poses[0]
 
         print(box_ids)
 
@@ -84,15 +84,16 @@ class UR7e_CubeGrasp(Node):
         # TODO this is just for initial test, change for more boxes
         box = get_object_by_id(box_ids[0])
         initial_pose = box_poses[0]
-        final_box = get_object_by_id(box_ids[1])
-        final_pose = box_poses[1]
+        # final_box = get_object_by_id(box_ids[1])
+        final_pose = bin_pose
         self.get_logger().info(f'box pose {initial_pose.position.z}')
         self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
-        initial_pose.position.y += GRIPPER_OFFSET_Y
-        initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
-        final_pose.position.y += GRIPPER_OFFSET_Y
-        final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
+        # initial_pose.position.y += GRIPPER_OFFSET_Y
+        # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
+        # final_pose.position.y += GRIPPER_OFFSET_Y
+        # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
+        # final_pose.position.z += GRIPPER_OFFSET_Z 
         
         success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
@@ -141,16 +142,16 @@ class UR7e_CubeGrasp(Node):
         # 1) Pregrasp at 20cm above the cube surface
         x_pre = source_pose.position.x
         y_pre = source_pose.position.y
-        z_pre = source_pose.position.z + 0.2
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 - 0.01
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
         self.get_logger().info(f'hovering 20cm above the cube surface at z={z_pre}')
-        self.get_logger().info(f'move down by 10cm to z={z_pre - 0.2}')
+        self.get_logger().info(f'move down by 20cm to z={z_pre - 0.2}')
 
         # 2) Grasp position
-        ik_result = self.ik_planner.compute_ik(ik_result, x_pre, y_pre, z_pre - 0.2)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_pre, y_pre, z_pre - 0.2) 
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
@@ -165,13 +166,13 @@ class UR7e_CubeGrasp(Node):
         # 5) Move to the x and y position of final pose
         x_final = target_pose.position.x
         y_final = target_pose.position.y
-        z_final = target_pose.position.z + 0.2
+        z_final = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2
         ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
         # 6) Lower to final pose z
-        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.2)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.2 + (box.width) + 0.02)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
@@ -220,12 +221,20 @@ class UR7e_CubeGrasp(Node):
         r_side_offset = [0, 0, 1] # z-axis of box-frame
 
         r_source_z_axis = r_source.apply(r_side_offset) # get in base-link frame
-        r_source_z_axis = r_dest.apply(r_side_offset)
+        r_dest_z_axis = r_dest.apply(r_side_offset)
 
         y_axis_base = [0, 1, 0] #should be pointing out towards from base_link
         r_source_ee, _, _ = R.align_vectors(r_source_z_axis, y_axis_base) # get rotation from ee pointing out towards 
                                                                         # to z-axis of box frame
-        r_dest_ee, _, _ = R.align_vectors(r_source_z_axis, y_axis_base)
+        r_dest_ee, _, _ = R.align_vectors(r_dest_z_axis, y_axis_base)
+
+        r_ee = R.from_quat([0, 1, 0, 0])
+
+        r_source_ee = r_source_ee.as_matrix() @ r_ee.as_matrix() 
+        r_dest_ee = r_dest_ee.as_matrix() @ r_ee.as_matrix()
+
+        r_source_ee = R.from_matrix(r_source_ee)
+        r_dest_ee = R.from_matrix(r_dest_ee)
 
         qx_src, qy_src, qz_src, qw_src = r_source_ee.as_quat() # Convert to quaternion for IK (IMPORTANT!)
         qx_dst, qy_dst, qz_dst, qw_dst = r_dest_ee.as_quat()
@@ -234,9 +243,9 @@ class UR7e_CubeGrasp(Node):
         # CALCULATE PRE-GRASP AND GRASP POSITIONS:
         # Position the end-effector with 5cm standoff from the box face along the x-axis
         # TODO: figure out if this would center in box (x & y wise)
-        pre_grasp_local = [(box.width / 2.0), 0.0, (0.05 - box.height / 2.0)]
+        # pre_grasp_local = [(box.width / 2.0), 0.0, (0.05 - box.height / 2.0)]
         # Push the end affector 2cm into the box face along the x-axis
-        grasp_local = [(box.width / 2.0), 0.0, (- box.height / 2.0  - 0.02)]
+        # grasp_local = [(box.width / 2.0), 0.0, (- box.height / 2.0  - 0.02)]
 
 
         # -----------------------------------------------------------
@@ -250,10 +259,10 @@ class UR7e_CubeGrasp(Node):
         # step 1: position and grasp
         
         # Calculate Source Pre-Grasp
-        pre_grasp_base_link = r_source.apply(pre_grasp_local)
-        x_pre = source_pose.position.x + pre_grasp_base_link[0]
-        y_pre = source_pose.position.y + pre_grasp_base_link[1]
-        z_pre = source_pose.position.z + pre_grasp_base_link[2]
+        # pre_grasp_base_link = r_source.apply(pre_grasp_local)
+        x_pre = source_pose.position.x #+ pre_grasp_base_link[0]
+        y_pre = source_pose.position.y #+ pre_grasp_base_link[1]
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width / 2) + 0.2 #+ pre_grasp_base_link[2]
 
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
