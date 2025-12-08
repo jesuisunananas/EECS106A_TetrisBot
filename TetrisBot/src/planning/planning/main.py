@@ -145,20 +145,20 @@ class UR7e_CubeGrasp(Node):
         if self.job_queue:
             self.execute_jobs()
         # ---------------------------------------------------------
-        # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
+        # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         # box_list = [get_object_by_id(id) for id in box_ids]
-        # box_info = packing_with_priors(box_list=box_list)
+        # box_info = packing_with_priors(box_list=box_list, vis=True)
         
+        # self.is_busy = True
         # for info in box_info:
         #     box_id = box_ids.index(info[0])
         #     box = get_object_by_id(box_id)
         #     initial_pose = box_poses[box_id]
-        #     initial_pose.position.y += GRIPPER_OFFSET_Y
-        #     initial_pose.position.z += GRIPPER_OFFSET_Z + (box.width / 2)
+        #     # initial_pose.position.y += GRIPPER_OFFSET_Y
+        #     # initial_pose.position.z += GRIPPER_OFFSET_Z + (box.width / 2)
             
         #     final_pose = self.calculate_final_pose(info, bin_tf)
 
-            
         #     success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
         #     if success:
