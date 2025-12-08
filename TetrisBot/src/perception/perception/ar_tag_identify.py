@@ -99,6 +99,12 @@ class TagIdentification(Node):
                         # self.get_logger().info(f"The item {id} is a box")
                         box_ids.append(id)
                         box_poses.append(pose)
+
+                        offset = self.offset_centre(item, pose.orientation) 
+                    
+                        pose.position.x += offset[0]
+                        pose.position.y += offset[1]
+                        pose.position.z += offset[2]
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
@@ -111,12 +117,6 @@ class TagIdentification(Node):
                         self.get_logger().info(f'Table z: {[pose.position.z]}')
                         if table_item is None: table_item = item
                         continue
-
-                    offset = self.offset_centre(item, pose.orientation) 
-                    
-                    pose.position.x += offset[0]
-                    pose.position.y += offset[1]
-                    pose.position.z += offset[2]
                     
                     self.get_logger().info(f"posing {item.name}, at position ({pose.position.x}, {pose.position.y}, {pose.position.z})")
                     obj = self.create_collision_object(item, pose)
