@@ -268,7 +268,7 @@ class UR7e_CubeGrasp(Node):
         # pre_grasp_base_link = r_source.apply(pre_grasp_local)
         x_pre = source_pose.position.x #+ pre_grasp_base_link[0]
         y_pre = source_pose.position.y #+ pre_grasp_base_link[1]
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 #+ pre_grasp_base_link[2]
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 - 0.02 #+ pre_grasp_base_link[2]
 
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
@@ -280,7 +280,7 @@ class UR7e_CubeGrasp(Node):
         # grasp_base_link = r_source.apply(grasp_local)
         x_g = source_pose.position.x #+ grasp_base_link[0]
         y_g = source_pose.position.y #+ grasp_base_link[1]
-        z_g = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.1 #+ grasp_base_link[2]
+        z_g = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) - 0.02 #+ grasp_base_link[2]
 
         ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
@@ -295,7 +295,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append('toggle_grip')
 
         # Lift
-        ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g + 0.1, qx_src, qy_src, qz_src, qw_src)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_g, y_g, z_g + 0.2, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
             self.get_logger().error("IK failed for lift")
             return False
@@ -312,14 +312,16 @@ class UR7e_CubeGrasp(Node):
                                                                     # slightly above the placement surface
 
         # Position above place location before lowering to place location
-        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
+        # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place)
         if not ik_result: 
             self.get_logger().error("IK failed for above place")
             return False
         self.job_queue.append(ik_result)
         
         # Move to place location
-        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
+        # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.2 + (box.width) + 0.02)
         if not ik_result: 
             self.get_logger().error("IK failed for place")
             return False
@@ -340,7 +342,8 @@ class UR7e_CubeGrasp(Node):
 
         # Move up to above place location
         # ik_result = self.ik_planner.compute_ik(ik_result, x_retreat, y_retreat, z_retreat + 0.15, qx_dst, qy_dst, qz_dst, qw_dst)
-        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
+        # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place, qx_dst, qy_dst, qz_dst, qw_dst)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place)
         if not ik_result: 
             self.get_logger().error("IK failed for retreat")
             return False
