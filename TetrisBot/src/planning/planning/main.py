@@ -82,14 +82,15 @@ class UR7e_CubeGrasp(Node):
         # TODO this is just for initial test, change for more boxes
         box = get_object_by_id(box_ids[0])
         initial_pose = box_poses[0]
+        final_box = get_object_by_id(box_ids[1])
         final_pose = box_poses[1]
         self.get_logger().info(f'box pose {initial_pose.position.z}')
         self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
         initial_pose.position.y += GRIPPER_OFFSET_Y
-        initial_pose.position.z += GRIPPER_OFFSET_Z
+        initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
         final_pose.position.y += GRIPPER_OFFSET_Y
-        final_pose.position.z += GRIPPER_OFFSET_Z
+        final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
         
         success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
@@ -266,10 +267,10 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(ik_result)
 
         self.get_logger().info(f'hovering 20cm above the cube surface at z={z_pre}')
-        self.get_logger().info(f'move down by 10cm to z={z_pre - 0.1}')
+        self.get_logger().info(f'move down by 10cm to z={z_pre - 0.2}')
 
         # 2) Grasp position
-        ik_result = self.ik_planner.compute_ik(ik_result, x_pre, y_pre, z_pre - 0.1)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_pre, y_pre, z_pre - 0.2)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
@@ -290,7 +291,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(ik_result)
 
         # 6) Lower to final pose z
-        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.1)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.2)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
