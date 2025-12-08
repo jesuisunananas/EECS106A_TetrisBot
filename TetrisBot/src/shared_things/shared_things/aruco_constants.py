@@ -25,7 +25,8 @@ BINS = {
 
 COLLISION_MESHES = {
     0: 'src/perception/perception/3d_models/cube.stl',
-    1: 'src/perception/perception/3d_models/rectangle.stl'
+    1: 'src/perception/perception/3d_models/rectangle.stl',
+    2: 'src/perception/perception/3d_models/small_box.stl'
 }
 
 BOX_MARKER_IDS = BOXES.keys()
