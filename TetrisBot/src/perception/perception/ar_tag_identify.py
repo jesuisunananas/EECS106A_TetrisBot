@@ -52,6 +52,7 @@ class TagIdentification(Node):
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self.active_items = set()
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
@@ -68,10 +69,14 @@ class TagIdentification(Node):
         bin_ids = []
         box_poses = []
         bin_poses = []
+
+        seen_ids = set()
         
         # Zip the IDs and Poses to simplify code ig
         for id, input_pose in zip(msg.marker_ids, msg.poses):
             if id != self.base_marker:
+
+                seen_ids.add(id)
                     
                 item = get_object_by_id(id) 
 
@@ -144,6 +149,17 @@ class TagIdentification(Node):
             table_obj = self.create_collision_object(table_item, table_pose)
             if table_obj:
                 collision_objects_batch.append(table_obj)
+            #seen_ids.add(table_item.id) uncomment if needed #TODO
+        
+        remove_these_ids = self.active_items - seen_ids
+        for id_to_be_removed in remove_these_ids:
+            coll_obj = CollisionObject()
+            coll_obj.header.frame_id = 'base_link'
+            coll_obj.id = str(id_to_be_removed)
+            coll_obj.operation = CollisionObject.REMOVE
+            collision_objects_batch.append(coll_obj)
+        
+        self.active_items = seen_ids.copy()
         
         # Send all updates in one service call. 
         if collision_objects_batch:
