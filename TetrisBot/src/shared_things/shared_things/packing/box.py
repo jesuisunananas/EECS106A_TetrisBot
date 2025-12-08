@@ -65,9 +65,14 @@ class Box(BigBox):
         self._fragility = f    
 
 class Bin(BigBox):
-    def __init__(self, length, width, height, id=-1, name=None):
+    def __init__(self, length, width, height, id=-1, name=None, resolution=0.02):
         super().__init__(length, width, height, id) 
-        self.height_map = np.zeros((length, width), dtype=float)
+        self.resolution = resolution
+        H = self.grid_length
+        W = self.grid_length
+
+
+        self.height_map = np.zeros((H, W), dtype=float)
         self.priority_list = []
         self.boxes = {}
         
@@ -77,6 +82,18 @@ class Bin(BigBox):
             else:
                 name = f"box_{uuid.uuid4().hex[:8]}"  # short random ID
         self.name = name
+    
+    @property
+    def grid_length(self) -> int:
+        return int(round(self.length / self.resolution))
+    
+    @property
+    def grid_width(self) -> int:
+        return int(round(self.width / self.resolution))
+
+    @property
+    def grid_shape(self) -> tuple[int, int]:
+        return (self.grid_length, self.grid_width)
 
 class Bundle(BigBox):
     def __init__(self, length, width, height, id=[], name=None):
