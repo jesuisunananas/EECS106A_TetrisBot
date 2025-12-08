@@ -46,8 +46,8 @@ MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
 MARKER_OBJECTS = {**BOXES, **BINS, **BUNDLES}
 
 # Marker sizes in meters
-BOX_MARKER_SIZE = 0.05
-BIN_MARKER_SIZE = 0.05
+BOX_MARKER_SIZE = 0.045
+BIN_MARKER_SIZE = 0.045
 DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
                            # gonna do this so when id not in marker_size_map, 
                            # it doesnt break.
@@ -88,10 +88,12 @@ def custom_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
     '''
     Simplified version that matches the original function's output format
     '''
-    marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
-                              [marker_size / 2, marker_size / 2, 0],
-                              [marker_size / 2, -marker_size / 2, 0],
-                              [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
+    marker_points = np.array([
+        [-marker_size / 2, marker_size / 2, 0],
+        [marker_size / 2, marker_size / 2, 0],
+        [marker_size / 2, -marker_size / 2, 0],
+        [-marker_size / 2, -marker_size / 2, 0]
+    ], dtype=np.float32)
     
     rvecs = []
     tvecs = []
