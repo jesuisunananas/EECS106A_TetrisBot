@@ -4,11 +4,10 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from control_msgs.action import FollowJointTrajectory
-# from geometry_msgs.msg import PointStamped, PoseArray
 from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry
-# from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from sensor_msgs.msg import JointState
 # from tf2_ros import Buffer, TransformListener
+import tf2_ros
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 
@@ -43,6 +42,9 @@ class UR7e_CubeGrasp(Node):
 
         # Create a server for calling placing service
         self._client = self.create_service(Empty, '/run_packing', self._placing_service)
+        
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
         # self.cube_pose = None
         # self.current_plan = None
@@ -72,7 +74,7 @@ class UR7e_CubeGrasp(Node):
         msg = self.current_objects
         box_ids = msg.box_ids
         box_poses = msg.box_poses
-        # bin_id = msg.bin_ids[0]
+        bin_id = msg.bin_ids[0]
         bin_pose = msg.bin_poses[0]
 
         print(box_ids)
@@ -105,34 +107,34 @@ class UR7e_CubeGrasp(Node):
         
         # ---------------------------------------------------------
         # NOTE: Demo 2: Stack multiple cubes, pausing each time for user input
-        self.is_busy = True
-        for id in box_ids:
-            box = get_object_by_id(id)
-            # input(f"Press Enter to move box {box.name}, id: {id}:")
-            self.get_logger().info(f"Planning box {box.name}, {id}...")
-            initial_pose = box_poses[box_ids.index(id)]
-            final_pose = bin_pose 
-            # TODO: ^^^The location of the bin AR_marker should actually 
-            # correspond to the top left corner of the bin pose, so placed 
-            # blocks doesn't cover the bin marker.
-            # TODO: fix in ar_tag_identify.py
+        # self.is_busy = True
+        # for id in box_ids:
+        #     box = get_object_by_id(id)
+        #     # input(f"Press Enter to move box {box.name}, id: {id}:")
+        #     self.get_logger().info(f"Planning box {box.name}, {id}...")
+        #     initial_pose = box_poses[box_ids.index(id)]
+        #     final_pose = bin_pose 
+        #     # TODO: ^^^The location of the bin AR_marker should actually 
+        #     # correspond to the top left corner of the bin pose, so placed 
+        #     # blocks doesn't cover the bin marker.
+        #     # TODO: fix in ar_tag_identify.py
             
-            self.get_logger().info(f'box pose {initial_pose.position.z}')
-            self.get_logger().info(f'final callback pose {final_pose.position.z}')
+        #     self.get_logger().info(f'box pose {initial_pose.position.z}')
+        #     self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
-            success = self.plan_pick_and_place(box, initial_pose, final_pose)
+        #     success = self.plan_pick_and_place(box, initial_pose, final_pose)
 
-            if success:
-                self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
-                bin_pose.position.z += box.width
-            else:
-                self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
-                self.job_queue = []
-                self.is_busy = False
-                return response
+        #     if success:
+        #         self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
+        #         bin_pose.position.z += box.width
+        #     else:
+        #         self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
+        #         self.job_queue = []
+        #         self.is_busy = False
+        #         return response
 
-        if self.job_queue:
-            self.execute_jobs()
+        # if self.job_queue:
+        #     self.execute_jobs()
         # ---------------------------------------------------------
         # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
@@ -144,22 +146,27 @@ class UR7e_CubeGrasp(Node):
             box = get_object_by_id(box_id)
             initial_pose = box_poses[box_id]
             
-            bin_tf = self.tf_buffer.lookup_transform("base_link", source_frame, rclpy.time.Time(), timeout=transform_timeout)
+            # NOTE: the bin orientation shouldn't actually matter tbh. 
+            # Placing based on the top left corner should still work
+            transform_timeout = rclpy.duration.Duration(seconds=0.1)
+            bin_tf = self.tf_buffer.lookup_transform("base_link", 
+                                                     f"ar_marker_{bin_id}", 
+                                                     rclpy.time.Time(), 
+                                                     timeout=transform_timeout
+                                                     )
             final_pose = self.calculate_final_pose(info, bin_tf)
 
             success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
-
             if success:
                 self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
-                self.is_busy = True
-                self.execute_jobs()
             else:
                 self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
                 self.job_queue = []
-
-            while self.is_busy:
-                self.get_logger().info(f'Waiting for box {id} to finish')
-        
+                self.is_busy = False
+                return response
+        # ---------------------------------------------------------
+        if self.job_queue:
+            self.execute_jobs()
         return response
 
     def test_plan_pick_and_place(self, box, source_pose, target_pose):

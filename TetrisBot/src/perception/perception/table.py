@@ -2,7 +2,7 @@ import numpy as np
 from geometry_msgs.msg import Pose
 from shared_things import *
 
-def average_table_pose(table, table_poses):
+def average_table_pose(table, table_poses: list[Pose]):
     """
     Calculates the average pose of a table based on a list of detected AR tag poses.
     """
