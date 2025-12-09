@@ -136,7 +136,7 @@ class UR7e_CubeGrasp(Node):
         # if self.job_queue:
         #     self.execute_jobs()
         # ---------------------------------------------------------
-        # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
+        # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
         box_info = packing_with_priors(box_list=box_list, vis=True)
         
@@ -238,7 +238,6 @@ class UR7e_CubeGrasp(Node):
         7. Re-enable Collision (Gripper <-> Box) <--NO
         8. Return Home
         """
-        box_id = box.id
 
         # ===================== Orientation Logic ===================
         r_source = R.from_quat([
@@ -264,7 +263,7 @@ class UR7e_CubeGrasp(Node):
         # self.get_logger().info(f'source z shape: {r_source_z_axis.shape}')
         self.get_logger().info(f'y-axis: {y_axis_base.shape}')
         r_source_ee, _ = R.align_vectors(np.atleast_2d(r_source_z_axis), y_axis_base) # get rotation from ee pointing out towards 
-                                                                        # to z-axis of box frame
+                                                                                      # to z-axis of box frame
         r_dest_ee, _ = R.align_vectors(np.atleast_2d(r_dest_z_axis), y_axis_base)
 
         r_ee = R.from_quat([0, 1, 0, 0])
@@ -362,27 +361,6 @@ class UR7e_CubeGrasp(Node):
             self.get_logger().error("IK failed for retreat")
             return False
         self.job_queue.append(ik_result)
-        
-        # -----------------------------------------------------------
-        # step 7: re-enable collision checking and home
-        
-        # HOME_X, HOME_Y, HOME_Z = 0.3, 0.0, 0.5 
-        # pose_home = self.ik_planner.compute_ik(self.joint_state, HOME_X, HOME_Y, HOME_Z, qx_dst, qy_dst, qz_dst, qw_dst)
-        
-        # if pose_home:
-        #     self.job_queue.append(pose_home)
-        # else:
-        #     self.get_logger().warn("Could not plan to Home, finishing at retreat pos.")
-
-        # Moves to home position (tuck)
-        # self.job_queue.append('tuck')
-
-        #NOTE: maybe don't need to go back to home position? as long as arms out of way i guess
-        # ik_result = self.ik_planner.compute_ik(ik_result, x_retreat, y_retreat, z_retreat, qx_dst, qy_dst, qz_dst, qw_dst)
-        # if not ik_result: 
-        #     self.get_logger().error("IK failed for retreat")
-        #     return False
-        # self.job_queue.append(ik_result)
 
         # -----------------------------------------------------------
         # STEP 7: re-open gripper
