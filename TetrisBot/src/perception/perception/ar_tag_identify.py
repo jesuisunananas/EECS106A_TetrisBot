@@ -102,7 +102,7 @@ class TagIdentification(Node):
 
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
-                        offset = self.offset_centre(item, pose.orientation) 
+                        offset = self.offset_centre(item, item.offset, pose.orientation) 
                         pose.position.x += offset[0]
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]
@@ -214,7 +214,7 @@ class TagIdentification(Node):
         except Exception as e:
             self.get_logger().warn(f'Fail to add collision objects: {e}')
 
-    def offset_centre(self, item, orientation_q):
+    def offset_centre(self, item, offset, orientation_q):
         """
         Calculates the offset in the world frame based on the object's orientation.
         """
@@ -226,7 +226,7 @@ class TagIdentification(Node):
         ])
         
         # Offset the box centre from the marker:
-        local_offset = np.array([0.0, 0.0, -item.length / 2.0])
+        local_offset = np.array(offset)
         
         # Rotate that offset vector to align with the object's current orientation in world
         return r.apply(local_offset)

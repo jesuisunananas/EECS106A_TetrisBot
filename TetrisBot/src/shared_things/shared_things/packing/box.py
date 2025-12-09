@@ -2,12 +2,14 @@ import numpy as np # pyright: ignore[reportMissingImports]
 import uuid
 
 class BigBox:
-    def __init__(self, length, width, height, id, offsets=None):
+    def __init__(self, length, width, height, id, offset=None):
         self.length = length
         self.width = width
         self.height = height
         self.id = id
-        self.offsets = offsets
+        if not offset:
+            self.offset = [0.0, 0.0, -self.length / 2.0]
+        self.offset = offset
         
     @property
     def length(self):
@@ -45,14 +47,14 @@ class BigBox:
     
     @property
     def offset(self):
-        if not self.offsets:
-            print("this object has no offsets")
+        if not self.offset:
+            print("this object has no offset")
             return [0.0, 0.0, 0.0]
-        return self.offsets
+        return self.offset
 
 class Box(BigBox):
-    def __init__(self, length, width, height, id=-1, fragility=1.0, name=None, offsets=None):
-        super().__init__(length, width, height, id, offsets)
+    def __init__(self, length, width, height, id=-1, fragility=1.0, name=None, offset=None):
+        super().__init__(length, width, height, id, offset)
         if name is None:
             if id != -1:
                 name = str(id)
@@ -73,7 +75,7 @@ class Box(BigBox):
         self._fragility = f    
 
 class Bin(BigBox):
-    def __init__(self, length, width, height, id=-1, name=None, resolution=0.02, offsets=None):
+    def __init__(self, length, width, height, id=-1, name=None, resolution=0.02, offset=None):
         super().__init__(length, width, height, id) 
         self.resolution = resolution
         H = self.grid_length
@@ -104,7 +106,7 @@ class Bin(BigBox):
         return (self.grid_length, self.grid_width)
 
 class Bundle(BigBox):
-    def __init__(self, length, width, height, id=[], name=None, offsets=None):
+    def __init__(self, length, width, height, id=[], name=None, offset=None):
         super().__init__(length, width, height, id) 
         if not isinstance(id, list): raise TypeError("Bundle objects should have a list of id's")
         # self.height_map = np.zeros((length, width), dtype=int)
