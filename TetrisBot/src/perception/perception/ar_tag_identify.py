@@ -102,14 +102,13 @@ class TagIdentification(Node):
 
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
-                        box_ids.append(id)
-                        box_poses.append(pose)
-
                         offset = self.offset_centre(item, pose.orientation) 
-                    
                         pose.position.x += offset[0]
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]
+                        
+                        box_ids.append(id)
+                        box_poses.append(pose)
 
                         # Create the object and add to batch
                         obj = self.create_collision_object(item, pose)

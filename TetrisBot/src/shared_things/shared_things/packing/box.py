@@ -2,12 +2,13 @@ import numpy as np # pyright: ignore[reportMissingImports]
 import uuid
 
 class BigBox:
-    def __init__(self, length, width, height, id):
+    def __init__(self, length, width, height, id, offsets=None):
         self.length = length
         self.width = width
         self.height = height
         self.id = id
-
+        self.offsets = offsets
+        
     @property
     def length(self):
         return self._length
@@ -41,10 +42,17 @@ class BigBox:
     @property
     def volume(self):
         return self.length * self.width * self.height
+    
+    @property
+    def offset(self):
+        if not self.offsets:
+            print("this object has no offsets")
+            return [0.0, 0.0, 0.0]
+        return self.offsets
 
 class Box(BigBox):
-    def __init__(self, length, width, height, id=-1, fragility=1.0, name=None):
-        super().__init__(length, width, height, id)
+    def __init__(self, length, width, height, id=-1, fragility=1.0, name=None, offsets=None):
+        super().__init__(length, width, height, id, offsets)
         if name is None:
             if id != -1:
                 name = str(id)
@@ -65,7 +73,7 @@ class Box(BigBox):
         self._fragility = f    
 
 class Bin(BigBox):
-    def __init__(self, length, width, height, id=-1, name=None, resolution=0.02):
+    def __init__(self, length, width, height, id=-1, name=None, resolution=0.02, offsets=None):
         super().__init__(length, width, height, id) 
         self.resolution = resolution
         H = self.grid_length
@@ -96,7 +104,7 @@ class Bin(BigBox):
         return (self.grid_length, self.grid_width)
 
 class Bundle(BigBox):
-    def __init__(self, length, width, height, id=[], name=None):
+    def __init__(self, length, width, height, id=[], name=None, offsets=None):
         super().__init__(length, width, height, id) 
         if not isinstance(id, list): raise TypeError("Bundle objects should have a list of id's")
         # self.height_map = np.zeros((length, width), dtype=int)
