@@ -20,7 +20,7 @@ from shared_things.aruco_constants import (
 )
 
 from shared_things.packing import (
-    Box, Bin, Bundle
+    Box, Bin, Bundle, packing_with_priors
 )
 
 from shared_things.planning_constants import (
@@ -29,7 +29,7 @@ from shared_things.planning_constants import (
 )
 
 __all__ = [
-    'Box', 'Bin', 'Bundle',
+    'Box', 'Bin', 'Bundle', 'packing_with_priors',
     'GRIPPER_OFFSET_Y',
     'GRIPPER_OFFSET_Z',
     'BOXES',

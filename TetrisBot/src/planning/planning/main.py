@@ -1,5 +1,4 @@
 # ROS Libraries
-# from TetrisBot.src.shared_things.shared_things.packing.main import packing_with_priors
 from std_srvs.srv import Trigger, Empty
 import rclpy
 from rclpy.node import Node
@@ -106,7 +105,6 @@ class UR7e_CubeGrasp(Node):
         
         # ---------------------------------------------------------
         # NOTE: Demo 2: Stack multiple cubes, pausing each time for user input
-        # placed_height = 0.0
         self.is_busy = True
         for id in box_ids:
             box = get_object_by_id(id)
@@ -114,10 +112,10 @@ class UR7e_CubeGrasp(Node):
             self.get_logger().info(f"Planning box {box.name}, {id}...")
             initial_pose = box_poses[box_ids.index(id)]
             final_pose = bin_pose 
-            # NOTE: ^^^The location of the bin AR_marker actually 
-            # corresponds to the top left corner of the bin pose
-            
-            # placed_height += box.width
+            # TODO: ^^^The location of the bin AR_marker should actually 
+            # correspond to the top left corner of the bin pose, so placed 
+            # blocks doesn't cover the bin marker.
+            # TODO: fix in ar_tag_identify.py
             
             self.get_logger().info(f'box pose {initial_pose.position.z}')
             self.get_logger().info(f'final callback pose {final_pose.position.z}')
@@ -125,16 +123,7 @@ class UR7e_CubeGrasp(Node):
             success = self.plan_pick_and_place(box, initial_pose, final_pose)
 
             if success:
-                self.get_logger().info(f"Planning successful for box {id}! Running queue.")
-                # self.is_busy = True
-                # self.execute_jobs()
-                # while self.is_busy:
-                    # To make sure execute_jobs finishes completely before moving to the next box,
-                    # I added the is_busy flag and wait.
-                    # self.get_logger().info(f'Waiting for box {id} to finish moving...')
-                # to stack the cubes, offset the bin pose by the height each time. 
-                # HACK: Since the Pose message type mutates, hopefully this works?
-                
+                self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
                 bin_pose.position.z += box.width
             else:
                 self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
@@ -146,31 +135,30 @@ class UR7e_CubeGrasp(Node):
             self.execute_jobs()
         # ---------------------------------------------------------
         # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
-        # box_list = [get_object_by_id(id) for id in box_ids]
-        # box_info = packing_with_priors(box_list=box_list, vis=True)
+        box_list = [get_object_by_id(id) for id in box_ids]
+        box_info = packing_with_priors(box_list=box_list, vis=True)
         
-        # self.is_busy = True
-        # for info in box_info:
-        #     box_id = box_ids.index(info[0])
-        #     box = get_object_by_id(box_id)
-        #     initial_pose = box_poses[box_id]
-        #     # initial_pose.position.y += GRIPPER_OFFSET_Y
-        #     # initial_pose.position.z += GRIPPER_OFFSET_Z + (box.width / 2)
+        self.is_busy = True
+        for info in box_info:
+            box_id = box_ids.index(info[0])
+            box = get_object_by_id(box_id)
+            initial_pose = box_poses[box_id]
             
-        #     final_pose = self.calculate_final_pose(info, bin_tf)
+            bin_tf = self.tf_buffer.lookup_transform("base_link", source_frame, rclpy.time.Time(), timeout=transform_timeout)
+            final_pose = self.calculate_final_pose(info, bin_tf)
 
-        #     success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
+            success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
-        #     if success:
-        #         self.get_logger().info(f"Planning successful for box {id}, running queue.")
-        #         self.is_busy = True
-        #         self.execute_jobs()
-        #     else:
-        #         self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
-        #         self.job_queue = []
+            if success:
+                self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
+                self.is_busy = True
+                self.execute_jobs()
+            else:
+                self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
+                self.job_queue = []
 
-        #     while self.is_busy:
-        #         self.get_logger().info(f'Waiting for box {id} to finish')
+            while self.is_busy:
+                self.get_logger().info(f'Waiting for box {id} to finish')
         
         return response
 
