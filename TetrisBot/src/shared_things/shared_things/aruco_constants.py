@@ -52,10 +52,7 @@ MARKER_OBJECTS = {**BOXES, **BINS, **BUNDLES}
 # Marker sizes in meters
 BOX_MARKER_SIZE = 0.048
 BIN_MARKER_SIZE = 0.048
-DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
-                           # gonna do this so when id not in marker_size_map, 
-                           # it doesnt break.
-
+DEFAULT_MARKER_SIZE = 0.15
 
 # Utility functions
 def get_object_by_id(marker_id):
