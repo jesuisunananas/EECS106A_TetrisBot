@@ -88,8 +88,11 @@ class IKPlanner(Node):
     def plan_to_joints(self, target_joint_state):
         req = GetMotionPlan.Request()
         req.motion_plan_request.group_name = 'ur_manipulator'
-        req.motion_plan_request.allowed_planning_time = 5.0
+        req.motion_plan_request.allowed_planning_time = 10.0  # Increased from 5.0
         req.motion_plan_request.planner_id = "RRTConnectkConfigDefault"
+        
+        # Allow multiple planning attempts with different random seeds
+        req.motion_plan_request.num_planning_attempts = 5
 
         goal_constraints = Constraints()
         for name, pos in zip(target_joint_state.name, target_joint_state.position):
