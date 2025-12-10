@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from control_msgs.action import FollowJointTrajectory
-from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry
+from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry, CollisionObject
 from sensor_msgs.msg import JointState
 # from tf2_ros import Buffer, TransformListener
 import tf2_ros
@@ -18,7 +18,7 @@ from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
 from shared_things.packing.main import packing_with_priors
 from shared_things.packing.config import PackingConfig
 
-from box_bin_msgs.msg import BoxBin
+from box_bin_msgs.msg import BoxBin, AttachedBox
 
 # Assuming this import exists in your workspace
 from planning.ik import IKPlanner
@@ -31,7 +31,10 @@ class UR7e_CubeGrasp(Node):
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1) 
 
         # Publisher for updating the Planning Scene (ACM)
-        # self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
+        self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
+        
+        # Publisher for attached box ID (tells perception to skip updating this box's collision object)
+        self.attached_box_pub = self.create_publisher(AttachedBox, '/attached_box', 10)
 
         self.exec_ac = ActionClient(
             self, FollowJointTrajectory,
@@ -54,7 +57,14 @@ class UR7e_CubeGrasp(Node):
 
         self.ik_planner = IKPlanner()
 
-        self.job_queue = [] 
+        self.job_queue = []
+        self.attached_box = None  # Track which box is being held 
+        # FIXME from Tuesday session, I have a hunch that IK fails due to the currently grasped collisionObject
+        # stops getting updated by the perception node (bc base_link marker gets blocked). I want to temporarily
+        # remove the grasped collisionObject during planning so this doesn't happen. 
+        
+        # NOTE The current fix are in ar_tag_identify.py and here. I've added a new ROS topic to publish the 
+        # current gripped object ID, and remove the associated collisionObject.
 
     def joint_state_callback(self, msg: JointState):
         if not self.is_busy:
@@ -63,6 +73,22 @@ class UR7e_CubeGrasp(Node):
     def objects_callback(self, msg: BoxBin):
         if msg.box_ids:
             self.current_objects = msg
+    
+    def publish_attached_box(self, box_id):
+        """Publish which box is currently attached to the gripper."""
+        msg = AttachedBox()
+        msg.attached_box_id = box_id
+        self.attached_box_pub.publish(msg)
+        self.attached_box = box_id
+        self.get_logger().info(f"Published attached box: {box_id}")
+    
+    def publish_detached_box(self):
+        """Publish that no box is attached (use -1 as 'all clear' signal)."""
+        msg = AttachedBox()
+        msg.attached_box_id = -1
+        self.attached_box_pub.publish(msg)
+        self.attached_box = None
+        self.get_logger().info("Published detached box (all clear)")
 
     def _placing_service(self, request, response):
         while self.joint_state is None:
@@ -144,17 +170,18 @@ class UR7e_CubeGrasp(Node):
         for info in box_info:
             box_id = box_ids.index(info[0])
             box = get_object_by_id(box_id)
+            bin = get_object_by_id(bin_id)
             initial_pose = box_poses[box_id]
             
             # NOTE: the bin orientation shouldn't actually matter tbh. 
             # Placing based on the top left corner should still work
             transform_timeout = rclpy.duration.Duration(seconds=0.1)
-            bin_tf = self.tf_buffer.lookup_transform("base_link", 
-                                                     f"ar_marker_{bin_id}", 
-                                                     rclpy.time.Time(), 
-                                                     timeout=transform_timeout
-                                                     )
-            final_pose = self.calculate_final_pose(info, bin_pose)
+            # bin_tf = self.tf_buffer.lookup_transform("base_link", 
+            #                                          f"ar_marker_{bin_id}", 
+            #                                          rclpy.time.Time(), 
+            #                                          timeout=transform_timeout
+            #                                          )
+            final_pose = self.calculate_final_pose(info, bin_pose, bin)
 
             success = self.plan_pick_and_place(box, initial_pose, final_pose)
             if success:
@@ -167,6 +194,7 @@ class UR7e_CubeGrasp(Node):
         # ---------------------------------------------------------
         if self.job_queue:
             self.execute_jobs()
+        self.publish_detached_box() # detatch box in case IK fails
         return response
 
     def test_plan_pick_and_place(self, box, source_pose, target_pose):
@@ -253,6 +281,8 @@ class UR7e_CubeGrasp(Node):
             target_pose.orientation.z, 
             target_pose.orientation.w
         ])
+        
+        self.get_logger().info(f'Target pose orientation: qx={target_pose.orientation.x:.3f}, qy={target_pose.orientation.y:.3f}, qz={target_pose.orientation.z:.3f}, qw={target_pose.orientation.w:.3f}')
 
         r_side_offset = [0, 0, 1] # z-axis of box-frame
 
@@ -276,6 +306,8 @@ class UR7e_CubeGrasp(Node):
 
         qx_src, qy_src, qz_src, qw_src = r_source_ee.as_quat() # Convert to quaternion for IK (IMPORTANT!)
         qx_dst, qy_dst, qz_dst, qw_dst = r_dest_ee.as_quat()
+        self.get_logger().info(f'Source orientation: qx={qx_src:.3f}, qy={qy_src:.3f}, qz={qz_src:.3f}, qw={qw_src:.3f}')
+        self.get_logger().info(f'Dest orientation: qx={qx_dst:.3f}, qy={qy_dst:.3f}, qz={qz_dst:.3f}, qw={qw_dst:.3f}')
         # ===================== Orientation Logic ===================
 
         # -----------------------------------------------------------
@@ -313,6 +345,10 @@ class UR7e_CubeGrasp(Node):
 
         # Grab
         self.job_queue.append('toggle_grip')
+        
+        # After grasping, publish that this box is now attached
+        # This tells perception to stop updating this box's collision object
+        self.job_queue.append(('publish_attached', box.id))
 
         # Lift back up to pre-grasp position:
         x_lift = x_pre
@@ -343,7 +379,7 @@ class UR7e_CubeGrasp(Node):
         # Drop to final place height
         x_place = x_pre_place
         y_place = y_pre_place
-        z_place = z_pre_place + box.height - 0.2 - 0.02 + 0.01 # NOTE: 2cm for the gripper being inside the cube, 1cm for safety 
+        z_place = z_pre_place + box.height - 0.2 - 0.02 + 0.005 # NOTE: 2cm for the gripper being inside the cube, 5mm for safety 
                                                                # This should solve the suspiciously high release height!
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
@@ -356,6 +392,10 @@ class UR7e_CubeGrasp(Node):
         # -----------------------------------------------------------
         # STEP 5: release
         self.job_queue.append('toggle_grip')
+        
+        # After releasing, publish that the box is no longer attached
+        # This tells perception to resume updating collision objects
+        self.job_queue.append('publish_detached')
         
         # -----------------------------------------------------------
         # STEP 6: back out of box to the position in step 3
@@ -393,6 +433,15 @@ class UR7e_CubeGrasp(Node):
         elif next_job == 'toggle_grip':
             self.get_logger().info("Toggling gripper")
             self._toggle_gripper()
+        
+        elif isinstance(next_job, tuple) and next_job[0] == 'publish_attached':
+            box_id = next_job[1]
+            self.publish_attached_box(box_id)
+            self.execute_jobs()
+        
+        elif next_job == 'publish_detached':
+            self.publish_detached_box()
+            self.execute_jobs()
 
         # elif next_job == 'tuck':
         #     self.get_logger().info('Calling tuck function')
@@ -450,7 +499,7 @@ class UR7e_CubeGrasp(Node):
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
 
-    def calculate_final_pose(self, box_info: tuple, bin_tf) -> Pose:
+    def calculate_final_pose(self, box_info: tuple, bin_pose, bin) -> Pose:
         # For changing from bin-frame coor to base-link frame
         id, name, fragility, z_base, z_top, x, y = box_info
         
@@ -477,14 +526,14 @@ class UR7e_CubeGrasp(Node):
 
         self.get_logger().info(f'calc final pose x: {x}, y: {y}')
 
-        un_grid_x = x * 0.02
-        un_grid_y = y * 0.02
-        un_grid_z = z_base * 0.02
+        un_grid_x = x * bin.resolution
+        un_grid_y = y * bin.resolution
+        un_grid_z = z_base * bin.resolution
 
         pose = Pose()
-        pose.position.x = float(un_grid_x + bin_tf.position.x)
-        pose.position.y = float(un_grid_y + bin_tf.position.y)
-        pose.position.z = float(un_grid_z + bin_tf.position.z)
+        pose.position.x = float(un_grid_x + bin_pose.position.x)
+        pose.position.y = float(un_grid_y + bin_pose.position.y)
+        pose.position.z = float(un_grid_z + bin_pose.position.z)
 
         return pose
 

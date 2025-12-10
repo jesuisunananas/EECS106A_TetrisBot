@@ -11,7 +11,7 @@ from shape_msgs.msg import SolidPrimitive
 from geometry_msgs.msg import Pose, PoseStamped
 from scipy.spatial.transform import Rotation as R
 import numpy as np
-from box_bin_msgs.msg import BoxBin
+from box_bin_msgs.msg import BoxBin, AttachedBox
 
 from perception.table import average_table_pose
 from perception.mesh import get_collision_mesh
@@ -43,6 +43,14 @@ class TagIdentification(Node):
             10
         )
         
+        # Subscribe to attached box status from planning node
+        self.attached_box_sub = self.create_subscription(
+            AttachedBox,
+            '/attached_box',
+            self.attached_box_callback,
+            10
+        )
+        
         self.box_bin_pub = self.create_publisher(BoxBin, "box_bin", 10)
 
         # Moveit planning scene
@@ -53,6 +61,15 @@ class TagIdentification(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.active_items = set()
+        self.attached_box_id = -1  # Track which box is attached (-1 means none)
+
+    def attached_box_callback(self, msg: AttachedBox):
+        """Receive notification of which box is currently attached."""
+        self.attached_box_id = msg.attached_box_id
+        if self.attached_box_id == -1:
+            self.get_logger().info("All boxes are now detached")
+        else:
+            self.get_logger().info(f"Box {self.attached_box_id} is now attached - skipping collision updates")
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
@@ -111,9 +128,13 @@ class TagIdentification(Node):
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]
 
-                        # Create the object and add to batch
-                        obj = self.create_collision_object(item, pose)
-                        collision_objects_batch.append(obj)
+                        # Skip processing attached boxes to prevent stale collision object updates
+                        if id != self.attached_box_id:
+                            obj = self.create_collision_object(item, pose) # Create the object and add to batch
+                            collision_objects_batch.append(obj)
+                        else:
+                            self.get_logger().info(f"Box {id} is currently attached to gripper, removing collisionObject for now.")
+                            seen_ids.remove(id)
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
@@ -165,9 +186,8 @@ class TagIdentification(Node):
             self.publish_collision_batch(collision_objects_batch)
     
     def create_collision_object(self, item, pose):
-        
+        """Try to fetch mesh collision object, otherwise default to cube primative"""
         coll_obj = CollisionObject()
-        
         mesh_filepath = None
         if isinstance(item.id, int):
             mesh_filepath = get_mesh_path(item.id)

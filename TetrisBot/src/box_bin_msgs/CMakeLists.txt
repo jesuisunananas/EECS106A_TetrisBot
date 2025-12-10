@@ -15,6 +15,7 @@ find_package(geometry_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/BoxBin.msg"
+  "msg/AttachedBox.msg"
   DEPENDENCIES geometry_msgs
 )
 
