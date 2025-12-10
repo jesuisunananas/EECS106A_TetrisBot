@@ -282,7 +282,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
         # placed = heuristics.place_box_with_rule(box, b)
         placed = place_box_with_rule(box, b)
 
-        print(f"Placed box {idx}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
+        print(f"Placed box {box.id}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
         print(b.height_map)
 
     print("Final height_map:")
@@ -323,7 +323,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     # sort fragile → tough (fragility ascending)
     box_info.sort(key=lambda t: t[1])
 
-    for name, frag, z_base, z_top, x, y in box_info:
+    for id, name, frag, z_base, z_top, x, y in box_info:
         print(
             f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
             f"pos=({x}, {y})", f"id={id}"

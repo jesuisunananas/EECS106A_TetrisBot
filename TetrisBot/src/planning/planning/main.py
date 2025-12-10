@@ -138,7 +138,7 @@ class UR7e_CubeGrasp(Node):
         # ---------------------------------------------------------
         # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
-        box_info = packing_with_priors(box_list=box_list, vis=True)
+        box_info = packing_with_priors(box_list=box_list, vis=False)
         
         self.is_busy = True
         for info in box_info:
@@ -154,13 +154,13 @@ class UR7e_CubeGrasp(Node):
                                                      rclpy.time.Time(), 
                                                      timeout=transform_timeout
                                                      )
-            final_pose = self.calculate_final_pose(info, bin_tf)
+            final_pose = self.calculate_final_pose(info, bin_pose)
 
-            success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
+            success = self.plan_pick_and_place(box, initial_pose, final_pose)
             if success:
-                self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
+                self.get_logger().info(f"Planning successful for box {box_id}! Adding to queue.")
             else:
-                self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
+                self.get_logger().error(f"Planning failed for box {box_id}, clearing queue.")
                 self.job_queue = []
                 self.is_busy = False
                 return response
@@ -185,7 +185,7 @@ class UR7e_CubeGrasp(Node):
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
-        self.get_loexecutegger().info(f'hovering 20cm above the cube surface at z={z_pre}')
+        self.get_logger().info(f'hovering 20cm above the cube surface at z={z_pre}')
         self.get_logger().info(f'move down by 20cm to z={z_pre - 0.2}')
 
         # 2) Grasp position
@@ -261,7 +261,7 @@ class UR7e_CubeGrasp(Node):
 
         y_axis_base = np.array([[0, 1, 0]]) #should be pointing out towards from base_link
         # self.get_logger().info(f'source z shape: {r_source_z_axis.shape}')
-        self.get_logger().info(f'y-axis: {y_axis_base.shape}')
+        # self.get_logger().info(f'y-axis: {y_axis_base.shape}')
         r_source_ee, _ = R.align_vectors(np.atleast_2d(r_source_z_axis), y_axis_base) # get rotation from ee pointing out towards 
                                                                                       # to z-axis of box frame
         r_dest_ee, _ = R.align_vectors(np.atleast_2d(r_dest_z_axis), y_axis_base)
@@ -291,6 +291,7 @@ class UR7e_CubeGrasp(Node):
         y_pre = source_pose.position.y 
         z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2
 
+        self.get_logger().info(f'z pre grasp: {z_pre}')
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
             self.get_logger().error("IK failed for pre grasp")
@@ -332,6 +333,7 @@ class UR7e_CubeGrasp(Node):
         z_pre_place = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_pre_place, y_pre_place, z_pre_place, qx_dst, qy_dst, qz_dst, qw_dst)
+        self.get_logger().info(f'z pre place: {z_pre_place}')
         ik_result = self.ik_planner.compute_ik(ik_result, x_pre_place, y_pre_place, z_pre_place)
         if not ik_result: 
             self.get_logger().error("IK failed for above place")
@@ -452,22 +454,40 @@ class UR7e_CubeGrasp(Node):
         # For changing from bin-frame coor to base-link frame
         id, name, fragility, z_base, z_top, x, y = box_info
         
-        box = get_object_by_id(id)
-        pose = PoseStamped()
+        # box = get_object_by_id(id)
+        # pose = Pose()
         
-        pose.header.frame_id = bin_tf.child_frame_id
-        pose.header.time = rclpy.time.Time()
+        # # pose.header.frame_id = bin_tf.child_frame_id
+        # # pose.header.time = rclpy.time.Time()
         
-        pose.orientation.x = 0.0
-        pose.orientation.y = 0.0
-        pose.orientation.z = 0.0
-        pose.orientation.w = 1.0
+        # pose.orientation.x = 0.0
+        # pose.orientation.y = 0.0
+        # pose.orientation.z = 0.0
+        # pose.orientation.w = 1.0
         
-        pose.position.x = x + (box.width / 2.0)
-        pose.position.y = y - (box.length / 2.0)
-        pose.position.z = z_base + (box.height / 2.0)
+        # # pose.position.x = x + (box.width / 2.0)
+        # # pose.position.y = y - (box.length / 2.0)
+        # # pose.position.z = z_base + (box.height / 2.0)
+
+        # pose.position.x = float(x)
+        # pose.position.y = float(y)
+        # pose.position.z = float(z_base)
         
-        return do_transform_pose(pose, bin_tf)
+        # return do_transform_pose(pose, bin_tf)
+
+        self.get_logger().info(f'calc final pose x: {x}, y: {y}')
+
+        un_grid_x = x * 0.02
+        un_grid_y = y * 0.02
+        un_grid_z = z_base * 0.02
+
+        pose = Pose()
+        pose.position.x = float(un_grid_x + bin_tf.position.x)
+        pose.position.y = float(un_grid_y + bin_tf.position.y)
+        pose.position.z = float(un_grid_z + bin_tf.position.z)
+
+        return pose
+
 
 def main(args=None):
     rclpy.init(args=args)

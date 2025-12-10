@@ -127,7 +127,7 @@ def footprint_overlap(b1: Box, b2: Box, b: Bin):
     y_j = b.boxes[b1.name]["y"]
     x_k = b.boxes[b2.name]["x"]
     y_k = b.boxes[b2.name]["y"] 
-    x_overlap = max(0, min(x_j + b1.length, x_k + b2.length) - max(x_j, x_k))
+    x_overlap = max(0, min(x_j + b1.grid_length(b.resolution), x_k + b2.grid_length(b.resolution)) - max(x_j, x_k))
     y_overlap = max(0, min(y_j + b1.grid_width(b.resolution), y_k + b2.grid_width(b.resolution)) - max(y_j, y_k))
     return x_overlap * y_overlap
 
@@ -143,7 +143,7 @@ def weight_on_box(lower: Box, upper: Box, b: Bin):
     area_overlap = footprint_overlap(lower, upper, b)
     if area_overlap == 0.0:
         return 0.0
-    area_upper = upper.length * upper.width
+    area_upper = upper.grid_length(b.resolution) * upper.grid_width(b.resolution)
     fraction_on_lower = area_overlap / area_upper
     return fraction_on_lower * p * upper.volume
 
