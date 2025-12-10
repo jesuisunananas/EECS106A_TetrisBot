@@ -57,6 +57,23 @@ class Box(BigBox):
     @property
     def fragility(self):
         return self._fragility
+
+    def grid_length(self, resolution) -> int:
+        div = self.length / resolution
+        return int(-(-div // 1))
+        # return int(round(self.length /resolution))
+    
+    def grid_width(self, resolution) -> int:
+        # print(f'box width inside: {self.width}')
+        # print(f'box grid width inside: {int(-(-self.width // resolution))}')
+        div = self.width / resolution
+        return int(-(-div // 1))
+        # return int(round(self.width / resolution))
+
+    def grid_height(self, resolution) -> int:
+        div = self.height / resolution
+        return int(-(-div // 1))
+        # return int(round(self.height / resolution))
     
     @fragility.setter
     def fragility(self, f):

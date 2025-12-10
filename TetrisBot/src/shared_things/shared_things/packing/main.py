@@ -55,7 +55,8 @@ def demo_heuristic():
     print(b.height_map)
 
     for bx in [b0, b1, b2, b3]:
-        placement = heuristics.place_box_with_rule(bx, b)
+        # placement = heuristics.place_box_with_rule(bx, b)
+        placement = place_box_with_rule(bx, b)
         print(f"Placement: {placement}")
 
     print("After:")
@@ -267,7 +268,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     hidden_dim = config.hidden_dim
     n_objects = config.n_objects
     policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-    policy.load_state_dict(torch.load("policy.pt", map_location="cpu"))
+    policy.load_state_dict(torch.load("src/shared_things/shared_things/packing/policy.pt", map_location="cpu"))
     policy.eval()
     env = PackingEnv(n_objects, config)
     X = env.reset(box_list=box_list)
@@ -278,7 +279,8 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     b = Bin(*env.bin_dims)
     for idx in ordering:
         box = env.boxes[int(idx)]
-        placed = heuristics.place_box_with_rule(box, b)
+        # placed = heuristics.place_box_with_rule(box, b)
+        placed = place_box_with_rule(box, b)
 
         print(f"Placed box {idx}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
         print(b.height_map)
@@ -286,10 +288,20 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     print("Final height_map:")
     print(b.height_map)
 
-    C = heuristics.compute_compactness(b)
-    P = heuristics.compute_pyramid(b)
-    A = heuristics.compute_access_cost(b)
-    F = heuristics.compute_fragility_penalty(
+    # C = heuristics.compute_compactness(b)
+    # P = heuristics.compute_pyramid(b)
+    # A = heuristics.compute_access_cost(b)
+    # F = heuristics.compute_fragility_penalty(
+    #     b, 
+    #     config.base_scaling, 
+    #     config.heavy_factor, 
+    #     config.fragile_quantile, 
+    #     config.alpha_capacity
+    # )
+    C = compute_compactness(b)
+    P = compute_pyramid(b)
+    A = compute_access_cost(b)
+    F = compute_fragility_penalty(
         b, 
         config.base_scaling, 
         config.heavy_factor, 
@@ -407,7 +419,8 @@ def main(config: PackingConfig):
         b = Bin(*env.bin_dims)
         for idx in ordering:
             box = env.boxes[int(idx)]
-            placed = heuristics.place_box_with_rule(box, b)
+            # placed = heuristics.place_box_with_rule(box, b)
+            placed = place_box_with_rule(box, b)
 
             print(f"Placed box {idx}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
             print(b.height_map)
@@ -415,10 +428,20 @@ def main(config: PackingConfig):
         print("Final height_map:")
         print(b.height_map)
 
-        C = heuristics.compute_compactness(b)
-        P = heuristics.compute_pyramid(b)
-        A = heuristics.compute_access_cost(b)
-        F = heuristics.compute_fragility_penalty(
+        # C = heuristics.compute_compactness(b)
+        # P = heuristics.compute_pyramid(b)
+        # A = heuristics.compute_access_cost(b)
+        # F = heuristics.compute_fragility_penalty(
+        #     b, 
+        #     config.base_scaling, 
+        #     config.heavy_factor, 
+        #     config.fragile_quantile, 
+        #     config.alpha_capacity
+        # )
+        C = compute_compactness(b)
+        P = compute_pyramid(b)
+        A = compute_access_cost(b)
+        F = compute_fragility_penalty(
             b, 
             config.base_scaling, 
             config.heavy_factor, 
