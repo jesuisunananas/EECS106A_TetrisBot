@@ -482,7 +482,8 @@ class UR7e_CubeGrasp(Node):
         un_grid_z = z_base * 0.02
 
         pose = Pose()
-        pose.position.x = float(un_grid_x + bin_tf.position.x)
+        # pose.position.x = float(un_grid_x + bin_tf.position.x)
+        pose.position.x = float(un_grid_x - bin_tf.position.x) # x-axis of base_link points left
         pose.position.y = float(un_grid_y + bin_tf.position.y)
         pose.position.z = float(un_grid_z + bin_tf.position.z)
 
