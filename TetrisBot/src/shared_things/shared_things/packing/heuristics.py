@@ -1,5 +1,5 @@
 import numpy as np # pyright: ignore[reportMissingImports]
-from box import Box, Bin
+from .box import Box, Bin
 
 bin = Bin(4,4,5, id=7)
 

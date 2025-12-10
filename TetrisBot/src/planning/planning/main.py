@@ -15,8 +15,8 @@ from ros2_aruco_interfaces.msg import ArucoMarkers
 from shared_things import *
 from geometry_msgs.msg import PoseArray, Pose, TransformStamped, PoseStamped
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
-# from packing.main import packing_with_priors
-# from packing.config import PackingConfig
+from packing.main import packing_with_priors
+from packing.config import PackingConfig
 
 from box_bin_msgs.msg import BoxBin
 
