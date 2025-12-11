@@ -162,10 +162,11 @@ class UR7e_CubeGrasp(Node):
         # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
         
-        packing_config = PackingConfig()
-        packing_config.bin_dims = (bin.grid_width(), bin.grid_length(), bin.grid_height())
-        packing_config.feature_dim = 6 # FIXME is it like (name, box.fragility, z_base, z_top, entry["x"], entry["y"])?
-        packing_config.n_objects = len(box_list)
+        packing_config = PackingConfig(bin_dims = (bin.grid_width(), bin.grid_length(), bin.grid_height()),
+                                       feature_dim = 6, # FIXME is it like (name, box.fragility, z_base, z_top, entry["x"], entry["y"])?
+                                       n_objects = len(box_list)
+                                       )
+                                       
         box_info = packing_with_priors(config=packing_config, box_list=box_list, vis=False)
         
         self.is_busy = True
