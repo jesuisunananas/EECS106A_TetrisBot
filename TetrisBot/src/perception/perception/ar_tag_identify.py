@@ -161,8 +161,8 @@ class TagIdentification(Node):
         self.active_items = seen_ids.copy()
         
         # Send all updates in one service call. 
-        if collision_objects_batch:
-            self.publish_collision_batch(collision_objects_batch)
+        # if collision_objects_batch:
+            # self.publish_collision_batch(collision_objects_batch)
     
     def create_collision_object(self, item, pose):
         
@@ -227,7 +227,8 @@ class TagIdentification(Node):
         ])
         
         # Offset the box centre from the marker:
-        local_offset = np.array([0.0, 0.0, -item.length / 2.0])
+        local_offset = np.array([0.0, 0.0, 0.01-(item.length / 2.0)])
+        # local_offset = np.array([0.0, 0.0, -item.width / 2.0])
         
         # Rotate that offset vector to align with the object's current orientation in world
         return r.apply(local_offset)

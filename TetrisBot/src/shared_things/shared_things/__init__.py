@@ -23,12 +23,14 @@ from .aruco_constants import (
 
 from .planning_constants import (
     GRIPPER_OFFSET_Y,
-    GRIPPER_OFFSET_Z
+    GRIPPER_OFFSET_Z,
+    GRASP_OFFSET_Z
 )
 
 __all__ = [
     'GRIPPER_OFFSET_Y',
     'GRIPPER_OFFSET_Z',
+    'GRASP_OFFSET_Z',
     'BOXES',
     'BINS',
     'BOX_MARKER_IDS',

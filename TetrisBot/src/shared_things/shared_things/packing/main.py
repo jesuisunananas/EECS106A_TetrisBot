@@ -274,7 +274,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     X = env.reset(box_list=box_list)
     indices, _, _ = policy(X, training=False)
     ordering = indices[0].tolist()
-    print("Ordering:", ordering)
+    print("Ordering (indicies):", ordering)
 
     b = Bin(*env.bin_dims)
     for idx in ordering:
@@ -311,7 +311,11 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
         box_info.append((box.id, name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
 
     # sort fragile → tough (fragility ascending)
-    box_info.sort(key=lambda t: t[1])
+    print('Box info presort:')
+    print(box_info)
+    # box_info.sort(key=lambda t: t[1])
+    # print('Box info postsort:')
+    # print(box_info)
 
     for id, name, frag, z_base, z_top, x, y in box_info:
         print(
