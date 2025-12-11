@@ -117,7 +117,8 @@ class TagIdentification(Node):
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
-                        offset = self.create_offset(item, [item.width / 2, -(item.height / 2), 0.0], pose.orientation) 
+                        # NOTE: applied the width/2 and height/2  offset to align with bin top left corner:
+                        offset = self.create_offset(item, [-(item.width / 2), (item.height / 2), 0.0], pose.orientation) 
                         pose.position.x += offset[0]
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]

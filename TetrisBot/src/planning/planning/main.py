@@ -142,16 +142,8 @@ class UR7e_CubeGrasp(Node):
             box_id = info[0]
             box_idx = box_ids.index(box_id)
             box = get_object_by_id(box_id)
-            initial_pose = box_poses[box_idx]
             
-            # NOTE: the bin orientation shouldn't actually matter tbh. 
-            # Placing based on the top left corner should still work
-            # transform_timeout = rclpy.duration.Duration(seconds=0.1)
-            # bin_tf = self.tf_buffer.lookup_transform("base_link", 
-            #                                          f"ar_marker_{bin_id}", 
-            #                                          rclpy.time.Time(), 
-            #                                          timeout=transform_timeout
-            #                                          )
+            initial_pose = box_poses[box_idx]
             final_pose = self.calculate_final_pose(info, bin_pose, get_object_by_id(bin_id))
 
             self.get_logger().info(f"Dim for box {box_id}: l:{box.length}, w:{box.width}, h:{box.height}")
@@ -457,42 +449,44 @@ class UR7e_CubeGrasp(Node):
 
     def calculate_final_pose(self, box_info: tuple, bin_pose, bin) -> Pose:
         # For changing from bin-frame coor to base-link frame
-        id, name, fragility, z_base, z_top, x, y = box_info
-        
-        # box = get_object_by_id(id)
-        # pose = Pose()
-        
-        # # pose.header.frame_id = bin_tf.child_frame_id
-        # # pose.header.time = rclpy.time.Time()
-        
-        # pose.orientation.x = 0.0
-        # pose.orientation.y = 0.0
-        # pose.orientation.z = 0.0
-        # pose.orientation.w = 1.0
-        
-        # # pose.position.x = x + (box.width / 2.0)
-        # # pose.position.y = y - (box.length / 2.0)
-        # # pose.position.z = z_base + (box.height / 2.0)
+        box_id, name, fragility, z_base, z_top, x, y = box_info
+        self.get_logger().info(f'calc final pose for box {box_id}; (x, y) = ({x}, {y})')
 
-        # pose.position.x = float(x)
-        # pose.position.y = float(y)
-        # pose.position.z = float(z_base)
-        
-        # return do_transform_pose(pose, bin_tf)
-
-        self.get_logger().info(f'calc final pose x: {x}, y: {y}')
-
-        un_grid_x = x * bin.resolution
-        un_grid_y = y * bin.resolution
-        un_grid_z = z_base * bin.resolution
+        x_meters = x * bin.resolution
+        y_meters = y * bin.resolution
+        z_meters = z_base * bin.resolution
 
         pose = Pose()
-        pose.position.x = float(un_grid_x + bin_pose.position.x) 
-        pose.position.y = float(un_grid_y + bin_pose.position.y)
-        pose.position.z = float(un_grid_z + bin_pose.position.z)
-
+        pose.orientation.x = 0.0
+        pose.orientation.y = 0.0
+        pose.orientation.z = 0.0
+        pose.orientation.w = 1.0
+        
+        #==========================original_transform================================
+        # NOTE: comment this section out when using complete_transform
+        pose.position.x = float(x_meters + bin_pose.position.x) 
+        pose.position.y = float(y_meters + bin_pose.position.y)
+        pose.position.z = float(z_meters + bin_pose.position.z)
         return pose
+        #============================================================================
+        
+        #==========================complete_transform================================
+        # NOTE: the bin orientation shouldn't actually matter tbh. 
+        # offset in bin frame, shifts the box position from box marker to the box top-left corner
+        transform_timeout = rclpy.duration.Duration(seconds=0.1)
+        bin_tf = self.tf_buffer.lookup_transform("base_link", f"ar_marker_{bin.id}", rclpy.time.Time(), timeout=transform_timeout)
 
+        box = get_object_by_id(box_id)
+        # FIXME if you merge arjun's branch, change box.length to box.length_m etc.
+        pose.position.x = float(x_meters + (box.width / 2.0)) 
+        pose.position.y = float(y_meters - (box.length / 2.0))
+        pose.position.z = float(z_meters + (box.height / 2.0))
+        return do_transform_pose(pose, bin_tf)
+        #============================================================================
+
+        
+        
+     
 
 def main(args=None):
     rclpy.init(args=args)
