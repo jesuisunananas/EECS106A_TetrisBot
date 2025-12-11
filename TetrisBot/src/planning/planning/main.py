@@ -4,14 +4,14 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from control_msgs.action import FollowJointTrajectory
-from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry, CollisionObject
+# from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry, CollisionObject
 from sensor_msgs.msg import JointState
 # from tf2_ros import Buffer, TransformListener
 import tf2_ros
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 
-from ros2_aruco_interfaces.msg import ArucoMarkers
+# from ros2_aruco_interfaces.msg import ArucoMarkers
 from shared_things import *
 from geometry_msgs.msg import PoseArray, Pose, TransformStamped, PoseStamped
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
@@ -29,9 +29,6 @@ class UR7e_CubeGrasp(Node):
 
         self.box_pose_array_sub = self.create_subscription(BoxBin, '/box_bin', self.objects_callback, 1) 
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1) 
-
-        # Publisher for updating the Planning Scene (ACM)
-        self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
         
         # Publisher for attached box ID (tells perception to skip updating this box's collision object)
         self.attached_box_pub = self.create_publisher(AttachedBox, '/attached_box', 10)
