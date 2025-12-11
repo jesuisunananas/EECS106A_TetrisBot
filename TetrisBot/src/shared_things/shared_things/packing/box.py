@@ -107,6 +107,10 @@ class Bin(BigBox):
     @property
     def grid_width(self) -> int:
         return int(round(self.width / self.resolution))
+    
+    @property
+    def grid_height(self) -> int:
+        return int(round(self.height / self.resolution))
 
     @property
     def grid_shape(self) -> tuple[int, int]:
