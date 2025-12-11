@@ -145,9 +145,10 @@ class UR7e_CubeGrasp(Node):
         
         self.is_busy = True
         for info in box_info:
-            box_id = box_ids.index(info[0])
+            box_idx = box_ids.index(info[0])
+            box_id = info[0]
             box = get_object_by_id(box_id)
-            initial_pose = box_poses[box_id]
+            initial_pose = box_poses[box_idx]
             
             # NOTE: the bin orientation shouldn't actually matter tbh. 
             # Placing based on the top left corner should still work
@@ -158,6 +159,8 @@ class UR7e_CubeGrasp(Node):
                                                      timeout=transform_timeout
                                                      )
             final_pose = self.calculate_final_pose(info, bin_pose)
+
+            self.get_logger().info(f"Dim for box {box_id}: l:{box.length}, w:{box.width}, h:{box.height}")
 
             success = self.plan_pick_and_place(box, initial_pose, final_pose)
             if success:
@@ -336,12 +339,12 @@ class UR7e_CubeGrasp(Node):
         # -----------------------------------------------------------
         # STEP 3: move to target, and place
         # Position above place location before lowering to place location
-        x_pre_place = target_pose.position.x 
+        x_pre_place = target_pose.position.x + 0.01
         y_pre_place = target_pose.position.y
         z_pre_place = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_pre_place, y_pre_place, z_pre_place, qx_dst, qy_dst, qz_dst, qw_dst)
-        self.get_logger().info(f'z pre place: {z_pre_place}')
+        # self.get_logger().info(f'z pre place: {z_pre_place}')
         ik_result = self.ik_planner.compute_ik(ik_result, x_pre_place, y_pre_place, z_pre_place)
         if not ik_result: 
             self.get_logger().error("IK failed for above place")
@@ -355,6 +358,7 @@ class UR7e_CubeGrasp(Node):
                                                                # This should solve the suspiciously high release height!
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
+        self.get_logger().info(f'target_final_z: {target_pose.position.z}')
         ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place)                                                    
         if not ik_result: 
             self.get_logger().error("IK failed for place")
