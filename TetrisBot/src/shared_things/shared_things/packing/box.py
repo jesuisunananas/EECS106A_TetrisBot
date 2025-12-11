@@ -2,11 +2,12 @@ import numpy as np # pyright: ignore[reportMissingImports]
 import uuid
 
 class BigBox:
-    def __init__(self, length, width, height, id):
+    def __init__(self, length, width, height, id, resolution = 0.01):
         self.length = length
         self.width = width
         self.height = height
         self.id = id
+        self.resolution = resolution
 
     @property
     def length(self):
@@ -53,27 +54,25 @@ class Box(BigBox):
         self.name = name
         # fragility is a distribution between 0 to 1, 1 being not fragile
         self.fragility = fragility
+        self.length = self.grid_length(self.resolution)
+        self.width = self.grid_width(self.resolution)
+        self.height = self.grid_height(self.resolution)
 
     @property
     def fragility(self):
         return self._fragility
 
+    @property
     def grid_length(self, resolution) -> int:
-        div = self.length / resolution
-        return int(-(-div // 1))
-        # return int(round(self.length /resolution))
+        return int(round(self.length / resolution))
     
+    @property
     def grid_width(self, resolution) -> int:
-        # print(f'box width inside: {self.width}')
-        # print(f'box grid width inside: {int(-(-self.width // resolution))}')
-        div = self.width / resolution
-        return int(-(-div // 1))
-        # return int(round(self.width / resolution))
+        return int(round(self.width / resolution))
 
+    @property
     def grid_height(self, resolution) -> int:
-        div = self.height / resolution
-        return int(-(-div // 1))
-        # return int(round(self.height / resolution))
+        return int(round(self.height / resolution))
     
     @fragility.setter
     def fragility(self, f):
@@ -82,14 +81,14 @@ class Box(BigBox):
         self._fragility = f    
 
 class Bin(BigBox):
-    def __init__(self, length, width, height, id=-1, name=None, resolution=0.02):
+    def __init__(self, length, width, height, id=-1, name=None, resolution = 0.01):
         super().__init__(length, width, height, id) 
         self.resolution = resolution
         H = self.grid_length
         W = self.grid_length
 
 
-        self.height_map = np.zeros((H, W), dtype=float)
+        self.height_map = np.zeros((H, W), dtype=int)
         self.priority_list = []
         self.boxes = {}
         

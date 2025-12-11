@@ -268,7 +268,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     hidden_dim = config.hidden_dim
     n_objects = config.n_objects
     policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-    policy.load_state_dict(torch.load("src/shared_things/shared_things/packing/policy.pt", map_location="cpu"))
+    policy.load_state_dict(torch.load(os.path.join(current_path, "policy.pt"), map_location="cpu"))
     policy.eval()
     env = PackingEnv(n_objects, config)
     X = env.reset(box_list=box_list)
@@ -288,16 +288,6 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     print("Final height_map:")
     print(b.height_map)
 
-    # C = heuristics.compute_compactness(b)
-    # P = heuristics.compute_pyramid(b)
-    # A = heuristics.compute_access_cost(b)
-    # F = heuristics.compute_fragility_penalty(
-    #     b, 
-    #     config.base_scaling, 
-    #     config.heavy_factor, 
-    #     config.fragile_quantile, 
-    #     config.alpha_capacity
-    # )
     C = compute_compactness(b)
     P = compute_pyramid(b)
     A = compute_access_cost(b)
@@ -328,6 +318,11 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
             f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
             f"pos=({x}, {y})", f"id={id}"
         )
+        z_base *= 0.01
+        z_height *= 0.01
+        x *= 0.01
+        y *= 0.01
+
 
     if vis:
         visualize_bin_pybullet(b, cell_size=0.05, gui=True)
