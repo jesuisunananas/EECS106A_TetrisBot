@@ -5,17 +5,17 @@ import os
 from collections import deque
 
 # from shared_things import Box, Bin
-from .box import Bin, Box
-from .heuristics import *
-from .model import PointerNetPolicy, Critic
-from .env import PackingEnv
-from .train import train_step
+from box import Bin, Box
+from heuristics import *
+from model import PointerNetPolicy, Critic
+from env import PackingEnv
+from train import train_step
 import random
 import pybullet as p
 from math import sqrt
 import pybullet_data
 import time
-from .config import PackingConfig
+from config import PackingConfig
 import argparse
 import numpy as np
 
@@ -268,7 +268,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     hidden_dim = config.hidden_dim
     n_objects = config.n_objects
     policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-    policy.load_state_dict(torch.load(os.path.join(current_path, "policy.pt"), map_location="cpu"))
+    policy.load_state_dict(torch.load("/Users/arjunrewari/Developer/EECS106A_TetrisBot/TetrisBot/src/shared_things/shared_things/packing/policy.pt", map_location="cpu"))
     policy.eval()
     env = PackingEnv(n_objects, config)
     X = env.reset(box_list=box_list)
@@ -319,9 +319,10 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
             f"pos=({x}, {y})", f"id={id}"
         )
         z_base *= 0.01
-        z_height *= 0.01
+        z_top *= 0.01
         x *= 0.01
         y *= 0.01
+        print(f"{name}: new_z_base={z_base}, new_z_top={z_top}, new_x={x}, new_y={y}")
 
 
     if vis:
@@ -331,7 +332,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
 
 
 def main(config: PackingConfig):
-    demo_heuristic()
+    #demo_heuristic()
     args = parse_args()
 
     # Hyperparameters
@@ -401,71 +402,81 @@ def main(config: PackingConfig):
         return
 
     elif args.mode == "eval":
-        print("\n=== Greedy rollout from trained policy ===")
-        policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-        policy.load_state_dict(torch.load(os.path.join(current_path, "packing/policy.pt"), map_location="cpu"))
-        policy.eval()
-        env = PackingEnv(n_objects, config)
-        X = env.reset(False)
-        indices, _, _ = policy(X, training=False)
-        ordering = indices[0].tolist()
-        print("Ordering:", ordering)
+        box_list = [
+            Box(name='cube', length=0.08, width=0.08, height=0.08, id=0),
+            Box(name='rectangle', length=0.1, width=0.06, height=0.06, id=1),
+            Box(name='small cube', length=0.06, width=0.06, height=0.06, id=2)
+        ]
 
-        b = Bin(*env.bin_dims)
-        for idx in ordering:
-            box = env.boxes[int(idx)]
-            # placed = heuristics.place_box_with_rule(box, b)
-            placed = place_box_with_rule(box, b)
+        b = Bin(name='bin', length=0.12, width=0.12, height=0.2, id=100)
 
-            print(f"Placed box {idx}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
-            print(b.height_map)
+        p = PackingConfig(bin_dims=(b.length_config, b.width_config, b.height_config), n_objects=3)
+        print(packing_with_priors(p, box_list=box_list, vis=False))
+        # print("\n=== Greedy rollout from trained policy ===")
+        # policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
+        # policy.load_state_dict(torch.load(os.path.join(current_path, "packing/policy.pt"), map_location="cpu"))
+        # policy.eval()
+        # env = PackingEnv(n_objects, config)
+        # X = env.reset(False)
+        # indices, _, _ = policy(X, training=False)
+        # ordering = indices[0].tolist()
+        # print("Ordering:", ordering)
 
-        print("Final height_map:")
-        print(b.height_map)
+        # b = Bin(*env.bin_dims)
+        # for idx in ordering:
+        #     box = env.boxes[int(idx)]
+        #     # placed = heuristics.place_box_with_rule(box, b)
+        #     placed = place_box_with_rule(box, b)
 
-        # C = heuristics.compute_compactness(b)
-        # P = heuristics.compute_pyramid(b)
-        # A = heuristics.compute_access_cost(b)
-        # F = heuristics.compute_fragility_penalty(
+        #     print(f"Placed box {idx}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
+        #     print(b.height_map)
+
+        # print("Final height_map:")
+        # print(b.height_map)
+
+        # # C = heuristics.compute_compactness(b)
+        # # P = heuristics.compute_pyramid(b)
+        # # A = heuristics.compute_access_cost(b)
+        # # F = heuristics.compute_fragility_penalty(
+        # #     b, 
+        # #     config.base_scaling, 
+        # #     config.heavy_factor, 
+        # #     config.fragile_quantile, 
+        # #     config.alpha_capacity
+        # # )
+        # C = compute_compactness(b)
+        # P = compute_pyramid(b)
+        # A = compute_access_cost(b)
+        # F = compute_fragility_penalty(
         #     b, 
         #     config.base_scaling, 
         #     config.heavy_factor, 
         #     config.fragile_quantile, 
         #     config.alpha_capacity
         # )
-        C = compute_compactness(b)
-        P = compute_pyramid(b)
-        A = compute_access_cost(b)
-        F = compute_fragility_penalty(
-            b, 
-            config.base_scaling, 
-            config.heavy_factor, 
-            config.fragile_quantile, 
-            config.alpha_capacity
-        )
 
-        print(f"\nFinal metrics: C={C:.3f}, P={P:.3f}, A={A:.3f}, F={F:.3f}")
+        # print(f"\nFinal metrics: C={C:.3f}, P={P:.3f}, A={A:.3f}, F={F:.3f}")
 
-        print("\nPer-box placement (sorted by fragility):")
-        # build list of (name, fragility, base_z, top_z, x, y)
-        box_info = []
-        for name, entry in b.boxes.items():
-            box = entry["box"]
-            z_base = entry["z"]
-            z_top = z_base + box.height
-            box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
+        # print("\nPer-box placement (sorted by fragility):")
+        # # build list of (name, fragility, base_z, top_z, x, y)
+        # box_info = []
+        # for name, entry in b.boxes.items():
+        #     box = entry["box"]
+        #     z_base = entry["z"]
+        #     z_top = z_base + box.height
+        #     box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
 
-        # sort fragile → tough (fragility ascending)
-        box_info.sort(key=lambda t: t[1])
+        # # sort fragile → tough (fragility ascending)
+        # box_info.sort(key=lambda t: t[1])
 
-        for name, frag, z_base, z_top, x, y in box_info:
-            print(
-                f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
-                f"pos=({x}, {y})"
-            )
+        # for name, frag, z_base, z_top, x, y in box_info:
+        #     print(
+        #         f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
+        #         f"pos=({x}, {y})"
+        #     )
         
-        visualize_bin_pybullet(b, cell_size=0.05, gui=True)
-        return
+        # visualize_bin_pybullet(b, cell_size=0.05, gui=True)
+        # return
 
 
 if __name__ == "__main__":
