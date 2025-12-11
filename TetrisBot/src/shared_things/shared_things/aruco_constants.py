@@ -23,7 +23,7 @@ BOXES = {
 
 BINS = {
     # 6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
-    100: Bin(name='bin', length=0.3, width=0.3, height=1, id=100, resolution=0.02),
+    100: Bin(name='bin', length=0.3, width=0.3, height=1, id=100),
 }
 
 COLLISION_MESHES = {
