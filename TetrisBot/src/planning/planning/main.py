@@ -84,9 +84,9 @@ class UR7e_CubeGrasp(Node):
         # self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
         # # initial_pose.position.y += GRIPPER_OFFSET_Y
-        # # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
+        # # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height_m / 2))
         # # final_pose.position.y += GRIPPER_OFFSET_Y
-        # # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
+        # # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height_m / 2))
         # # final_pose.position.z += GRIPPER_OFFSET_Z 
         
         # # success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
@@ -122,7 +122,7 @@ class UR7e_CubeGrasp(Node):
 
         #     if success:
         #         self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
-        #         bin_pose.position.z += box.width
+        #         bin_pose.position.z += box.width_m
         #     else:
         #         self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
         #         self.job_queue = []
@@ -154,7 +154,7 @@ class UR7e_CubeGrasp(Node):
             #                                          )
             final_pose = self.calculate_final_pose(info, bin_pose, get_object_by_id(bin_id))
 
-            self.get_logger().info(f"Dim for box {box_id}: l:{box.length}, w:{box.width}, h:{box.height}")
+            self.get_logger().info(f"Dim for box {box_id}: l:{box.length_m}, w:{box.width_m}, h:{box.height_m}")
 
             success = self.plan_pick_and_place(box, initial_pose, final_pose)
             if success:
@@ -179,7 +179,7 @@ class UR7e_CubeGrasp(Node):
         # 1) Pregrasp at 20cm above the cube surface
         x_pre = source_pose.position.x
         y_pre = source_pose.position.y
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 - 0.01
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width_m/2) + 0.2 - 0.01
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre)
         if not ik_result: return False
         self.job_queue.append(ik_result)
@@ -209,7 +209,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(ik_result)
 
         # 6) Lower to final pose z
-        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.2 + (box.width) + 0.02)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.2 + (box.width_m) + 0.02)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
@@ -289,8 +289,8 @@ class UR7e_CubeGrasp(Node):
         # Pre-grasp EE position 20cm above cube top surface:
         x_pre = source_pose.position.x 
         y_pre = source_pose.position.y 
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 
-        # z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.height/2) + 0.2
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width_m/2) + 0.2 
+        # z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.height_m/2) + 0.2
 
         self.get_logger().info(f'z pre grasp: {z_pre}')
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
@@ -345,7 +345,7 @@ class UR7e_CubeGrasp(Node):
         # Drop to final place height
         x_place = x_pre_place
         y_place = y_pre_place
-        z_place = z_pre_place + box.height - 0.2 - GRASP_OFFSET_Z + 0.005 
+        z_place = z_pre_place + box.height_m - 0.2 - GRASP_OFFSET_Z + 0.005 
         # NOTE: GRASP_OFFSET_Z for the gripper being inside the cube, 1cm for safety 
         # This should solve the suspiciously high release height!
         
@@ -470,9 +470,9 @@ class UR7e_CubeGrasp(Node):
         # pose.orientation.z = 0.0
         # pose.orientation.w = 1.0
         
-        # # pose.position.x = x + (box.width / 2.0)
-        # # pose.position.y = y - (box.length / 2.0)
-        # # pose.position.z = z_base + (box.height / 2.0)
+        # # pose.position.x = x + (box.width_m / 2.0)
+        # # pose.position.y = y - (box.length_m / 2.0)
+        # # pose.position.z = z_base + (box.height_m / 2.0)
 
         # pose.position.x = float(x)
         # pose.position.y = float(y)

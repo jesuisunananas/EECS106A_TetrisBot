@@ -175,7 +175,7 @@ class TagIdentification(Node):
             try:
                 box = SolidPrimitive()
                 box.type = SolidPrimitive.BOX
-                box.dimensions = [item.height, item.length, item.width]
+                box.dimensions = [item.height_m, item.length_m, item.width_m]
                 coll_obj.primitives = [box]
                 coll_obj.primitive_poses = [pose]
             except:
@@ -227,8 +227,8 @@ class TagIdentification(Node):
         ])
         
         # Offset the box centre from the marker:
-        local_offset = np.array([0.0, 0.0, 0.01-(item.length / 2.0)])
-        # local_offset = np.array([0.0, 0.0, -item.width / 2.0])
+        local_offset = np.array([0.0, 0.0, 0.01-(item.length_m / 2.0)])
+        # local_offset = np.array([0.0, 0.0, -item.width_m / 2.0])
         
         # Rotate that offset vector to align with the object's current orientation in world
         return r.apply(local_offset)
