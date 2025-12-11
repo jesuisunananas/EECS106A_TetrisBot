@@ -17,6 +17,7 @@ from geometry_msgs.msg import PoseArray, Pose, TransformStamped, PoseStamped
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
 from shared_things.packing.main import packing_with_priors
 from shared_things.packing.config import PackingConfig
+import time
 
 from box_bin_msgs.msg import BoxBin
 
@@ -122,7 +123,8 @@ class UR7e_CubeGrasp(Node):
         #     self.get_logger().info(f'box pose {initial_pose.position.z}')
         #     self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
-        #     success = self.plan_pick_and_place(box, initial_pose, final_pose)
+        #     # success = self.plan_pick_and_place(box, initial_pose, final_pose)
+        #     success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
         #     if success:
         #         self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
@@ -135,8 +137,9 @@ class UR7e_CubeGrasp(Node):
 
         # if self.job_queue:
         #     self.execute_jobs()
+        # return response
         # ---------------------------------------------------------
-        # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
+        # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
         box_info = packing_with_priors(box_list=box_list, vis=False)
         
@@ -223,6 +226,9 @@ class UR7e_CubeGrasp(Node):
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
+        # 7) Open gripper to reset
+        self.job_queue.append('toggle_grip')
+
         return True
 
 
@@ -289,7 +295,8 @@ class UR7e_CubeGrasp(Node):
         # Pre-grasp EE position 20cm above cube top surface:
         x_pre = source_pose.position.x 
         y_pre = source_pose.position.y 
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 
+        # z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.height/2) + 0.2
 
         self.get_logger().info(f'z pre grasp: {z_pre}')
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
@@ -317,7 +324,8 @@ class UR7e_CubeGrasp(Node):
         # Lift back up to pre-grasp position:
         x_lift = x_pre
         y_lift = y_pre
-        z_lift = z_pre 
+        # z_lift = z_pre
+        z_lift = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2 
         
         ik_result = self.ik_planner.compute_ik(ik_result, x_lift, y_lift, z_lift, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
@@ -343,7 +351,7 @@ class UR7e_CubeGrasp(Node):
         # Drop to final place height
         x_place = x_pre_place
         y_place = y_pre_place
-        z_place = z_pre_place + box.height - 0.2 - 0.02 + 0.01 # NOTE: 2cm for the gripper being inside the cube, 1cm for safety 
+        z_place = z_pre_place + box.height - 0.2 - 0.02 + 0.005 # NOTE: 2cm for the gripper being inside the cube, 1cm for safety 
                                                                # This should solve the suspiciously high release height!
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
@@ -446,6 +454,7 @@ class UR7e_CubeGrasp(Node):
         try:
             result = future.result().result
             self.get_logger().info('Execution complete.')
+            time.sleep(0.5)
             self.execute_jobs() 
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
@@ -482,8 +491,7 @@ class UR7e_CubeGrasp(Node):
         un_grid_z = z_base * 0.02
 
         pose = Pose()
-        # pose.position.x = float(un_grid_x + bin_tf.position.x)
-        pose.position.x = float(un_grid_x - bin_tf.position.x) # x-axis of base_link points left
+        pose.position.x = float(un_grid_x + bin_tf.position.x) 
         pose.position.y = float(un_grid_y + bin_tf.position.y)
         pose.position.z = float(un_grid_z + bin_tf.position.z)
 
