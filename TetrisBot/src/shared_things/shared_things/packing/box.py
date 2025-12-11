@@ -3,11 +3,26 @@ import uuid
 
 class BigBox:
     def __init__(self, length, width, height, id, resolution = 0.01):
+        self._length_m = float(length)
+        self._width_m = float(width)
+        self._height_m = float(height)
         self.length = length
         self.width = width
         self.height = height
         self.id = id
         self.resolution = resolution
+
+    @property
+    def length_m(self) -> float:
+        return self._length_m
+
+    @property
+    def width_m(self) -> float:
+        return self._width_m
+
+    @property
+    def height_m(self) -> float:
+        return self._height_m
     
     def to_grid_units(self, value: float) -> int:
         return int(round(value / self.resolution))
@@ -58,9 +73,9 @@ class Box(BigBox):
         # fragility is a distribution between 0 to 1, 1 being not fragile
 
         self.fragility = fragility
-        self.length = self.to_grid_units(self._length)
-        self.width = self.to_grid_units(self._width)
-        self.height = self.to_grid_units(self._height)
+        self.length = self.to_grid_units(self.length_m)
+        self.width = self.to_grid_units(self.width_m)
+        self.height = self.to_grid_units(self.height_m)
 
     @property
     def fragility(self):
@@ -76,12 +91,10 @@ class Bin(BigBox):
     def __init__(self, length, width, height, id=-1, name=None, resolution = 0.01):
         super().__init__(length, width, height, id) 
         self.resolution = resolution
-        self.length_config = self._length
-        self.width_config = self._width
-        self.height_config = self._height
-        self.length = self.to_grid_units(self._length)
-        self.width = self.to_grid_units(self._width)
-        self.height = self.to_grid_units(self._height)
+        # absolute dimensions
+        self.length = self.to_grid_units(self.length_m)
+        self.width = self.to_grid_units(self.width_m)
+        self.height = self.to_grid_units(self.height_m)
         self.height_map = np.zeros((self.length, self.width), dtype=int)
         self.priority_list = []
         self.boxes = {}

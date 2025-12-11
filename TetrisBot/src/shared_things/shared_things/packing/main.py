@@ -410,7 +410,7 @@ def main(config: PackingConfig):
 
         b = Bin(name='bin', length=0.12, width=0.12, height=0.2, id=100)
 
-        p = PackingConfig(bin_dims=(b.length_config, b.width_config, b.height_config), n_objects=3)
+        p = PackingConfig(bin_dims=(b.length_m, b.width_m, b.height_m), n_objects=3)
         print(packing_with_priors(p, box_list=box_list, vis=False))
         # print("\n=== Greedy rollout from trained policy ===")
         # policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
