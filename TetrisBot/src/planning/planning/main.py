@@ -347,7 +347,7 @@ class UR7e_CubeGrasp(Node):
         # Drop to final place height
         x_place = x_pre_place
         y_place = y_pre_place
-        z_place = z_pre_place + box.height_m - 0.2 - GRASP_OFFSET_Z + 0.005 
+        z_place = z_pre_place + box.height_m - 0.2 - GRASP_OFFSET_Z + 0.01 
         # NOTE: GRASP_OFFSET_Z for the gripper being inside the cube, 1cm for safety 
         # This should solve the suspiciously high release height!
         

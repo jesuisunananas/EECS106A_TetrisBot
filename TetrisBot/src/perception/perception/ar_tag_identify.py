@@ -59,6 +59,9 @@ class TagIdentification(Node):
         source_frame = msg.header.frame_id.lstrip('/')
         target_frame = "base_link"
 
+        # transform_timeout = rclpy.duration.Duration(seconds=0.1)
+        # tf = self.tf_buffer.lookup_transform(target_frame, source_frame, rclpy.time.Time(), timeout=transform_timeout)
+
         # List to collect all collision objects for this frame
         collision_objects_batch = []
         table_poses = []
@@ -103,17 +106,23 @@ class TagIdentification(Node):
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
                         # NOTE: applied the height + 0.01 offset here:
-                        offset = self.create_offset(item, [0.0, 0.0, 0.01-(item.height_m / 2.0)], pose.orientation) 
-                        pose.position.x += offset[0]
-                        pose.position.y += offset[1]
-                        pose.position.z += offset[2]
+                        offset = self.create_offset(item, [0.0, 0.0, -1.0-(item.length_m / 2.0)], pose.orientation) 
+
+                        box_pose = Pose()
+                        box_pose.position.x = pose.position.x + offset[0]
+                        box_pose.position.y = pose.position.y + offset[1]
+                        box_pose.position.z = pose.position.z + offset[2]
+                        box_pose.orientation.x = pose.orientation.x
+                        box_pose.orientation.y = pose.orientation.y
+                        box_pose.orientation.z = pose.orientation.z
+                        box_pose.orientation.w = pose.orientation.w
                         
                         box_ids.append(id)
-                        box_poses.append(pose)
+                        box_poses.append(box_pose)
 
                         # Create the object and add to batch
-                        obj = self.create_collision_object(item, pose)
-                        collision_objects_batch.append(obj)
+                        # obj = self.create_collision_object(item, pose)
+                        # collision_objects_batch.append(obj)
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
@@ -145,25 +154,25 @@ class TagIdentification(Node):
         box_bins.bin_poses = bin_poses
         self.box_bin_pub.publish(box_bins)
             
-        # Placing the table (only if it is not empty):
-        if table_poses and table_item:
-            # table_item.placed = True 
-            # self.get_logger().info(f"Placing Table")
-            table_pose = average_table_pose(table_item, table_poses)
-            table_obj = self.create_collision_object(table_item, table_pose)
-            if table_obj:
-                collision_objects_batch.append(table_obj)
-            #seen_ids.add(table_item.id) uncomment if needed #TODO
+        # # Placing the table (only if it is not empty):
+        # if table_poses and table_item:
+        #     # table_item.placed = True 
+        #     # self.get_logger().info(f"Placing Table")
+        #     table_pose = average_table_pose(table_item, table_poses)
+        #     table_obj = self.create_collision_object(table_item, table_pose)
+        #     if table_obj:
+        #         collision_objects_batch.append(table_obj)
+        #     #seen_ids.add(table_item.id) uncomment if needed #TODO
         
-        remove_these_ids = self.active_items - seen_ids
-        for id_to_be_removed in remove_these_ids:
-            coll_obj = CollisionObject()
-            coll_obj.header.frame_id = 'base_link'
-            coll_obj.id = str(id_to_be_removed)
-            coll_obj.operation = CollisionObject.REMOVE
-            collision_objects_batch.append(coll_obj)
+        # remove_these_ids = self.active_items - seen_ids
+        # for id_to_be_removed in remove_these_ids:
+        #     coll_obj = CollisionObject()
+        #     coll_obj.header.frame_id = 'base_link'
+        #     coll_obj.id = str(id_to_be_removed)
+        #     coll_obj.operation = CollisionObject.REMOVE
+        #     collision_objects_batch.append(coll_obj)
         
-        self.active_items = seen_ids.copy()
+        # self.active_items = seen_ids.copy()
         
         # Send all updates in one service call. 
         # if collision_objects_batch:
