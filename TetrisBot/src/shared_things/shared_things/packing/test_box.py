@@ -1,5 +1,5 @@
 import pytest
-from box import Box, Bin
+from .box import Box, Bin
 
 class TestBox:
     def test_zero_box(self):

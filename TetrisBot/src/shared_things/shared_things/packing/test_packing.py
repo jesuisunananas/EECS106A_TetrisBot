@@ -1,7 +1,7 @@
 import numpy as np # type: ignore
 import pytest # type: ignore
-from box import Box, Bin
-from heuristics import place_box_with_rule
+from .box import Box, Bin
+from .heuristics import place_box_with_rule
 
 """I think these ones are outdated, now that I've added some more parameters..."""
 

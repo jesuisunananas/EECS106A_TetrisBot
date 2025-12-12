@@ -210,52 +210,43 @@ class ArucoNode(rclpy.node.Node):
 
         if marker_ids is not None:
             # Organize markers with their corresponding sizes and corners
-            marker_data = []  # List of (index, marker_id, marker_size, corners)
-            bigger_marker_data = []
             small_corners = []
             big_corners = []
-
             small_ids = []
             big_ids = []
             
             for i, marker_id in enumerate(marker_ids):
                 marker_size = get_marker_size(marker_id[0]) # <- new function imported from aruco_constants.py!!
-                if marker_size == 0.05:
-                    marker_data.append((i, marker_id, marker_size, corners[i]))
+                if marker_size == BOX_MARKER_SIZE:
                     small_corners.append(corners[i])
                     small_ids.append(marker_id)
-                else:
-                    bigger_marker_data.append((i, marker_id, marker_size, corners[i]))
+                elif marker_size == DEFAULT_MARKER_SIZE:
                     big_corners.append(corners[i])
                     big_ids.append(marker_id)
-            
-
-
-
             
             # Estimate poses for all markers at once
             # Handle empty arrays to prevent crashes when markers are temporarily lost
             if len(small_corners) > 0:
                 if parse_version(cv2.__version__) >= parse_version("4.7.0"):
-                    rvecs, tvecs, _ = custom_estimatePoseSingleMarkers(
+                    small_rvecs, small_tvecs, _ = custom_estimatePoseSingleMarkers(
                         small_corners, BOX_MARKER_SIZE, self.intrinsic_mat, self.distortion
                     )
                 elif cv2.__version__ > "4.0.0":
-                    rvecs, tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
+                    small_rvecs, small_tvecs, _ = cv2.aruco.estimatePoseSingleMarkers(
                         small_corners, BOX_MARKER_SIZE, self.intrinsic_mat, self.distortion
                     )
                 else:
-                    rvecs, tvecs = cv2.aruco.estimatePoseSingleMarkers(
+                    small_rvecs, small_tvecs = cv2.aruco.estimatePoseSingleMarkers(
                         small_corners, marker_ids, self.intrinsic_mat, self.distortion
                     )
                 # Ensure proper shape (N, 1, 3)
-                if rvecs.ndim == 0 or len(rvecs) == 0:
-                    rvecs = np.empty((0, 1, 3))
-                if tvecs.ndim == 0 or len(tvecs) == 0:
-                    tvecs = np.empty((0, 1, 3))
+                if small_rvecs.ndim == 0 or len(small_rvecs) == 0:
+                    small_rvecs = np.empty((0, 1, 3))
+                if small_tvecs.ndim == 0 or len(small_tvecs) == 0:
+                    small_tvecs = np.empty((0, 1, 3))
             else:
-                rvecs = np.empty((0, 1, 3))
-                tvecs = np.empty((0, 1, 3))
+                small_rvecs = np.empty((0, 1, 3))
+                small_tvecs = np.empty((0, 1, 3))
             
             if len(big_corners) > 0:
                 if parse_version(cv2.__version__) >= parse_version("4.7.0"):
@@ -280,16 +271,17 @@ class ArucoNode(rclpy.node.Node):
                 big_tvecs = np.empty((0, 1, 3))
             
             # Safely append arrays (both are guaranteed to be 2D now)
-            if len(rvecs) > 0 and len(big_rvecs) > 0:
+            rvecs, tvecs = np.empty((0, 1, 3)), np.empty((0, 1, 3))
+            if len(small_rvecs) > 0:
+                rvecs = np.append(rvecs, small_rvecs, axis=0)
+                tvecs = np.append(tvecs, small_tvecs, axis=0)
+            if len(big_rvecs) > 0:
                 rvecs = np.append(rvecs, big_rvecs, axis=0)
                 tvecs = np.append(tvecs, big_tvecs, axis=0)
-            elif len(big_rvecs) > 0:
-                rvecs = big_rvecs
-                tvecs = big_tvecs
             # If both are empty, rvecs and tvecs remain empty arrays
 
-            small_ids.extend(big_ids)
-            marker_ids = small_ids
+            # reorder the marker_ids (first small markers, then big markers)
+            marker_ids = small_ids + big_ids
             
             # Skip processing if no valid poses were computed
             if len(rvecs) == 0 or len(tvecs) == 0 or len(marker_ids) == 0:

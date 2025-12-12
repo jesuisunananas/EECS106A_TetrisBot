@@ -65,7 +65,7 @@ class IKPlanner(Node):
         ik_req.ik_request.group_name = 'ur_manipulator'
         ik_req.ik_request.pose_stamped = pose
         ik_req.ik_request.robot_state.joint_state = current_joint_state
-        ik_req.ik_request.ik_link_name = 'wrist_3_link'
+        ik_req.ik_request.ik_link_name = 'tool0' #'wrist_3_link'
 
         future = self.ik_client.call_async(ik_req)
         rclpy.spin_until_future_complete(self, future)
@@ -88,8 +88,11 @@ class IKPlanner(Node):
     def plan_to_joints(self, target_joint_state):
         req = GetMotionPlan.Request()
         req.motion_plan_request.group_name = 'ur_manipulator'
-        req.motion_plan_request.allowed_planning_time = 5.0
+        req.motion_plan_request.allowed_planning_time = 10.0  # Increased from 5.0
         req.motion_plan_request.planner_id = "RRTConnectkConfigDefault"
+        
+        # Allow multiple planning attempts with different random seeds
+        req.motion_plan_request.num_planning_attempts = 5
 
         goal_constraints = Constraints()
         for name, pos in zip(target_joint_state.name, target_joint_state.position):
@@ -113,7 +116,7 @@ class IKPlanner(Node):
 
         result = future.result()
         if result.motion_plan_response.error_code.val != 1:
-            self.get_logger().error('Planning failed.')
+            self.get_logger().error(f'Planning failed. Code={result.motion_plan_response.error_code.val}')
             return None
 
         self.get_logger().info('Motion plan computed successfully.')

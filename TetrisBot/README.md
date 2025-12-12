@@ -1,36 +1,37 @@
 
 
-## Running ros2_aruco:
+## Running system:
 _Note: the install and build folders are git-ignored, so you'll have to do this every time you clone it on a new computer._
 _Run colon build and source in the root directory_
-### Step 1: start camera
-```
-ros2 launch realsense2_camera rs_launch.py pointcloud.enable:=true rgb_camera.color_profile:=1920x1080x30
-```
-
-### Step 2: launch the aruco_recongnition node:
-```
-ros2 launch ros2_aruco aruco_recognition.launch.py
-```
-
-## Running perception:
-All the code are in ar_tag_identity.py 
-
-### Step 1: start camera
-```
-ros2 launch realsense2_camera rs_launch.py pointcloud.enable:=true rgb_camera.color_profile:=1920x1080x30
-```
-
-### Step 2: start the base-link tree
+### Step 0: run ur7e comms
 ```
 ros2 run ur7e_utils enable_comms
 ```
 
-### Step 3: connect the tree to camera
+### Step 1: launch perception launch file
 ```
-ros2 run planning tf
+ros2 launch perception perception.launch.py ar_marker:=<insert base link ar marker id>
 ```
-### Step 4: launch the node
+
+### Step 2: run planning.main
 ```
-ros2 launch perception perception.launch.py
+ros2 run planning main
+```
+
+### Step 3: call service to run packing
+Every time you want to get the arm to move, make a service call in a seperate terminal:
+```
+ros2 service call /run_packing std_srvs/srv/Empty
+```
+
+## Misc:
+
+### Reset arm
+```
+ros2 run ur7e_utils reset_state
+```
+
+### Tuck arm
+```
+ros2 run ur7e_utils tuck
 ```

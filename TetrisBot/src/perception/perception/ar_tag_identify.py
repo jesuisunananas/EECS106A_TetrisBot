@@ -14,6 +14,7 @@ import numpy as np
 from box_bin_msgs.msg import BoxBin
 
 from perception.table import average_table_pose
+from perception.mesh import get_collision_mesh
 
 class TagIdentification(Node):
     '''
@@ -31,7 +32,7 @@ class TagIdentification(Node):
         super().__init__("ar_tag_identification_node")
 
         # Base Marker parameter (set via launch file)
-        self.declare_parameter('base_marker', 7)
+        self.declare_parameter('base_marker', 10)
         self.base_marker = self.get_parameter('base_marker').value
 
         # "aruco_markers" subscriber
@@ -51,6 +52,7 @@ class TagIdentification(Node):
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
+        self.active_items = set()
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
@@ -67,10 +69,14 @@ class TagIdentification(Node):
         bin_ids = []
         box_poses = []
         bin_poses = []
+
+        seen_ids = set()
         
         # Zip the IDs and Poses to simplify code ig
         for id, input_pose in zip(msg.marker_ids, msg.poses):
             if id != self.base_marker:
+
+                seen_ids.add(id)
                     
                 item = get_object_by_id(id) 
 
@@ -94,33 +100,40 @@ class TagIdentification(Node):
                     
                     pose = transformed_pose
 
-                    offset = self.offset_centre(item, pose.orientation) 
-                    pose.position.x += offset[0]
-                    pose.position.y += offset[1]
-                    pose.position.z += offset[2]
-                    
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
+                        # NOTE: applied the height + 0.01 offset here:
+                        offset = self.create_offset(item, [0.0, 0.0, 0.01-(item.height / 2.0)], pose.orientation) 
+                        pose.position.x += offset[0]
+                        pose.position.y += offset[1]
+                        pose.position.z += offset[2]
+                        
                         box_ids.append(id)
                         box_poses.append(pose)
+
+                        # Create the object and add to batch
+                        obj = self.create_collision_object(item, pose)
+                        collision_objects_batch.append(obj)
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
+                        # NOTE: applied the width/2 and height/2  offset to align with bin top left corner:
+                        offset = self.create_offset(item, [-(item.width / 2), (item.height / 2), 0.0], pose.orientation) 
+                        pose.position.x += offset[0]
+                        pose.position.y += offset[1]
+                        pose.position.z += offset[2]
+                        
                         bin_ids.append(id)
                         bin_poses.append(pose)
                         
                     elif is_table(id):
                         # self.get_logger().info(f"The item {id} forms a table")
                         table_poses.append(pose)
+                        self.get_logger().info(f'Table z: {[pose.position.z]}')
                         if table_item is None: table_item = item
                         continue
                     
-                    self.get_logger().info(f"posing {item.name}")
-                    
-                    # Create the object and add to batch
-                    obj = self.create_collision_object(item, pose)
-                    if obj:
-                        collision_objects_batch.append(obj)
+                    self.get_logger().info(f"posing {item.name}, at position ({pose.position.x}, {pose.position.y}, {pose.position.z})")   
                 
                 except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as ex:
                     self.get_logger().warn(f"TF transform failed ({source_frame} -> {target_frame}): {ex}")
@@ -141,26 +154,50 @@ class TagIdentification(Node):
             table_obj = self.create_collision_object(table_item, table_pose)
             if table_obj:
                 collision_objects_batch.append(table_obj)
+            #seen_ids.add(table_item.id) uncomment if needed #TODO
+        
+        remove_these_ids = self.active_items - seen_ids
+        for id_to_be_removed in remove_these_ids:
+            coll_obj = CollisionObject()
+            coll_obj.header.frame_id = 'base_link'
+            coll_obj.id = str(id_to_be_removed)
+            coll_obj.operation = CollisionObject.REMOVE
+            collision_objects_batch.append(coll_obj)
+        
+        self.active_items = seen_ids.copy()
         
         # Send all updates in one service call. 
-        if collision_objects_batch:
-            self.publish_collision_batch(collision_objects_batch)
+        # if collision_objects_batch:
+            # self.publish_collision_batch(collision_objects_batch)
     
     def create_collision_object(self, item, pose):
-        box = SolidPrimitive()
-        box.type = SolidPrimitive.BOX
-
-        try:
-            box.dimensions = [item.length, item.width, item.height]
-        except:
-            self.get_logger().warn(f"cannot add collison object! item as no dimension attributes!")
-            return None
         
         coll_obj = CollisionObject()
+        
+        mesh_filepath = None
+        if isinstance(item.id, int):
+            mesh_filepath = get_mesh_path(item.id)
+        if not mesh_filepath:
+            try:
+                box = SolidPrimitive()
+                box.type = SolidPrimitive.BOX
+                box.dimensions = [item.height, item.length, item.width]
+                coll_obj.primitives = [box]
+                coll_obj.primitive_poses = [pose]
+            except:
+                self.get_logger().warn(f"cannot add collison object! item as no dimension attributes nor mesh path!")
+                return None
+        else:
+            mesh = get_collision_mesh(self.get_logger(), mesh_filepath)
+            if not mesh:
+                self.get_logger().warn(f"cannot add collison mesh!")
+                return None
+            coll_obj.meshes = [mesh]
+            coll_obj.mesh_poses = [pose]
+        
         coll_obj.header.frame_id = 'base_link'
         coll_obj.id = str(item.id)
-        coll_obj.primitives = [box]
-        coll_obj.primitive_poses = [pose]
+        
         coll_obj.operation = CollisionObject.ADD
         return coll_obj
 
@@ -184,7 +221,7 @@ class TagIdentification(Node):
         except Exception as e:
             self.get_logger().warn(f'Fail to add collision objects: {e}')
 
-    def offset_centre(self, item, orientation_q):
+    def create_offset(self, item, offset, orientation_q):
         """
         Calculates the offset in the world frame based on the object's orientation.
         """
@@ -196,7 +233,7 @@ class TagIdentification(Node):
         ])
         
         # Offset the box centre from the marker:
-        local_offset = np.array([0.0, 0.0, -item.height / 2.0])
+        local_offset = np.array(offset)
         
         # Rotate that offset vector to align with the object's current orientation in world
         return r.apply(local_offset)

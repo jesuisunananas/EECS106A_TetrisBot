@@ -8,9 +8,15 @@ import cv2
 import numpy as np
 
 # Marker IDs (defaults, can be overridden via launch file)
+# NOTE length is along the z-direction of the ar marker, height is upright 
+# direction of the marker, and width is the... ye
+
+#in base_link frame length: x, width: y, height: z
 BOXES = {
-    1: Box(name='cube', length=0.08, width=0.08, height=0.08, id=1),
-    0: Box(name='rectangle', length=0.06, width=0.06, height=0.1, id=0),
+    0: Box(name='cube', length=0.08, width=0.08, height=0.08, id=0),
+    1: Box(name='rectangle', length=0.1, width=0.06, height=0.06, id=1),
+    # 1: Box(name='rectangle', length=0.06, width=0.1, height=0.06, id=1),
+    2: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=2),
     # 3: Box(name='ooo orange', length=1.0, width=1.0, height=1.0, id=3),
     # 4: Box(name='cheezzz', length=1.0, width=1.0, height=1.0, id=4),
     # 5: Box(name='bobo', length=1.0, width=1.0, height=1.0, id=5),
@@ -19,7 +25,14 @@ BOXES = {
 
 BINS = {
     # 6: Bin(name='bag', length=10.0, width=10.0, height=1.0, id=6),
-    100: Bin(name='bin', length=10, width=10, height=1, id=100),
+    # 100: Bin(name='bin', length=0.3, width=0.3, height=1, id=100, resolution=0.02),
+    100: Bin(name='bin', length=0.08, width=0.08, height=1, id=100, resolution=0.02),
+}
+
+COLLISION_MESHES = {
+    0: 'src/perception/perception/3d_models/cube.stl',
+    1: 'src/perception/perception/3d_models/rectangle.stl',
+    2: 'src/perception/perception/3d_models/small_box.stl'
 }
 
 BOX_MARKER_IDS = BOXES.keys()
@@ -32,7 +45,7 @@ BIN_ID_DESCRIPTIONS = {bin.id: bin.name for bin in BINS.values()}
 
 # FOR COLLISION OBJECTS:
 TABLE_IDS = [50, 51, 52, 53]
-table = Bundle(name='table', length=5.0, width=5.0, height=0.2, id=TABLE_IDS)
+table = Bundle(name='table', length=5.0, width=5.0, height=0.02, id=TABLE_IDS)
 BUNDLES = {id: table for id in TABLE_IDS}
 
 # Joint dictionaries: 
@@ -40,12 +53,9 @@ MARKER_ID_DESCRIPTIONS = {**BOX_ID_DESCRIPTIONS, **BIN_ID_DESCRIPTIONS}
 MARKER_OBJECTS = {**BOXES, **BINS, **BUNDLES}
 
 # Marker sizes in meters
-BOX_MARKER_SIZE = 0.05
-BIN_MARKER_SIZE = 0.05
-DEFAULT_MARKER_SIZE = 0.15 # NOTE: Not sure why marker_size is relevant but 
-                           # gonna do this so when id not in marker_size_map, 
-                           # it doesnt break.
-
+BOX_MARKER_SIZE = 0.048
+BIN_MARKER_SIZE = 0.048
+DEFAULT_MARKER_SIZE = 0.15
 
 # Utility functions
 def get_object_by_id(marker_id):
@@ -73,15 +83,21 @@ def get_marker_size(marker_id):
         return BIN_MARKER_SIZE
     else:
         return DEFAULT_MARKER_SIZE
+
+def get_mesh_path(marker_id):
+    """returns the file path to the collision mesh for marker ID"""
+    return COLLISION_MESHES.get(marker_id, None)
     
 def custom_estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
     '''
     Simplified version that matches the original function's output format
     '''
-    marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
-                              [marker_size / 2, marker_size / 2, 0],
-                              [marker_size / 2, -marker_size / 2, 0],
-                              [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
+    marker_points = np.array([
+        [-marker_size / 2, marker_size / 2, 0],
+        [marker_size / 2, marker_size / 2, 0],
+        [marker_size / 2, -marker_size / 2, 0],
+        [-marker_size / 2, -marker_size / 2, 0]
+    ], dtype=np.float32)
     
     rvecs = []
     tvecs = []
