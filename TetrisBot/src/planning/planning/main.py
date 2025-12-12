@@ -31,9 +31,6 @@ class UR7e_CubeGrasp(Node):
         self.box_pose_array_sub = self.create_subscription(BoxBin, '/box_bin', self.objects_callback, 1) 
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1) 
 
-        # Publisher for updating the Planning Scene (ACM)
-        # self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
-
         self.exec_ac = ActionClient(
             self, FollowJointTrajectory,
             '/scaled_joint_trajectory_controller/follow_joint_trajectory'
@@ -150,15 +147,8 @@ class UR7e_CubeGrasp(Node):
             box = get_object_by_id(box_id)
             initial_pose = box_poses[box_idx]
             
-            # NOTE: the bin orientation shouldn't actually matter tbh. 
-            # Placing based on the top left corner should still work
-            transform_timeout = rclpy.duration.Duration(seconds=0.1)
-            bin_tf = self.tf_buffer.lookup_transform("base_link", 
-                                                     f"ar_marker_{bin_id}", 
-                                                     rclpy.time.Time(), 
-                                                     timeout=transform_timeout
-                                                     )
-            final_pose = self.calculate_final_pose(info, bin_pose)
+            bin = get_object_by_id(bin_id)
+            final_pose = self.calculate_final_pose(info, bin, bin_pose)
 
             self.get_logger().info(f"Dim for box {box_id}: l:{box.length}, w:{box.width}, h:{box.height}")
 
@@ -255,36 +245,21 @@ class UR7e_CubeGrasp(Node):
             source_pose.orientation.z, 
             source_pose.orientation.w
         ])
-        
-        r_dest = R.from_quat([
-            target_pose.orientation.x, 
-            target_pose.orientation.y,
-            target_pose.orientation.z, 
-            target_pose.orientation.w
-        ])
-
         r_side_offset = [0, 0, 1] # z-axis of box-frame
 
         r_source_z_axis = r_source.apply(r_side_offset) # get in base-link frame
-        r_dest_z_axis = r_dest.apply(r_side_offset)
 
         y_axis_base = np.array([[0, 1, 0]]) #should be pointing out towards from base_link
         # self.get_logger().info(f'source z shape: {r_source_z_axis.shape}')
         # self.get_logger().info(f'y-axis: {y_axis_base.shape}')
         r_source_ee, _ = R.align_vectors(np.atleast_2d(r_source_z_axis), y_axis_base) # get rotation from ee pointing out towards 
                                                                                       # to z-axis of box frame
-        r_dest_ee, _ = R.align_vectors(np.atleast_2d(r_dest_z_axis), y_axis_base)
 
-        r_ee = R.from_quat([0, 1, 0, 0])
-
-        r_source_ee = r_source_ee.as_matrix() @ r_ee.as_matrix() 
-        r_dest_ee = r_dest_ee.as_matrix() @ r_ee.as_matrix()
-
+        r_ee = R.from_quat([0, 1, 0, 0]) # gripper pointing downwards
+        r_source_ee = r_source_ee.as_matrix() @ r_ee.as_matrix() # Combine rotations to get final desired EE orientation
         r_source_ee = R.from_matrix(r_source_ee)
-        r_dest_ee = R.from_matrix(r_dest_ee)
 
         qx_src, qy_src, qz_src, qw_src = r_source_ee.as_quat() # Convert to quaternion for IK (IMPORTANT!)
-        qx_dst, qy_dst, qz_dst, qw_dst = r_dest_ee.as_quat()
         # ===================== Orientation Logic ===================
 
         # -----------------------------------------------------------
@@ -298,8 +273,8 @@ class UR7e_CubeGrasp(Node):
         # Pre-grasp EE position 20cm above cube top surface:
         x_pre = source_pose.position.x 
         y_pre = source_pose.position.y 
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 
-        # z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.height/2) + 0.2
+        # z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.height/2) + 0.2
 
         self.get_logger().info(f'z pre grasp: {z_pre}')
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
@@ -339,7 +314,7 @@ class UR7e_CubeGrasp(Node):
         # -----------------------------------------------------------
         # STEP 3: move to target, and place
         # Position above place location before lowering to place location
-        x_pre_place = target_pose.position.x + 0.01
+        x_pre_place = target_pose.position.x + 0.01 # FIXME: maybe will be fixes with smaller AR tags?
         y_pre_place = target_pose.position.y
         z_pre_place = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2
         
@@ -463,20 +438,20 @@ class UR7e_CubeGrasp(Node):
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
 
-    def calculate_final_pose(self, box_info: tuple, bin_tf) -> Pose:
+    def calculate_final_pose(self, box_info: tuple, bin, bin_pose) -> Pose:
         # For changing from bin-frame coor to base-link frame
         id, name, fragility, z_base, z_top, x, y = box_info
         
-        self.get_logger().info(f'calc final pose x: {x}, y: {y}')
+        self.get_logger().info(f'calc final pose for {name} (grids) x: {x}, y: {y}, z: {z_base}')
 
-        un_grid_x = x * 0.02
-        un_grid_y = y * 0.02
-        un_grid_z = z_base * 0.02
+        un_grid_x = x * bin.resolution
+        un_grid_y = y * bin.resolution
+        un_grid_z = z_base * bin.resolution
 
         pose = Pose()
-        pose.position.x = float(un_grid_x + bin_tf.position.x) 
-        pose.position.y = float(un_grid_y + bin_tf.position.y)
-        pose.position.z = float(un_grid_z + bin_tf.position.z)
+        pose.position.x = float(un_grid_x + bin_pose.position.x) 
+        pose.position.y = float(un_grid_y + bin_pose.position.y)
+        pose.position.z = float(un_grid_z + bin_pose.position.z)
 
         return pose
 
