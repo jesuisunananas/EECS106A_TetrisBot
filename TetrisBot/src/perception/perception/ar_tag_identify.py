@@ -16,58 +16,6 @@ from box_bin_msgs.msg import BoxBin
 from perception.table import average_table_pose
 from perception.mesh import get_collision_mesh
 
-from dataclasses import dataclass
-import math
-import numpy as np
-from scipy.spatial.transform import Rotation as R
-
-def quat_slerp(q0, q1, t):
-    # q = [x,y,z,w]
-    r0 = R.from_quat(q0)
-    r1 = R.from_quat(q1)
-
-    # Ensure shortest path (same hemisphere)
-    if np.dot(q0, q1) < 0:
-        q1 = -q1
-        r1 = R.from_quat(q1)
-
-    # SciPy doesn't have direct slerp between 2 quats without Slerp object;
-    # simple approach: interpolate via rotvec
-    r_rel = r0.inv() * r1
-    rotvec = r_rel.as_rotvec()
-    r_interp = r0 * R.from_rotvec(rotvec * t)
-    return r_interp.as_quat()
-
-def angle_between_quats(q0, q1):
-    # return angle in radians
-    if np.dot(q0, q1) < 0:
-        q1 = -q1
-    dq = R.from_quat(q0).inv() * R.from_quat(q1)
-    return np.linalg.norm(dq.as_rotvec())
-
-@dataclass
-class PoseFilter:
-    pos: np.ndarray
-    quat: np.ndarray
-    last_seen_sec: float
-
-    def update(self, new_pos, new_quat, now_sec,
-               alpha=0.15, max_jump_m=0.03, max_jump_deg=15.0):
-        # gate outliers
-        dp = np.linalg.norm(new_pos - self.pos)
-        dtheta = angle_between_quats(self.quat, new_quat) * 180.0 / math.pi
-        if dp > max_jump_m or dtheta > max_jump_deg:
-            # ignore spike, but refresh last_seen so we don’t “drop” instantly
-            self.last_seen_sec = now_sec
-            return self.pos, self.quat
-
-        # smooth
-        self.pos = (1 - alpha) * self.pos + alpha * new_pos
-        self.quat = quat_slerp(self.quat, new_quat, alpha)
-        self.last_seen_sec = now_sec
-        return self.pos, self.quat
-
-
 class TagIdentification(Node):
     '''
     Notes;
@@ -105,8 +53,10 @@ class TagIdentification(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.active_items = set()
-        self.filters = {}  # id -> PoseFilter
-        self.hold_seconds = 0.5
+
+        self.last_good_pose = {}   # id -> Pose
+        self.last_seen_time = {}  # id -> float (seconds)
+        self.hold_seconds = 0.5   # <-- tune this (0.3–1.0s is typical)
 
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
@@ -142,9 +92,9 @@ class TagIdentification(Node):
                 try:
                     # create pose
                     source_pose = PoseStamped()
-                    # source_pose.header = msg.header
-                    source_pose.header.frame_id = msg.header.frame_id
-                    source_pose.header.stamp = self.get_clock().now().to_msg()
+                    source_pose.header = msg.header
+                    #source_pose.header.frame_id = msg.header.frame_id
+                    #source_pose.header.stamp = self.get_clock().now().to_msg()
                     source_pose.pose = input_pose
 
                     # # apply transform to this PoseStamped
@@ -155,27 +105,18 @@ class TagIdentification(Node):
                     
                     pose = transformed_pose
 
-                    now_sec = self.get_clock().now().nanoseconds * 1e-9
-
-                    new_pos = np.array([pose.position.x, pose.position.y, pose.position.z], dtype=float)
-                    new_quat = np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w], dtype=float)
-
-                    pf = self.filters.get(id)
-                    if pf is None:
-                        self.filters[id] = PoseFilter(new_pos, new_quat, now_sec)
-                    else:
-                        fpos, fquat = pf.update(new_pos, new_quat, now_sec)
-                        pose.position.x, pose.position.y, pose.position.z = fpos.tolist()
-                        pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = fquat.tolist()
-
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
                         # NOTE: applied the height + 0.01 offset here:
-                        offset = self.create_offset(item, [0.0, 0.0, 0.01-(item.height_m / 2.0)], pose.orientation) 
+                        offset = self.create_offset(item, [0.0, 0.0, 0.01-(item.height / 2.0)], pose.orientation) 
                         pose.position.x += offset[0]
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]
-                        
+
+                        now_sec = self.get_clock().now().nanoseconds * 1e-9
+                        self.last_good_pose[id] = pose
+                        self.last_seen_time[id] = now_sec
+
                         box_ids.append(id)
                         box_poses.append(pose)
 
@@ -185,10 +126,15 @@ class TagIdentification(Node):
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
-                        # offset = self.create_offset(item, [item.width_m / 2, -(item.height_m / 2), 0.0], pose.orientation) 
-                        # pose.position.x += offset[0]
-                        # pose.position.y += offset[1]
-                        # pose.position.z += offset[2]
+                        offset = self.create_offset(item, [item.width / 2, -(item.height / 2), 0.0], pose.orientation) 
+                        pose.position.x += offset[0]
+                        pose.position.y += offset[1]
+                        pose.position.z += offset[2]
+
+                        now_sec = self.get_clock().now().nanoseconds * 1e-9
+                        self.last_good_pose[id] = pose
+                        self.last_seen_time[id] = now_sec
+
                         
                         bin_ids.append(id)
                         bin_poses.append(pose)
@@ -205,6 +151,43 @@ class TagIdentification(Node):
                 except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as ex:
                     self.get_logger().warn(f"TF transform failed ({source_frame} -> {target_frame}): {ex}")
             
+        # ----------------------------------------------------
+        # HOLD LAST GOOD POSES FOR SHORT DROPOUTS
+        # ----------------------------------------------------
+        now_sec = self.get_clock().now().nanoseconds * 1e-9
+
+        for id, last_pose in list(self.last_good_pose.items()):
+            if id in seen_ids:
+                continue  # already handled this frame
+
+            # marker NOT seen this frame
+            last_seen = self.last_seen_time.get(id, None)
+            if last_seen is None:
+                continue
+
+            if now_sec - last_seen <= self.hold_seconds:
+                # HOLD: reuse last good pose
+                item = get_object_by_id(id)
+                if item is None:
+                    continue
+
+                pose = last_pose
+
+                if is_box(id):
+                    box_ids.append(id)
+                    box_poses.append(pose)
+
+                elif is_bin(id):
+                    bin_ids.append(id)
+                    bin_poses.append(pose)
+
+                elif is_table(id):
+                    table_poses.append(pose)
+                    if table_item is None:
+                        table_item = item
+
+
+        
         # publish categorised bins and boxes
         box_bins = BoxBin()
         box_bins.box_ids = box_ids
@@ -217,7 +200,12 @@ class TagIdentification(Node):
         if table_poses and table_item:
             # table_item.placed = True 
             # self.get_logger().info(f"Placing Table")
+
             table_pose = average_table_pose(table_item, table_poses)
+
+            now_sec = self.get_clock().now().nanoseconds * 1e-9
+            self.last_good_pose[table_item.id] = table_pose
+            self.last_seen_time[table_item.id] = now_sec
             table_obj = self.create_collision_object(table_item, table_pose)
             if table_obj:
                 collision_objects_batch.append(table_obj)
@@ -233,24 +221,24 @@ class TagIdentification(Node):
         
         # self.active_items = seen_ids.copy()
 
-        # After processing detections:
         now_sec = self.get_clock().now().nanoseconds * 1e-9
 
-        expired = []
-        for tracked_id, pf in list(self.filters.items()):
-            if (now_sec - pf.last_seen_sec) > self.hold_seconds:
-                expired.append(tracked_id)
+        expired_ids = []
+        for tracked_id, last_t in self.last_seen_time.items():
+            if now_sec - last_t > self.hold_seconds:
+                expired_ids.append(tracked_id)
 
-        for id_to_be_removed in expired:
-            # remove collision object
+        for id_to_be_removed in expired_ids:
             coll_obj = CollisionObject()
             coll_obj.header.frame_id = 'base_link'
             coll_obj.id = str(id_to_be_removed)
             coll_obj.operation = CollisionObject.REMOVE
             collision_objects_batch.append(coll_obj)
 
-            # forget filter state
-            del self.filters[id_to_be_removed]
+            # clean up
+            self.last_seen_time.pop(id_to_be_removed, None)
+            self.last_good_pose.pop(id_to_be_removed, None)
+
         
         # Send all updates in one service call. 
         # if collision_objects_batch:
