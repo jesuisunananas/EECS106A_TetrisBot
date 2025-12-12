@@ -4,7 +4,6 @@ import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from control_msgs.action import FollowJointTrajectory
-from moveit_msgs.msg import RobotTrajectory, PlanningScene, AllowedCollisionMatrix, AllowedCollisionEntry
 from sensor_msgs.msg import JointState
 # from tf2_ros import Buffer, TransformListener
 import tf2_ros
@@ -17,6 +16,7 @@ from geometry_msgs.msg import PoseArray, Pose, TransformStamped, PoseStamped
 from tf2_geometry_msgs.tf2_geometry_msgs import do_transform_pose
 from shared_things.packing.main import packing_with_priors
 from shared_things.packing.config import PackingConfig
+import time
 
 from box_bin_msgs.msg import BoxBin
 
@@ -29,10 +29,7 @@ class UR7e_CubeGrasp(Node):
 
         self.box_pose_array_sub = self.create_subscription(BoxBin, '/box_bin', self.objects_callback, 1) 
         self.joint_state_sub = self.create_subscription(JointState, '/joint_states', self.joint_state_callback, 1) 
-
-        # Publisher for updating the Planning Scene (ACM)
-        # self.scene_pub = self.create_publisher(PlanningScene, '/planning_scene', 10)
-
+        
         self.exec_ac = ActionClient(
             self, FollowJointTrajectory,
             '/scaled_joint_trajectory_controller/follow_joint_trajectory'
@@ -46,8 +43,6 @@ class UR7e_CubeGrasp(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
 
-        # self.cube_pose = None
-        # self.current_plan = None
         self.joint_state = None
         self.current_objects = None
         self.is_busy = False
@@ -89,9 +84,9 @@ class UR7e_CubeGrasp(Node):
         # self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
         # # initial_pose.position.y += GRIPPER_OFFSET_Y
-        # # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
+        # # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height_m / 2))
         # # final_pose.position.y += GRIPPER_OFFSET_Y
-        # # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
+        # # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height_m / 2))
         # # final_pose.position.z += GRIPPER_OFFSET_Z 
         
         # # success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
@@ -122,11 +117,12 @@ class UR7e_CubeGrasp(Node):
         #     self.get_logger().info(f'box pose {initial_pose.position.z}')
         #     self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
-        #     success = self.plan_pick_and_place(box, initial_pose, final_pose)
+        #     # success = self.plan_pick_and_place(box, initial_pose, final_pose)
+        #     success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
 
         #     if success:
         #         self.get_logger().info(f"Planning successful for box {id}! Adding to queue.")
-        #         bin_pose.position.z += box.width
+        #         bin_pose.position.z += box.width_m
         #     else:
         #         self.get_logger().error(f"Planning failed for box {id}, clearing queue.")
         #         self.job_queue = []
@@ -135,26 +131,30 @@ class UR7e_CubeGrasp(Node):
 
         # if self.job_queue:
         #     self.execute_jobs()
+        # return response
         # ---------------------------------------------------------
-        # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
+        # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
         box_info = packing_with_priors(box_list=box_list, vis=False)
         
         self.is_busy = True
         for info in box_info:
-            box_id = box_ids.index(info[0])
+            box_id = info[0]
+            box_idx = box_ids.index(box_id)
             box = get_object_by_id(box_id)
-            initial_pose = box_poses[box_id]
+            initial_pose = box_poses[box_idx]
             
             # NOTE: the bin orientation shouldn't actually matter tbh. 
             # Placing based on the top left corner should still work
-            transform_timeout = rclpy.duration.Duration(seconds=0.1)
-            bin_tf = self.tf_buffer.lookup_transform("base_link", 
-                                                     f"ar_marker_{bin_id}", 
-                                                     rclpy.time.Time(), 
-                                                     timeout=transform_timeout
-                                                     )
-            final_pose = self.calculate_final_pose(info, bin_pose)
+            # transform_timeout = rclpy.duration.Duration(seconds=0.1)
+            # bin_tf = self.tf_buffer.lookup_transform("base_link", 
+            #                                          f"ar_marker_{bin_id}", 
+            #                                          rclpy.time.Time(), 
+            #                                          timeout=transform_timeout
+            #                                          )
+            final_pose = self.calculate_final_pose(info, bin_pose, get_object_by_id(bin_id))
+
+            self.get_logger().info(f"Dim for box {box_id}: l:{box.length_m}, w:{box.width_m}, h:{box.height_m}")
 
             success = self.plan_pick_and_place(box, initial_pose, final_pose)
             if success:
@@ -170,7 +170,6 @@ class UR7e_CubeGrasp(Node):
         return response
 
     def test_plan_pick_and_place(self, box, source_pose, target_pose):
-        
         # clear out job queue:
         self.job_queue = []
         
@@ -180,7 +179,7 @@ class UR7e_CubeGrasp(Node):
         # 1) Pregrasp at 20cm above the cube surface
         x_pre = source_pose.position.x
         y_pre = source_pose.position.y
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2 - 0.01
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width_m/2) + 0.2 - 0.01
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre)
         if not ik_result: return False
         self.job_queue.append(ik_result)
@@ -210,7 +209,7 @@ class UR7e_CubeGrasp(Node):
         self.job_queue.append(ik_result)
 
         # 6) Lower to final pose z
-        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.2 + (box.width) + 0.02)
+        ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final - 0.2 + (box.width_m) + 0.02)
         if not ik_result: return False
         self.job_queue.append(ik_result)
 
@@ -222,6 +221,9 @@ class UR7e_CubeGrasp(Node):
         ik_result = self.ik_planner.compute_ik(ik_result, x_final, y_final, z_final)
         if not ik_result: return False
         self.job_queue.append(ik_result)
+
+        # 7) Open gripper to reset
+        self.job_queue.append('toggle_grip')
 
         return True
 
@@ -260,8 +262,6 @@ class UR7e_CubeGrasp(Node):
         r_dest_z_axis = r_dest.apply(r_side_offset)
 
         y_axis_base = np.array([[0, 1, 0]]) #should be pointing out towards from base_link
-        # self.get_logger().info(f'source z shape: {r_source_z_axis.shape}')
-        # self.get_logger().info(f'y-axis: {y_axis_base.shape}')
         r_source_ee, _ = R.align_vectors(np.atleast_2d(r_source_z_axis), y_axis_base) # get rotation from ee pointing out towards 
                                                                                       # to z-axis of box frame
         r_dest_ee, _ = R.align_vectors(np.atleast_2d(r_dest_z_axis), y_axis_base)
@@ -289,7 +289,8 @@ class UR7e_CubeGrasp(Node):
         # Pre-grasp EE position 20cm above cube top surface:
         x_pre = source_pose.position.x 
         y_pre = source_pose.position.y 
-        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width/2) + 0.2
+        z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.width_m/2) + 0.2 
+        # z_pre = source_pose.position.z + GRIPPER_OFFSET_Z + (box.height_m/2) + 0.2
 
         self.get_logger().info(f'z pre grasp: {z_pre}')
         ik_result = self.ik_planner.compute_ik(self.joint_state, x_pre, y_pre, z_pre, qx_src, qy_src, qz_src, qw_src)
@@ -301,7 +302,7 @@ class UR7e_CubeGrasp(Node):
         # Calculate Source Grasp (Entering the object)
         x_grasp = x_pre
         y_grasp = y_pre
-        z_grasp = z_pre - 0.2 - 0.02 # move EE 2cm into the cube:
+        z_grasp = z_pre - 0.2 - GRASP_OFFSET_Z # move EE GRASP_OFFSET_Z (1.5cm) into the cube:
         ik_result = self.ik_planner.compute_ik(ik_result, x_grasp, y_grasp, z_grasp, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
             self.get_logger().error("IK failed for post grasp")
@@ -317,7 +318,8 @@ class UR7e_CubeGrasp(Node):
         # Lift back up to pre-grasp position:
         x_lift = x_pre
         y_lift = y_pre
-        z_lift = z_pre 
+        # z_lift = z_pre
+        z_lift = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2 
         
         ik_result = self.ik_planner.compute_ik(ik_result, x_lift, y_lift, z_lift, qx_src, qy_src, qz_src, qw_src)
         if not ik_result: 
@@ -328,12 +330,12 @@ class UR7e_CubeGrasp(Node):
         # -----------------------------------------------------------
         # STEP 3: move to target, and place
         # Position above place location before lowering to place location
-        x_pre_place = target_pose.position.x 
+        x_pre_place = target_pose.position.x + 0.01 # FIXME why is this offset needed? Is it a box marker issue or a planning issue?
         y_pre_place = target_pose.position.y
         z_pre_place = target_pose.position.z + GRIPPER_OFFSET_Z + 0.2
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_pre_place, y_pre_place, z_pre_place, qx_dst, qy_dst, qz_dst, qw_dst)
-        self.get_logger().info(f'z pre place: {z_pre_place}')
+        # self.get_logger().info(f'z pre place: {z_pre_place}')
         ik_result = self.ik_planner.compute_ik(ik_result, x_pre_place, y_pre_place, z_pre_place)
         if not ik_result: 
             self.get_logger().error("IK failed for above place")
@@ -343,10 +345,12 @@ class UR7e_CubeGrasp(Node):
         # Drop to final place height
         x_place = x_pre_place
         y_place = y_pre_place
-        z_place = z_pre_place + box.height - 0.2 - 0.02 + 0.01 # NOTE: 2cm for the gripper being inside the cube, 1cm for safety 
-                                                               # This should solve the suspiciously high release height!
+        z_place = z_pre_place + box.height_m - 0.2 - GRASP_OFFSET_Z + 0.005 
+        # NOTE: GRASP_OFFSET_Z for the gripper being inside the cube, 1cm for safety 
+        # This should solve the suspiciously high release height!
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)
+        self.get_logger().info(f'target_final_z: {target_pose.position.z}')
         ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place)                                                    
         if not ik_result: 
             self.get_logger().error("IK failed for place")
@@ -446,11 +450,12 @@ class UR7e_CubeGrasp(Node):
         try:
             result = future.result().result
             self.get_logger().info('Execution complete.')
+            time.sleep(0.5)
             self.execute_jobs() 
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
 
-    def calculate_final_pose(self, box_info: tuple, bin_tf) -> Pose:
+    def calculate_final_pose(self, box_info: tuple, bin_pose, bin) -> Pose:
         # For changing from bin-frame coor to base-link frame
         id, name, fragility, z_base, z_top, x, y = box_info
         
@@ -465,9 +470,9 @@ class UR7e_CubeGrasp(Node):
         # pose.orientation.z = 0.0
         # pose.orientation.w = 1.0
         
-        # # pose.position.x = x + (box.width / 2.0)
-        # # pose.position.y = y - (box.length / 2.0)
-        # # pose.position.z = z_base + (box.height / 2.0)
+        # # pose.position.x = x + (box.width_m / 2.0)
+        # # pose.position.y = y - (box.length_m / 2.0)
+        # # pose.position.z = z_base + (box.height_m / 2.0)
 
         # pose.position.x = float(x)
         # pose.position.y = float(y)
@@ -477,15 +482,14 @@ class UR7e_CubeGrasp(Node):
 
         self.get_logger().info(f'calc final pose x: {x}, y: {y}')
 
-        un_grid_x = x * 0.02
-        un_grid_y = y * 0.02
-        un_grid_z = z_base * 0.02
+        un_grid_x = x * bin.resolution
+        un_grid_y = y * bin.resolution
+        un_grid_z = z_base * bin.resolution
 
         pose = Pose()
-        # pose.position.x = float(un_grid_x + bin_tf.position.x)
-        pose.position.x = float(un_grid_x - bin_tf.position.x) # x-axis of base_link points left
-        pose.position.y = float(un_grid_y + bin_tf.position.y)
-        pose.position.z = float(un_grid_z + bin_tf.position.z)
+        pose.position.x = float(un_grid_x + bin_pose.position.x) 
+        pose.position.y = float(un_grid_y + bin_pose.position.y)
+        pose.position.z = float(un_grid_z + bin_pose.position.z)
 
         return pose
 

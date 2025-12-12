@@ -2,7 +2,8 @@ from dataclasses import dataclass
 
 @dataclass
 class PackingConfig:
-    bin_dims: tuple = (4,4,8)
+    # bin_dims: tuple = (4,4,8)
+    bin_dims: tuple = (0.1, 0.1, 20)
     feature_dim: int = 7
     hidden_dim: int = 128
     n_objects: int = 20

@@ -102,14 +102,14 @@ class TagIdentification(Node):
 
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
-                        box_ids.append(id)
-                        box_poses.append(pose)
-
-                        offset = self.offset_centre(item, pose.orientation) 
-                    
+                        # NOTE: applied the height + 0.01 offset here:
+                        offset = self.create_offset(item, [0.0, 0.0, 0.01-(item.height / 2.0)], pose.orientation) 
                         pose.position.x += offset[0]
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]
+                        
+                        box_ids.append(id)
+                        box_poses.append(pose)
 
                         # Create the object and add to batch
                         obj = self.create_collision_object(item, pose)
@@ -117,6 +117,11 @@ class TagIdentification(Node):
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
+                        offset = self.create_offset(item, [item.width / 2, -(item.height / 2), 0.0], pose.orientation) 
+                        pose.position.x += offset[0]
+                        pose.position.y += offset[1]
+                        pose.position.z += offset[2]
+                        
                         bin_ids.append(id)
                         bin_poses.append(pose)
                         
@@ -161,8 +166,8 @@ class TagIdentification(Node):
         self.active_items = seen_ids.copy()
         
         # Send all updates in one service call. 
-        if collision_objects_batch:
-            self.publish_collision_batch(collision_objects_batch)
+        # if collision_objects_batch:
+            # self.publish_collision_batch(collision_objects_batch)
     
     def create_collision_object(self, item, pose):
         
@@ -175,7 +180,7 @@ class TagIdentification(Node):
             try:
                 box = SolidPrimitive()
                 box.type = SolidPrimitive.BOX
-                box.dimensions = [item.height, item.length, item.width]
+                box.dimensions = [item.height_m, item.length_m, item.width_m]
                 coll_obj.primitives = [box]
                 coll_obj.primitive_poses = [pose]
             except:
@@ -215,7 +220,7 @@ class TagIdentification(Node):
         except Exception as e:
             self.get_logger().warn(f'Fail to add collision objects: {e}')
 
-    def offset_centre(self, item, orientation_q):
+    def create_offset(self, item, offset, orientation_q):
         """
         Calculates the offset in the world frame based on the object's orientation.
         """
@@ -227,7 +232,7 @@ class TagIdentification(Node):
         ])
         
         # Offset the box centre from the marker:
-        local_offset = np.array([0.0, 0.0, -item.length / 2.0])
+        local_offset = np.array(offset)
         
         # Rotate that offset vector to align with the object's current orientation in world
         return r.apply(local_offset)

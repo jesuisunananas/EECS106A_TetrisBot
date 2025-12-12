@@ -116,7 +116,7 @@ class IKPlanner(Node):
 
         result = future.result()
         if result.motion_plan_response.error_code.val != 1:
-            self.get_logger().error('Planning failed.')
+            self.get_logger().error(f'Planning failed. Code={result.motion_plan_response.error_code.val}')
             return None
 
         self.get_logger().info('Motion plan computed successfully.')
