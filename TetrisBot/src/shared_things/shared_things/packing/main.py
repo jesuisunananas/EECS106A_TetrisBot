@@ -5,17 +5,17 @@ import os
 from collections import deque
 
 # from shared_things import Box, Bin
-from .box import Bin, Box
-from .heuristics import *
-from .model import PointerNetPolicy, Critic
-from .env import PackingEnv
-from .train import train_step
+from box import Bin, Box
+from heuristics import *
+from model import PointerNetPolicy, Critic
+from env import PackingEnv
+from train import train_step
 import random
 import pybullet as p
 from math import sqrt
 import pybullet_data
 import time
-from .config import PackingConfig
+from config import PackingConfig
 import argparse
 import numpy as np
 
@@ -268,13 +268,13 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     hidden_dim = config.hidden_dim
     n_objects = config.n_objects
     policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-    policy.load_state_dict(torch.load("src/shared_things/shared_things/packing/policy.pt", map_location="cpu"))
+    policy.load_state_dict(torch.load("/Users/arjunrewari/Developer/EECS106A_TetrisBot/TetrisBot/src/shared_things/shared_things/packing/policy.pt", map_location="cpu"))
     policy.eval()
     env = PackingEnv(n_objects, config)
     X = env.reset(box_list=box_list)
     indices, _, _ = policy(X, training=False)
     ordering = indices[0].tolist()
-    print("Ordering (indicies):", ordering)
+    print("Ordering:", ordering)
 
     b = Bin(*env.bin_dims)
     for idx in ordering:
@@ -311,11 +311,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
         box_info.append((box.id, name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
 
     # sort fragile → tough (fragility ascending)
-    print('Box info presort:')
-    print(box_info)
-    # box_info.sort(key=lambda t: t[1])
-    # print('Box info postsort:')
-    # print(box_info)
+    #box_info.sort(key=lambda t: t[1])
 
     for id, name, frag, z_base, z_top, x, y in box_info:
         print(
