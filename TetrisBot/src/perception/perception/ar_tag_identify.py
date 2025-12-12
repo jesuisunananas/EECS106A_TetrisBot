@@ -13,9 +13,6 @@ from scipy.spatial.transform import Rotation as R
 import numpy as np
 from box_bin_msgs.msg import BoxBin
 
-from perception.table import average_table_pose
-from perception.mesh import get_collision_mesh
-
 class TagIdentification(Node):
     '''
     Notes;
@@ -57,27 +54,18 @@ class TagIdentification(Node):
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
         source_frame = msg.header.frame_id.lstrip('/')
+        self.get_logger().info(f"Source frame is in {source_frame}")
         target_frame = "base_link"
 
-        # List to collect all collision objects for this frame
-        collision_objects_batch = []
-        table_poses = []
-        table_item = None
-        
         # for box_bin publisher:
         box_ids = []
         bin_ids = []
         box_poses = []
         bin_poses = []
-
-        seen_ids = set()
         
         # Zip the IDs and Poses to simplify code ig
         for id, input_pose in zip(msg.marker_ids, msg.poses):
             if id != self.base_marker:
-
-                seen_ids.add(id)
-                    
                 item = get_object_by_id(id) 
 
                 if item is None: 
@@ -92,42 +80,21 @@ class TagIdentification(Node):
                     source_pose.header.stamp = self.get_clock().now().to_msg()
                     source_pose.pose = input_pose
 
-                    # # apply transform to this PoseStamped
+                    # apply transform to this PoseStamped
                     transform_timeout = rclpy.duration.Duration(seconds=0.1)
                     # transformed_pose = self.tf_buffer.transform(source_pose, target_frame, timeout=transform_timeout)
                     tf = self.tf_buffer.lookup_transform(target_frame, source_frame, rclpy.time.Time(), timeout=transform_timeout)
-                    transformed_pose = tf2_geometry_msgs.do_transform_pose(source_pose.pose, tf)
-                    
-                    pose = transformed_pose
+                    tf_pose = tf2_geometry_msgs.do_transform_pose(source_pose.pose, tf)
 
                     if is_box(id):
-                        # self.get_logger().info(f"The item {id} is a box")
                         box_ids.append(id)
-                        box_poses.append(pose)
+                        box_poses.append(tf_pose)
 
-                        offset = self.offset_centre(item, pose.orientation) 
-                    
-                        pose.position.x += offset[0]
-                        pose.position.y += offset[1]
-                        pose.position.z += offset[2]
-
-                        # Create the object and add to batch
-                        obj = self.create_collision_object(item, pose)
-                        collision_objects_batch.append(obj)
-                        
-                    elif is_bin(id):
-                        # self.get_logger().info(f"The item {id} is a bin")
+                    elif is_bin(id):                        
                         bin_ids.append(id)
-                        bin_poses.append(pose)
-                        
-                    elif is_table(id):
-                        # self.get_logger().info(f"The item {id} forms a table")
-                        table_poses.append(pose)
-                        self.get_logger().info(f'Table z: {[pose.position.z]}')
-                        if table_item is None: table_item = item
-                        continue
+                        bin_poses.append(tf_pose)
                     
-                    self.get_logger().info(f"posing {item.name}, at position ({pose.position.x}, {pose.position.y}, {pose.position.z})")   
+                    # self.get_logger().info(f"posing {item.name}, at position ({tf_pose.position.x}, {tf_pose.position.y}, {tf_pose.position.z})")   
                 
                 except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException) as ex:
                     self.get_logger().warn(f"TF transform failed ({source_frame} -> {target_frame}): {ex}")
@@ -139,96 +106,15 @@ class TagIdentification(Node):
         box_bins.bin_ids = bin_ids
         box_bins.bin_poses = bin_poses
         self.box_bin_pub.publish(box_bins)
-            
-        # Placing the table (only if it is not empty):
-        if table_poses and table_item:
-            # table_item.placed = True 
-            # self.get_logger().info(f"Placing Table")
-            table_pose = average_table_pose(table_item, table_poses)
-            table_obj = self.create_collision_object(table_item, table_pose)
-            if table_obj:
-                collision_objects_batch.append(table_obj)
-            #seen_ids.add(table_item.id) uncomment if needed #TODO
         
-        remove_these_ids = self.active_items - seen_ids
-        for id_to_be_removed in remove_these_ids:
-            coll_obj = CollisionObject()
-            coll_obj.header.frame_id = 'base_link'
-            coll_obj.id = str(id_to_be_removed)
-            coll_obj.operation = CollisionObject.REMOVE
-            collision_objects_batch.append(coll_obj)
-        
-        self.active_items = seen_ids.copy()
-        
-        # Send all updates in one service call. 
-        # if collision_objects_batch:
-            # self.publish_collision_batch(collision_objects_batch)
-    
-    def create_collision_object(self, item, pose):
-        
-        coll_obj = CollisionObject()
-        
-        mesh_filepath = None
-        if isinstance(item.id, int):
-            mesh_filepath = get_mesh_path(item.id)
-        if not mesh_filepath:
-            try:
-                box = SolidPrimitive()
-                box.type = SolidPrimitive.BOX
-                box.dimensions = [item.height, item.length, item.width]
-                coll_obj.primitives = [box]
-                coll_obj.primitive_poses = [pose]
-            except:
-                self.get_logger().warn(f"cannot add collison object! item as no dimension attributes nor mesh path!")
-                return None
-        else:
-            mesh = get_collision_mesh(self.get_logger(), mesh_filepath)
-            if not mesh:
-                self.get_logger().warn(f"cannot add collison mesh!")
-                return None
-            coll_obj.meshes = [mesh]
-            coll_obj.mesh_poses = [pose]
-        
-        coll_obj.header.frame_id = 'base_link'
-        coll_obj.id = str(item.id)
-        
-        coll_obj.operation = CollisionObject.ADD
-        return coll_obj
-
-    def publish_collision_batch(self, collision_objects):
-        scene_msg = PlanningScene()
-        scene_msg.world.collision_objects = collision_objects
-        scene_msg.is_diff = True
-
-        req = ApplyPlanningScene.Request()
-        req.scene = scene_msg
-
-        # self.get_logger().info('Calling service (batch)')
-        future = self.scene_cli.call_async(req)
-        future.add_done_callback(self.collision_response_callback)
-
-    def collision_response_callback(self, future):
-        try:
-            response = future.result()
-            if not response.success:
-                self.get_logger().warn('Failed to add collision objects')
-        except Exception as e:
-            self.get_logger().warn(f'Fail to add collision objects: {e}')
-
-    def offset_centre(self, item, orientation_q):
+    def create_offset(self, offset, q_x, q_y, q_z, q_w):
         """
         Calculates the offset in the world frame based on the object's orientation.
         """
-        r = R.from_quat([
-            orientation_q.x,
-            orientation_q.y,
-            orientation_q.z,
-            orientation_q.w
-        ])
-        
+        r = R.from_quat([q_x, q_y, q_z, q_w]) # NOTE: don't pass in orientation so prevent mutations
+
         # Offset the box centre from the marker:
-        local_offset = np.array([0.0, 0.0, 0.01-(item.length / 2.0)])
-        # local_offset = np.array([0.0, 0.0, -item.width / 2.0])
+        local_offset = np.array(offset)
         
         # Rotate that offset vector to align with the object's current orientation in world
         return r.apply(local_offset)
