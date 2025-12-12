@@ -319,11 +319,11 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
             f"pos=({x}, {y})", f"id={id}"
         )
         #z_base = int(z_base)
-        z_base *= 0.01
+        z_base *= b.resolution
         #z_top = int(z_top)
-        z_top *= 0.01
-        x *= 0.01
-        y *= 0.01
+        z_top *= b.resolution
+        x *= b.resolution
+        y *= b.resolution
         print(f"{name}: new_z_base={z_base}, new_z_top={z_top}, new_x={x}, new_y={y}")
 
     box_info.sort(key=lambda t: t[3])
@@ -415,72 +415,6 @@ def main(config: PackingConfig):
 
         p = PackingConfig(bin_dims=(b.length_m, b.width_m, b.height_m), n_objects=3)
         print(packing_with_priors(p, box_list=box_list, vis=False))
-        # print("\n=== Greedy rollout from trained policy ===")
-        # policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-        # policy.load_state_dict(torch.load(os.path.join(current_path, "packing/policy.pt"), map_location="cpu"))
-        # policy.eval()
-        # env = PackingEnv(n_objects, config)
-        # X = env.reset(False)
-        # indices, _, _ = policy(X, training=False)
-        # ordering = indices[0].tolist()
-        # print("Ordering:", ordering)
-
-        # b = Bin(*env.bin_dims)
-        # for idx in ordering:
-        #     box = env.boxes[int(idx)]
-        #     # placed = heuristics.place_box_with_rule(box, b)
-        #     placed = place_box_with_rule(box, b)
-
-        #     print(f"Placed box {idx}: {placed}, l: {box.length}, w: {box.width}, h: {box.height}")
-        #     print(b.height_map)
-
-        # print("Final height_map:")
-        # print(b.height_map)
-
-        # # C = heuristics.compute_compactness(b)
-        # # P = heuristics.compute_pyramid(b)
-        # # A = heuristics.compute_access_cost(b)
-        # # F = heuristics.compute_fragility_penalty(
-        # #     b, 
-        # #     config.base_scaling, 
-        # #     config.heavy_factor, 
-        # #     config.fragile_quantile, 
-        # #     config.alpha_capacity
-        # # )
-        # C = compute_compactness(b)
-        # P = compute_pyramid(b)
-        # A = compute_access_cost(b)
-        # F = compute_fragility_penalty(
-        #     b, 
-        #     config.base_scaling, 
-        #     config.heavy_factor, 
-        #     config.fragile_quantile, 
-        #     config.alpha_capacity
-        # )
-
-        # print(f"\nFinal metrics: C={C:.3f}, P={P:.3f}, A={A:.3f}, F={F:.3f}")
-
-        # print("\nPer-box placement (sorted by fragility):")
-        # # build list of (name, fragility, base_z, top_z, x, y)
-        # box_info = []
-        # for name, entry in b.boxes.items():
-        #     box = entry["box"]
-        #     z_base = entry["z"]
-        #     z_top = z_base + box.height
-        #     box_info.append((name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
-
-        # # sort fragile → tough (fragility ascending)
-        # box_info.sort(key=lambda t: t[1])
-
-        # for name, frag, z_base, z_top, x, y in box_info:
-        #     print(
-        #         f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
-        #         f"pos=({x}, {y})"
-        #     )
-        
-        # visualize_bin_pybullet(b, cell_size=0.05, gui=True)
-        # return
-
 
 if __name__ == "__main__":
     main(config=PackingConfig())
