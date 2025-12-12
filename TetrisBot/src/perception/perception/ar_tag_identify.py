@@ -16,6 +16,58 @@ from box_bin_msgs.msg import BoxBin
 from perception.table import average_table_pose
 from perception.mesh import get_collision_mesh
 
+from dataclasses import dataclass
+import math
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+
+def quat_slerp(q0, q1, t):
+    # q = [x,y,z,w]
+    r0 = R.from_quat(q0)
+    r1 = R.from_quat(q1)
+
+    # Ensure shortest path (same hemisphere)
+    if np.dot(q0, q1) < 0:
+        q1 = -q1
+        r1 = R.from_quat(q1)
+
+    # SciPy doesn't have direct slerp between 2 quats without Slerp object;
+    # simple approach: interpolate via rotvec
+    r_rel = r0.inv() * r1
+    rotvec = r_rel.as_rotvec()
+    r_interp = r0 * R.from_rotvec(rotvec * t)
+    return r_interp.as_quat()
+
+def angle_between_quats(q0, q1):
+    # return angle in radians
+    if np.dot(q0, q1) < 0:
+        q1 = -q1
+    dq = R.from_quat(q0).inv() * R.from_quat(q1)
+    return np.linalg.norm(dq.as_rotvec())
+
+@dataclass
+class PoseFilter:
+    pos: np.ndarray
+    quat: np.ndarray
+    last_seen_sec: float
+
+    def update(self, new_pos, new_quat, now_sec,
+               alpha=0.15, max_jump_m=0.03, max_jump_deg=15.0):
+        # gate outliers
+        dp = np.linalg.norm(new_pos - self.pos)
+        dtheta = angle_between_quats(self.quat, new_quat) * 180.0 / math.pi
+        if dp > max_jump_m or dtheta > max_jump_deg:
+            # ignore spike, but refresh last_seen so we don’t “drop” instantly
+            self.last_seen_sec = now_sec
+            return self.pos, self.quat
+
+        # smooth
+        self.pos = (1 - alpha) * self.pos + alpha * new_pos
+        self.quat = quat_slerp(self.quat, new_quat, alpha)
+        self.last_seen_sec = now_sec
+        return self.pos, self.quat
+
+
 class TagIdentification(Node):
     '''
     Notes;
@@ -53,6 +105,9 @@ class TagIdentification(Node):
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
         self.active_items = set()
+        self.filters = {}  # id -> PoseFilter
+        self.hold_seconds = 0.5
+
 
     def aruco_marker_callback(self, msg: ArucoMarkers):
         # The frame the camera is reporting in (usually optical_frame)
@@ -99,6 +154,19 @@ class TagIdentification(Node):
                     transformed_pose = tf2_geometry_msgs.do_transform_pose(source_pose.pose, tf)
                     
                     pose = transformed_pose
+
+                    now_sec = self.get_clock().now().nanoseconds * 1e-9
+
+                    new_pos = np.array([pose.position.x, pose.position.y, pose.position.z], dtype=float)
+                    new_quat = np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w], dtype=float)
+
+                    pf = self.filters.get(id)
+                    if pf is None:
+                        self.filters[id] = PoseFilter(new_pos, new_quat, now_sec)
+                    else:
+                        fpos, fquat = pf.update(new_pos, new_quat, now_sec)
+                        pose.position.x, pose.position.y, pose.position.z = fpos.tolist()
+                        pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = fquat.tolist()
 
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
@@ -155,15 +223,34 @@ class TagIdentification(Node):
                 collision_objects_batch.append(table_obj)
             #seen_ids.add(table_item.id) uncomment if needed #TODO
         
-        remove_these_ids = self.active_items - seen_ids
-        for id_to_be_removed in remove_these_ids:
+        # remove_these_ids = self.active_items - seen_ids
+        # for id_to_be_removed in remove_these_ids:
+        #     coll_obj = CollisionObject()
+        #     coll_obj.header.frame_id = 'base_link'
+        #     coll_obj.id = str(id_to_be_removed)
+        #     coll_obj.operation = CollisionObject.REMOVE
+        #     collision_objects_batch.append(coll_obj)
+        
+        # self.active_items = seen_ids.copy()
+
+        # After processing detections:
+        now_sec = self.get_clock().now().nanoseconds * 1e-9
+
+        expired = []
+        for tracked_id, pf in list(self.filters.items()):
+            if (now_sec - pf.last_seen_sec) > self.hold_seconds:
+                expired.append(tracked_id)
+
+        for id_to_be_removed in expired:
+            # remove collision object
             coll_obj = CollisionObject()
             coll_obj.header.frame_id = 'base_link'
             coll_obj.id = str(id_to_be_removed)
             coll_obj.operation = CollisionObject.REMOVE
             collision_objects_batch.append(coll_obj)
-        
-        self.active_items = seen_ids.copy()
+
+            # forget filter state
+            del self.filters[id_to_be_removed]
         
         # Send all updates in one service call. 
         # if collision_objects_batch:
