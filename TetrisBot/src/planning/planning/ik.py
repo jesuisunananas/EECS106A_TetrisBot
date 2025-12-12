@@ -8,26 +8,6 @@ from builtin_interfaces.msg import Duration
 import sys
 
 
-# Example usage:
-# -------------------------------------------------
-# current joint state (replace with your robot's)
-# current_state = JointState()
-# current_state.name = [
-#     'shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint',
-#     'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint'
-# ]
-# current_state.position = [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]
-
-# Compute IK for target point
-# ik_solution = node.compute_ik(current_state, 0.4, 0.1, 0.3)
-
-# if ik_solution:
-#     # Plan motion to the found joint configuration
-#     trajectory = node.plan_to_joints(ik_solution)
-#     if trajectory:
-#         node.get_logger().info('Trajectory ready to execute.')
-
-
 class IKPlanner(Node):
     def __init__(self):
         super().__init__('ik_planner')

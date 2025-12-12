@@ -467,27 +467,6 @@ class UR7e_CubeGrasp(Node):
         # For changing from bin-frame coor to base-link frame
         id, name, fragility, z_base, z_top, x, y = box_info
         
-        # box = get_object_by_id(id)
-        # pose = Pose()
-        
-        # # pose.header.frame_id = bin_tf.child_frame_id
-        # # pose.header.time = rclpy.time.Time()
-        
-        # pose.orientation.x = 0.0
-        # pose.orientation.y = 0.0
-        # pose.orientation.z = 0.0
-        # pose.orientation.w = 1.0
-        
-        # # pose.position.x = x + (box.width / 2.0)
-        # # pose.position.y = y - (box.length / 2.0)
-        # # pose.position.z = z_base + (box.height / 2.0)
-
-        # pose.position.x = float(x)
-        # pose.position.y = float(y)
-        # pose.position.z = float(z_base)
-        
-        # return do_transform_pose(pose, bin_tf)
-
         self.get_logger().info(f'calc final pose x: {x}, y: {y}')
 
         un_grid_x = x * 0.02
