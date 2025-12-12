@@ -87,9 +87,9 @@ class UR7e_CubeGrasp(Node):
         # self.get_logger().info(f'final callback pose {final_pose.position.z}')
 
         # # initial_pose.position.y += GRIPPER_OFFSET_Y
-        # # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height / 2))
+        # # initial_pose.position.z += (GRIPPER_OFFSET_Z + (box.height_m / 2))
         # # final_pose.position.y += GRIPPER_OFFSET_Y
-        # # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height / 2))
+        # # final_pose.position.z += (GRIPPER_OFFSET_Z + (final_box.height_m / 2))
         # # final_pose.position.z += GRIPPER_OFFSET_Z 
         
         # # success = self.test_plan_pick_and_place(box, initial_pose, final_pose)
@@ -150,7 +150,7 @@ class UR7e_CubeGrasp(Node):
             bin = get_object_by_id(bin_id)
             final_pose = self.calculate_final_pose(info, bin, bin_pose)
 
-            self.get_logger().info(f"Dim for box {box_id}: l:{box.length}, w:{box.width}, h:{box.height}")
+            self.get_logger().info(f"Dim for box {box_id}: l:{box.length_m }, w:{box.width}, h:{box.height}")
 
             success = self.plan_pick_and_place(box, initial_pose, final_pose)
             if success:
@@ -329,7 +329,7 @@ class UR7e_CubeGrasp(Node):
         # Drop to final place height
         x_place = x_pre_place
         y_place = y_pre_place
-        z_place = z_pre_place + box.height - 0.2 - 0.02 + 0.005 # NOTE: 2cm for the gripper being inside the cube, 1cm for safety 
+        z_place = z_pre_place + box.height_m - 0.2 - 0.02 + 0.005 # NOTE: 2cm for the gripper being inside the cube, 1cm for safety 
                                                                # This should solve the suspiciously high release height!
         
         # ik_result = self.ik_planner.compute_ik(ik_result, x_place, y_place, z_place - 0.1, qx_dst, qy_dst, qz_dst, qw_dst)

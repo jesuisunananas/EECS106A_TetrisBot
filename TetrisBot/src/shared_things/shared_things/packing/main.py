@@ -179,7 +179,7 @@ CELL_SIZE = 0.05  # meters per grid cell
 def visualize_bin_pybullet(b: Bin, cell_size=CELL_SIZE, gui=True):
     client = setup_pybullet(gui=gui)
     create_bin_visual(
-        bin_dims=(b.length, b.width, b.height),
+        bin_dims=(b.width, b.length, b.height),
         cell_size=cell_size,
     )
     def color_from_name(name: str):
@@ -411,10 +411,10 @@ def main(config: PackingConfig):
             Box(name='small cube', length=0.06, width=0.06, height=0.06, id=2)
         ]
 
-        b = Bin(name='bin', length=0.12, width=0.12, height=0.2, id=100)
+        b = Bin(name='bin', length=0.08, width=0.178, height=20, id=100)
 
         p = PackingConfig(bin_dims=(b.length_m, b.width_m, b.height_m), n_objects=3)
-        print(packing_with_priors(p, box_list=box_list, vis=False))
+        print(packing_with_priors(p, box_list=box_list, vis=True))
 
 if __name__ == "__main__":
     main(config=PackingConfig())

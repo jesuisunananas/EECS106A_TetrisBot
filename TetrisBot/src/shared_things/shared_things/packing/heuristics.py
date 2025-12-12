@@ -17,10 +17,10 @@ when we add a Box(2, 1, 3) (from left-top point 0,0) height map becomes:
 def add_box(x, y, box: Box, b: Bin):
     if not can_add_box(x, y, box, b):
         return False
-    submatrix = b.height_map[y:y+box.grid_width(b.resolution), x:x+box.grid_length(b.resolution)]
+    submatrix = b.height_map[y:y+box.width, x:x+box.length]
     base_height = submatrix.max()
-    top_height = base_height + box.grid_height(b.resolution)
-    b.height_map[y:y + box.grid_width(b.resolution), x:x + box.grid_length(b.resolution)] = top_height
+    top_height = base_height + box.height
+    b.height_map[y:y + box.width, x:x + box.length] = top_height
     b.boxes[box.name] = {
         "box": box,
         "x": x,
@@ -33,11 +33,11 @@ def add_box(x, y, box: Box, b: Bin):
 def can_add_box(x, y, box: Box, b: Bin):
     if x < 0: return False
     if y< 0: return False
-    if x + box.grid_length(b.resolution) > b.height_map.shape[1]: return False
-    if y + box.grid_width(b.resolution) > b.height_map.shape[0]: return False
+    if x + box.length > b.height_map.shape[1]: return False
+    if y + box.width > b.height_map.shape[0]: return False
 
-    submatrix = b.height_map[y:y+box.grid_width(b.resolution), x:x+box.grid_length(b.resolution)]
-    if np.any((submatrix + box.grid_height(b.resolution)) > b.height): return False
+    submatrix = b.height_map[y:y+box.width, x:x+box.length]
+    if np.any((submatrix + box.height) > b.height): return False
     base_height = submatrix.max()
     support_ratio = np.count_nonzero(submatrix == base_height) / submatrix.size
     if support_ratio < 0.5:
@@ -55,13 +55,13 @@ def all_pos_for_box(box: Box, b: Bin):
     positions = []
     # width = int(round(box.width / b.resolution))
     # length = int(round(box.length / b.resolution))
-    print(f'box grid width: {box.grid_width(b.resolution)}')
+    print(f'box grid width: {box.width}')
 
-    for y in range(rows - box.grid_width(b.resolution) + 1):
-        for x in range(cols - box.grid_length(b.resolution) + 1):
+    for y in range(rows - box.width + 1):
+        for x in range(cols - box.length + 1):
             if can_add_box(x, y, box, b):
                 # Compute base height (for tie breaking)
-                submatrix = hmap[y:y + box.grid_width(b.resolution), x:x + box.grid_length(b.resolution)]
+                submatrix = hmap[y:y + box.width, x:x + box.length]
                 z = submatrix.max()
                 positions.append((x, y, z))
 
@@ -99,7 +99,7 @@ def compute_pyramid(b: Bin):
         box = entry["box"]
         x = entry["x"]
         y = entry["y"]
-        mask[y:y + box.grid_width(b.resolution), x:x + box.grid_length(b.resolution)] = True
+        mask[y:y + box.width, x:x + box.length] = True
         object_volume += entry["box"].volume
     region_volume = float(b.height_map[mask].sum())
     if region_volume == 0:
@@ -127,13 +127,13 @@ def footprint_overlap(b1: Box, b2: Box, b: Bin):
     y_j = b.boxes[b1.name]["y"]
     x_k = b.boxes[b2.name]["x"]
     y_k = b.boxes[b2.name]["y"] 
-    x_overlap = max(0, min(x_j + b1.grid_length(b.resolution), x_k + b2.grid_length(b.resolution)) - max(x_j, x_k))
-    y_overlap = max(0, min(y_j + b1.grid_width(b.resolution), y_k + b2.grid_width(b.resolution)) - max(y_j, y_k))
+    x_overlap = max(0, min(x_j + b1.length, x_k + b2.length) - max(x_j, x_k))
+    y_overlap = max(0, min(y_j + b1.width, y_k + b2.width) - max(y_j, y_k))
     return x_overlap * y_overlap
 
 # check if b2 is stacked on b1
 def vertical_stacking(b1: Box, b2: Box, b: Bin):
-    z_top = b1.grid_height(b.resolution) + b.boxes[b1.name]["z"]
+    z_top = b1.height + b.boxes[b1.name]["z"]
     z_base = b.boxes[b2.name]["z"]
     return z_base >= z_top
 
@@ -143,7 +143,7 @@ def weight_on_box(lower: Box, upper: Box, b: Bin):
     area_overlap = footprint_overlap(lower, upper, b)
     if area_overlap == 0.0:
         return 0.0
-    area_upper = upper.grid_length(b.resolution) * upper.grid_width(b.resolution)
+    area_upper = upper.length * upper.width
     fraction_on_lower = area_overlap / area_upper
     return fraction_on_lower * p * upper.volume
 

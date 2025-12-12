@@ -44,7 +44,7 @@ def average_table_pose(table, table_poses: list[Pose]):
     box_pose = Pose()
     box_pose.position.x = average_pos[0]
     box_pose.position.y = average_pos[1]
-    box_pose.position.z = average_pos[2] - (table.height / 2.0)    
+    box_pose.position.z = average_pos[2] - (table.height_m / 2.0)    
     # ^ Z is shifted down by half thickness so the top surface aligns with tags
 
     box_pose.orientation.x = average_quat[0]
