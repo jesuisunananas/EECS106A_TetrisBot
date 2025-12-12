@@ -1,7 +1,7 @@
 import torch # type: ignore
 import numpy as np # type: ignore
-from box import Box, Bin
-from heuristics import *
+from .box import Box, Bin
+from .heuristics import *
 
 class RewardScaler:
     def __init__(self, momentum=0.99, eps=1e-6):

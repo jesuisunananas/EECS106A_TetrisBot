@@ -103,7 +103,7 @@ class TagIdentification(Node):
                     if is_box(id):
                         # self.get_logger().info(f"The item {id} is a box")
                         # NOTE: applied the height + 0.01 offset here:
-                        offset = self.create_offset(item, [0.0, 0.0, 0.01-(item.height / 2.0)], pose.orientation) 
+                        offset = self.create_offset(item, [0.0, 0.0, 0.01-(item.height_m / 2.0)], pose.orientation) 
                         pose.position.x += offset[0]
                         pose.position.y += offset[1]
                         pose.position.z += offset[2]
@@ -117,10 +117,10 @@ class TagIdentification(Node):
                         
                     elif is_bin(id):
                         # self.get_logger().info(f"The item {id} is a bin")
-                        offset = self.create_offset(item, [item.width / 2, -(item.height / 2), 0.0], pose.orientation) 
-                        pose.position.x += offset[0]
-                        pose.position.y += offset[1]
-                        pose.position.z += offset[2]
+                        # offset = self.create_offset(item, [item.width_m / 2, -(item.height_m / 2), 0.0], pose.orientation) 
+                        # pose.position.x += offset[0]
+                        # pose.position.y += offset[1]
+                        # pose.position.z += offset[2]
                         
                         bin_ids.append(id)
                         bin_poses.append(pose)

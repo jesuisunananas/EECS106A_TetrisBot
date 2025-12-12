@@ -5,17 +5,17 @@ import os
 from collections import deque
 
 # from shared_things import Box, Bin
-from box import Bin, Box
-from heuristics import *
-from model import PointerNetPolicy, Critic
-from env import PackingEnv
-from train import train_step
+from .box import Bin, Box
+from .heuristics import *
+from .model import PointerNetPolicy, Critic
+from .env import PackingEnv
+from .train import train_step
 import random
 import pybullet as p
 from math import sqrt
 import pybullet_data
 import time
-from config import PackingConfig
+from .config import PackingConfig
 import argparse
 import numpy as np
 
@@ -268,7 +268,7 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
     hidden_dim = config.hidden_dim
     n_objects = config.n_objects
     policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
-    policy.load_state_dict(torch.load("/Users/arjunrewari/Developer/EECS106A_TetrisBot/TetrisBot/src/shared_things/shared_things/packing/policy.pt", map_location="cpu"))
+    policy.load_state_dict(torch.load("src/shared_things/shared_things/packing/policy.pt", map_location="cpu"))
     policy.eval()
     env = PackingEnv(n_objects, config)
     X = env.reset(box_list=box_list)

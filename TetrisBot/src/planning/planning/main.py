@@ -135,7 +135,9 @@ class UR7e_CubeGrasp(Node):
         # ---------------------------------------------------------
         # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
-        box_info = packing_with_priors(box_list=box_list, vis=False)
+        bin_obj = get_object_by_id(bin_id)
+        packing_config = PackingConfig(bin_dims=(bin_obj.length_m, bin_obj.width_m, bin_obj.height), n_objects=len(box_list))
+        box_info = packing_with_priors(config=packing_config, box_list=box_list, vis=False)
         
         self.is_busy = True
         for info in box_info:
@@ -480,7 +482,7 @@ class UR7e_CubeGrasp(Node):
         
         # return do_transform_pose(pose, bin_tf)
 
-        self.get_logger().info(f'calc final pose x: {x}, y: {y}')
+        self.get_logger().info(f'calc final pose x: {x}, y: {y}, z: {z_base}')
 
         un_grid_x = x * bin.resolution
         un_grid_y = y * bin.resolution
