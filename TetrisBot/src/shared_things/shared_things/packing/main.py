@@ -193,18 +193,18 @@ def visualize_bin_pybullet(b: Bin, cell_size=CELL_SIZE, gui=True):
     body_to_name = {}
     for name, entry in b.boxes.items():
         box = entry["box"]
-        x_cell = entry["x"]
-        y_cell = entry["y"]
+        x_cell = entry["y"]
+        y_cell = entry["x"]
         z_cell = entry["z"]
 
         # Sizes in meters
-        sx = box.length * cell_size
-        sy = box.width  * cell_size
+        sx = box.width * cell_size
+        sy = box.length  * cell_size
         sz = box.height * cell_size
 
         # Center position in meters
-        x_center = (x_cell + box.length / 2.0) * cell_size
-        y_center = (y_cell + box.width  / 2.0) * cell_size
+        x_center = (x_cell + box.width / 2.0) * cell_size
+        y_center = (y_cell + box.length  / 2.0) * cell_size
         z_center = (z_cell + box.height / 2.0) * cell_size
 
         half_extents = [sx/2, sy/2, sz/2]
@@ -406,12 +406,12 @@ def main(config: PackingConfig):
 
     elif args.mode == "eval":
         box_list = [
-            Box(name='cube', length=0.08, width=0.08, height=0.08, id=0),
-            Box(name='rectangle', length=0.1, width=0.06, height=0.06, id=1),
-            Box(name='small cube', length=0.06, width=0.06, height=0.06, id=2)
+            Box(length=8, width=8, height=8, fragility=0.1),
+            Box(length=6, width=10, height=6),
+            Box(length=6, width=6, height=6)
         ]
 
-        b = Bin(name='bin', length=0.08, width=0.178, height=20, id=100)
+        b = Bin(length=12, width=8, height=20, id=100)
 
         p = PackingConfig(bin_dims=(b.length_m, b.width_m, b.height_m), n_objects=3)
         print(packing_with_priors(p, box_list=box_list, vis=True))
