@@ -311,19 +311,22 @@ def packing_with_priors(config=PackingConfig(), box_list=None, vis=True):
         box_info.append((box.id, name, box.fragility, z_base, z_top, entry["x"], entry["y"]))
 
     # sort fragile → tough (fragility ascending)
-    box_info.sort(key=lambda t: t[1])
+    #box_info.sort(key=lambda t: t[1])
 
     for id, name, frag, z_base, z_top, x, y in box_info:
         print(
             f"{name}: frag={frag:.3f}, base_z={z_base}, top_z={z_top}, "
             f"pos=({x}, {y})", f"id={id}"
         )
+        #z_base = int(z_base)
         z_base *= 0.01
+        #z_top = int(z_top)
         z_top *= 0.01
         x *= 0.01
         y *= 0.01
         print(f"{name}: new_z_base={z_base}, new_z_top={z_top}, new_x={x}, new_y={y}")
 
+    box_info.sort(key=lambda t: t[3])
 
     if vis:
         visualize_bin_pybullet(b, cell_size=0.05, gui=True)
@@ -481,3 +484,5 @@ def main(config: PackingConfig):
 
 if __name__ == "__main__":
     main(config=PackingConfig())
+
+    
