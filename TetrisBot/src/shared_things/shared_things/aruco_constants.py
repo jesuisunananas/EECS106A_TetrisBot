@@ -18,7 +18,7 @@ BOXES = {
     2: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=2),
     3: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=3),
     4: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=4),
-    20: Box(name='cup', length=0.09, width=0.09, height=0.09, id=20),
+    #20: Box(name='cup', length=0.09, width=0.09, height=0.09, id=20),
 }
 
 BINS = {

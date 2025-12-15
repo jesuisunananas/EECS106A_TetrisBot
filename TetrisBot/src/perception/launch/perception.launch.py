@@ -55,6 +55,22 @@ def generate_launch_description():
         output='screen',
     )
 
+    rgbd_box_pose_node = Node(
+        package='perception',
+        executable='rgbd_box_pose_node',   # must match your setup.py entry point
+        name='rgbd_box_pose_node',
+        output='screen',
+        parameters=[{
+            # optional if your node supports params (recommended)
+            'rgb_topic': '/camera/color/image_raw',
+            'depth_topic': '/camera/aligned_depth_to_color/image_raw',
+            'camera_info_topic': '/camera/camera_info',
+            'target_frame': 'base_link',
+            #'conf_threshold': 0.6,
+        }],
+    )
+
+
     # Static TF: base_link -> world
     # -------------------------------------------------
     # This TF is static because the "world" frame does not move.
@@ -154,7 +170,8 @@ def generate_launch_description():
         # planning_tf_node,
         tf_launch,
         moveit_launch,
-        ar_tag_identification_node,
+        rgbd_box_pose_node,
+        #ar_tag_identification_node,
         ik_planner_node,
         shutdown_on_any_exit
     ])

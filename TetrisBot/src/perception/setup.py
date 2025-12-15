@@ -21,7 +21,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ar_tag_identify = perception.ar_tag_identify:main',
+            #'ar_tag_identify = perception.ar_tag_identify:main',
+            'rgbd_box_pose_node = perception.rgbd_box_pose_node:main',
         ],
     },
 )

@@ -87,8 +87,9 @@ class TagIdentification(Node):
                     tf_pose = tf2_geometry_msgs.do_transform_pose(source_pose.pose, tf)
 
                     if is_box(id):
-                        box_ids.append(id)
-                        box_poses.append(tf_pose)
+                        # box_ids.append(id)
+                        # box_poses.append(tf_pose)
+                        continue
 
                     elif is_bin(id):                        
                         bin_ids.append(id)
