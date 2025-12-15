@@ -138,7 +138,9 @@ class UR7e_CubeGrasp(Node):
         # ---------------------------------------------------------
         # # NOTE: Demo 3: Stacking cubes based on packing_with_priors and prioirity order
         box_list = [get_object_by_id(id) for id in box_ids]
-        box_info = packing_with_priors(box_list=box_list, vis=False)
+        b = get_object_by_id(bin_id)
+        pc = PackingConfig(bin_dims=(b.length_m, b.width_m, b.height_m), n_objects=len(box_list))
+        box_info = packing_with_priors(config=pc, box_list=box_list, vis=False)
         
         self.is_busy = True
         for info in box_info:
@@ -147,10 +149,10 @@ class UR7e_CubeGrasp(Node):
             box = get_object_by_id(box_id)
             initial_pose = box_poses[box_idx]
             
-            bin = get_object_by_id(bin_id)
-            final_pose = self.calculate_final_pose(info, bin, bin_pose)
+            #bin = get_object_by_id(bin_id)
+            final_pose = self.calculate_final_pose(info, b, bin_pose)
 
-            self.get_logger().info(f"Dim for box {box_id}: l:{box.length_m }, w:{box.width}, h:{box.height}")
+            self.get_logger().info(f"Dim for box {box_id}: l:{box.length_m }, w:{box.width_m}, h:{box.height_m}")
 
             success = self.plan_pick_and_place(box, initial_pose, final_pose)
             if success:
@@ -438,15 +440,15 @@ class UR7e_CubeGrasp(Node):
         except Exception as e:
             self.get_logger().error(f'Execution failed: {e}')
 
-    def calculate_final_pose(self, box_info: tuple, bin, bin_pose) -> Pose:
+    def calculate_final_pose(self, box_info: tuple, b, bin_pose) -> Pose:
         # For changing from bin-frame coor to base-link frame
         id, name, fragility, z_base, z_top, x, y = box_info
         
         self.get_logger().info(f'calc final pose for {name} (grids) x: {x}, y: {y}, z: {z_base}')
 
-        un_grid_x = x * bin.resolution
-        un_grid_y = y * bin.resolution
-        un_grid_z = z_base * bin.resolution
+        un_grid_x = x * b.resolution
+        un_grid_y = y * b.resolution
+        un_grid_z = z_base * b.resolution
 
         pose = Pose()
         pose.position.x = float(un_grid_x + bin_pose.position.x) 
