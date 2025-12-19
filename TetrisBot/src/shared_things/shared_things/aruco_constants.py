@@ -13,10 +13,10 @@ import numpy as np
 
 #in base_link frame length: x, width: y, height: z
 BOXES = {
-    0: Box(name='cube', length=0.08, width=0.08, height=0.08, id=0),
+    20: Box(name='cube', length=0.08, width=0.08, height=0.08, id=20),
     1: Box(name='rectangle', length=0.1, width=0.06, height=0.06, id=1),
     # 1: Box(name='rectangle', length=0.06, width=0.1, height=0.06, id=1),
-    2: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=2),
+    # 2: Box(name='small cube', length=0.06, width=0.06, height=0.06, id=2),
     # 3: Box(name='ooo orange', length=1.0, width=1.0, height=1.0, id=3),
     # 4: Box(name='cheezzz', length=1.0, width=1.0, height=1.0, id=4),
     # 5: Box(name='bobo', length=1.0, width=1.0, height=1.0, id=5),
@@ -30,9 +30,9 @@ BINS = {
 }
 
 COLLISION_MESHES = {
-    0: 'src/perception/perception/3d_models/cube.stl',
-    1: 'src/perception/perception/3d_models/rectangle.stl',
-    2: 'src/perception/perception/3d_models/small_box.stl'
+    20: 'src/perception/perception/3d_models/cube.stl',
+    # 1: 'src/perception/perception/3d_models/rectangle.stl',
+    # 2: 'src/perception/perception/3d_models/small_box.stl'
 }
 
 BOX_MARKER_IDS = BOXES.keys()

@@ -167,8 +167,8 @@ class TagIdentification(Node):
         self.active_items = seen_ids.copy()
         
         # Send all updates in one service call. 
-        # if collision_objects_batch:
-            # self.publish_collision_batch(collision_objects_batch)
+        if collision_objects_batch:
+            self.publish_collision_batch(collision_objects_batch)
     
     def create_collision_object(self, item, pose):
         
