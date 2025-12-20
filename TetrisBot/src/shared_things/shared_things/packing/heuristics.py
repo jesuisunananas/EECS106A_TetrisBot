@@ -163,19 +163,15 @@ def compute_fragility_penalty(b: Bin,
     if not b.boxes:
         return 0.0
 
-    # --- 1. Collect fragilities and compute "very fragile" threshold ---
     frag_list = np.array([entry["box"].fragility for entry in b.boxes.values()], dtype=float)
-    # e.g. bottom 25% are "very fragile"
     very_fragile_thresh = np.quantile(frag_list, fragile_quantile)
 
     penalty = 0.0
 
-    # --- 2. Loop over each "lower" box j ---
     for _, j_entry in b.boxes.items():
         j_box = j_entry["box"]
         frag_j = float(j_box.fragility)
 
-        # compute how much weight is on j_box
         load_on_box = 0.0
         for _, k_entry in b.boxes.items():
             k_box = k_entry["box"]
@@ -183,20 +179,15 @@ def compute_fragility_penalty(b: Bin,
                 continue
             load_on_box += weight_on_box(j_box, k_box, b)
 
-        # "capacity" based on fragility & volume
         capacity = alpha * frag_j * float(j_box.volume)
 
         overload = max(0.0, load_on_box - capacity)
         if overload <= 0.0:
-            # no overload => no penalty for this box
             continue
 
-        # --- 3. Heavier penalty if j is very fragile compared to others ---
         if frag_j <= very_fragile_thresh:
-            # Very fragile relative to set: big penalty
             scale = base_scaling * heavy_factor
         else:
-            # Normal box
             scale = base_scaling
 
         penalty += scale * overload

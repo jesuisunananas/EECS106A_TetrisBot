@@ -412,6 +412,7 @@ def main(config: PackingConfig):
     elif args.mode == "eval":
         print("\n=== Greedy rollout from trained policy ===")
         policy = PointerNetPolicy(feature_dim=feature_dim, hidden_dim=hidden_dim)
+        # input path for policy.pt instead of current path
         policy.load_state_dict(torch.load(os.path.join(current_path, "packing/policy.pt"), map_location="cpu"))
         policy.eval()
         env = PackingEnv(n_objects, config)
