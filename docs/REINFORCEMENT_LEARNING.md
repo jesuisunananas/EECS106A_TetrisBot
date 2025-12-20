@@ -1,5 +1,5 @@
 ```
-Goal: Create a learning based packing system that would efficiently pack regular\
+Goal: Create a learning based packing system that would efficiently pack regular \
 objects (rectangular shaped boxes) in a bin with respect to fragility, access\
 priority, and stability.\
 \
